@@ -1,8 +1,9 @@
 package de.rwth.imi.flare.requestor;
 
 import de.rwth.imi.flare.api.model.Criterion;
-import de.rwth.imi.flare.api.model.FilterType;
 import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.api.model.FilterType;
+import de.rwth.imi.flare.api.model.ValueFilter;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 public class QueryStringBuilder {
@@ -21,26 +22,63 @@ public class QueryStringBuilder {
 
     private String constructQueryString(){
         MappingEntry mapping = this.criterion.getValueFilter().getMapping();
-        builder.append(mapping.getFhirResourceType()).append('?');
+        this.builder.append(mapping.getFhirResourceType()).append('?');
+        if(this.criterion.getValueFilter() != null){
+            appendValueFilterByType();
+        }
+        // Search for concepts
+        else{
+            appendConceptFilterString();
+        }
+
+        if(mapping.getFixedCriteria() != null){
+
+        }
+
+        return builder.toString();
+    }
+
+    private void appendConceptFilterString() {
+        MappingEntry mapping = this.criterion.getValueFilter().getMapping();
+        // TODO: Tree expansion if necessary
+        TerminologyCode termCode = this.criterion.getTermCode();
+        this.builder.append(mapping.getTermCodeSearchParameter())
+                .append('=')
+                .append(termCode.getCode()).append('|').append(termCode.getSystem());
+    }
+
+    private void appendValueFilterByType() {
+        MappingEntry mapping = this.criterion.getValueFilter().getMapping();
 
         if(mapping.getTermCodeSearchParameter() != null){
             TerminologyCode termCode = this.criterion.getTermCode();
             builder.append(mapping.getTermCodeSearchParameter())
                     .append('=')
                     .append(termCode.getSystem()).append('|').append(termCode.getCode());
-            constructConceptSearchString();
         }
-        else{
-            constructValueSearchString();
+        FilterType filter = this.criterion.getValueFilter().getFilter();
+        if (filter == FilterType.QUANTITY_COMPARATOR){
+            appendQuantityComparatorFilterString();
         }
-        return builder.toString();
+        else if (filter == FilterType.QUANTITY_RANGE){
+            appendQuantityRangeFilterString();
+        }
+        //TODO: Implement concept filter
     }
 
-    private void constructValueSearchString() {
-
+    private void appendQuantityRangeFilterString() {
+        ValueFilter valueFilter = this.criterion.getValueFilter();
+        MappingEntry mapping = valueFilter.getMapping();
+        String valueSearchParameter = mapping.getValueSearchParameter();
+        builder.append(valueSearchParameter).append("=ge").append(valueFilter.getMinValue()).append(valueFilter.getUnit());
+        builder.append('&');
+        builder.append(valueSearchParameter).append("=le").append(valueFilter.getMaxValue()).append(valueFilter.getUnit());
     }
 
-    private void constructConceptSearchString() {
-        builder.append()
+    private void appendQuantityComparatorFilterString() {
+        ValueFilter valueFilter = this.criterion.getValueFilter();
+        String valueSearchParameter = this.criterion.getValueFilter().getMapping().getValueSearchParameter();
+        this.builder.append(valueSearchParameter).append('=')
+                .append(valueFilter.getComparator()).append(valueFilter.getValue()).append(valueFilter.getUnit());
     }
 }
