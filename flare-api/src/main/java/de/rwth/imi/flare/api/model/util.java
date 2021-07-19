@@ -2,6 +2,7 @@ package de.rwth.imi.flare.api.model;
 
 import jakarta.xml.bind.JAXB;
 
+import java.io.StringReader;
 import java.io.StringWriter;
 
 public class util {
@@ -12,6 +13,6 @@ public class util {
     }
 
     public static Query deserialize(String xml){
-        return JAXB.unmarshal(xml, Query.class);
+        return JAXB.unmarshal(new StringReader(xml), Query.class);
     }
 }
