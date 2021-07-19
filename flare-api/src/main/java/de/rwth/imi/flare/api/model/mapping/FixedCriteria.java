@@ -14,4 +14,5 @@ public class FixedCriteria {
     private String code;
     private String display;
     private String system;
+    private String searchParameter;
 }
