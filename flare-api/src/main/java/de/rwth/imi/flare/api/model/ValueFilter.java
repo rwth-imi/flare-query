@@ -19,19 +19,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ValueFilter
 {
-    @XmlElement(name = "filter")
     private FilterType filter;
-    @XmlElement(name = "selectedConcepts")
     private TerminologyCode[] selectedConcepts;
-    @XmlElement(name = "comparator")
     private Comparator comparator;
-    @XmlElement(name = "value")
     private Double value;
-    @XmlElement(name = "unit")
     private String unit;
-    @XmlElement(name = "minValue")
     private Double minValue;
-    @XmlElement(name = "maxValue")
     private Double maxValue;
-    private MappingEntry mapping;
 }

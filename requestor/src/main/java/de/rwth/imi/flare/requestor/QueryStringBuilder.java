@@ -25,7 +25,7 @@ public class QueryStringBuilder {
     }
 
     private String constructQueryString(){
-        MappingEntry mapping = this.criterion.getValueFilter().getMapping();
+        MappingEntry mapping = this.criterion.getMapping();
         this.sb.append(mapping.getFhirResourceType()).append('?');
 
         if(this.criterion.getValueFilter() != null){
@@ -43,13 +43,13 @@ public class QueryStringBuilder {
     }
 
     private void appendFixedCriteriaString() {
-        for (FixedCriteria criterion : this.criterion.getValueFilter().getMapping().getFixedCriteria()){
+        for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()){
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(criterion.getCode());
         }
     }
 
     private void appendConceptFilterString() {
-        MappingEntry mapping = this.criterion.getValueFilter().getMapping();
+        MappingEntry mapping = this.criterion.getMapping();
         StringBuilder sbTemp = new StringBuilder();
         // TODO: Tree expansion if necessary
         TerminologyCode termCode = this.criterion.getTermCode();
@@ -59,7 +59,7 @@ public class QueryStringBuilder {
     }
 
     private void appendValueFilterByType() {
-        MappingEntry mapping = this.criterion.getValueFilter().getMapping();
+        MappingEntry mapping = this.criterion.getMapping();
         StringBuilder sbTemp = new StringBuilder();
 
         if(mapping.getTermCodeSearchParameter() != null){
@@ -80,7 +80,7 @@ public class QueryStringBuilder {
 
     private void appendQuantityRangeFilterString() {
         ValueFilter valueFilter = this.criterion.getValueFilter();
-        MappingEntry mapping = valueFilter.getMapping();
+        MappingEntry mapping = this.criterion.getMapping();
         String valueSearchParameter = mapping.getValueSearchParameter();
         StringBuilder sbTemp = new StringBuilder();
 
@@ -95,7 +95,7 @@ public class QueryStringBuilder {
 
     private void appendQuantityComparatorFilterString() {
         ValueFilter valueFilter = this.criterion.getValueFilter();
-        String valueSearchParameter = this.criterion.getValueFilter().getMapping().getValueSearchParameter();
+        String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
         StringBuilder sbTemp = new StringBuilder();
 
         this.sb.append(valueSearchParameter).append('=');

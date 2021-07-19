@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.api.model;
 
+import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -22,4 +23,5 @@ public class Criterion
     private TerminologyCode termCode;
     @XmlElement(name = "valueFilter")
     private ValueFilter valueFilter;
+    private MappingEntry mapping;
 }
