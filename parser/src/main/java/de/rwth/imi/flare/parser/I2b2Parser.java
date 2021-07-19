@@ -1,8 +1,8 @@
 package de.rwth.imi.flare.parser;
 
 import de.rwth.imi.flare.api.model.Query;
+import de.rwth.imi.flare.api.model.util;
 import de.rwth.imi.flare.api.FlareParser;
-import jakarta.xml.bind.JAXBException;
 
 import java.io.IOException;
 import javax.xml.transform.TransformerConfigurationException;
@@ -14,12 +14,10 @@ import javax.xml.transform.TransformerException;
 public class I2b2Parser implements FlareParser
 {
     private final ModelTransformer transformer;
-    private final XMLSerializer xmlSerializer;
-    
-    public I2b2Parser() throws TransformerConfigurationException, JAXBException
+
+    public I2b2Parser() throws TransformerConfigurationException
     {
         this.transformer = new ModelTransformer();
-        this.xmlSerializer = new XMLSerializer();
     }
     
     @Override
@@ -30,9 +28,9 @@ public class I2b2Parser implements FlareParser
         {
             transformedXml = transformer.transform(input);
             System.out.println(transformedXml);
-            return this.xmlSerializer.xmlStringToQuery(transformedXml);
+            return util.deserialize(transformedXml);
 
-        } catch (TransformerException | JAXBException e)
+        } catch (TransformerException e)
         {
             throw new IOException(e);
         }

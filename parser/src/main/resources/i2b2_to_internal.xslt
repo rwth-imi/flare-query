@@ -34,6 +34,7 @@
                                                        select="substring-before($values_text,' and ')"/>
                                             <xsl:param name="second_value"
                                                        select="substring-after($values_text, ' and ')"/>
+                                            <!-- Properly order both values by size -->
                                             <xsl:choose>
                                                 <xsl:when test="$first_value&gt;=$second_value">
                                                     <minValue>

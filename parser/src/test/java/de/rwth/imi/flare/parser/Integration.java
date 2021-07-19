@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.parser;
 
 import de.rwth.imi.flare.api.model.*;
+import jakarta.xml.bind.JAXB;
 import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.TestInstance;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class Integration {
@@ -28,7 +31,7 @@ public class Integration {
 
         TerminologyCode male_terminology = new TerminologyCode("\\\\i2b2_DEMO\\i2b2\\Demographics\\Gender\\Male\\", "i2b2_sim");
         Criterion criterion1 = new Criterion(male_terminology,
-                new ValueFilter(FilterType.CONCEPT, new TerminologyCode[]{male_terminology}, null, null, null, null, null, null));
+                null);//new ValueFilter(FilterType.CONCEPT, new TerminologyCode[]{male_terminology}, null, null, null, null, null, null));
         CriteriaGroup criteriaGroup1 = new CriteriaGroup(new Criterion[]{criterion1});
 
         criterion1 = new Criterion(
@@ -48,9 +51,6 @@ public class Integration {
 
         Query expectedResult = new Query();
         expectedResult.setInclusionCriteria(new CriteriaGroup[]{criteriaGroup1, criteriaGroup2, criteriaGroup3});
-        XMLSerializer serializer = new XMLSerializer();
-        String exepectedResultS = serializer.QueryToXmlString(expectedResult);
-        System.out.println(exepectedResultS);
         Assertions.assertEquals(expectedResult, parsed);
     }
 }
