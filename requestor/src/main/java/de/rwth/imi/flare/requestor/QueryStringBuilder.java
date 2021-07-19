@@ -9,6 +9,8 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.List;
 
 public class QueryStringBuilder {
     private final Criterion criterion;
@@ -44,7 +46,17 @@ public class QueryStringBuilder {
 
     private void appendFixedCriteriaString() {
         for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()){
-            this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(criterion.getCode());
+            List<String> encodedCriteriaValueList = new LinkedList<>();
+
+            // Join all values into one string
+            StringBuilder sbTemp = new StringBuilder();
+            for(TerminologyCode value : criterion.getValue()){
+                sbTemp.append(value.getCode()).append('|').append(value.getSystem());
+                encodedCriteriaValueList.add(urlEncodeAndReset(sbTemp));
+            }
+            String valueString = String.join(",", encodedCriteriaValueList);
+
+            this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
     }
 

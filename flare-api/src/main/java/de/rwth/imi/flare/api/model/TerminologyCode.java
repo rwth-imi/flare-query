@@ -18,8 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TerminologyCode
 {
-    @XmlElement(name = "code")
     private String code;
-    @XmlElement(name = "system")
     private String system;
+    private String display;
 }
