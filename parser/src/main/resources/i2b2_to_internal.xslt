@@ -12,6 +12,9 @@
                                     <xsl:value-of select="item_key"/>
                                 </code>
                                 <system>i2b2_sim</system>
+                                <display>
+                                    <xsl:value-of select="item_name"/>
+                                </display>
                             </termCode>
                             <xsl:if test="count(constrain_by_value) &gt; 0">
                                 <valueFilter>
