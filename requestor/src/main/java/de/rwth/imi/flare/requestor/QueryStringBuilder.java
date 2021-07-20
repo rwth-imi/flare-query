@@ -31,10 +31,16 @@ public class QueryStringBuilder {
         this.sb.append(mapping.getFhirResourceType()).append('?');
 
         if(this.criterion.getValueFilter() != null){
+            if(mapping.getTermCodeSearchParameter() != null){
+                StringBuilder sbTemp = new StringBuilder();
+                this.sb.append(mapping.getTermCodeSearchParameter()).append("=");
+                sbTemp.append(this.criterion.getTermCode().getSystem())
+                        .append("|")
+                        .append(this.criterion.getTermCode().getCode());
+                this.sb.append(urlEncodeAndReset(sbTemp)).append(("&"));
+            }
+
             appendValueFilterByType();
-        }
-        else{
-            appendConceptFilterString();
         }
 
         if(mapping.getFixedCriteria() != null){
@@ -46,28 +52,19 @@ public class QueryStringBuilder {
 
     private void appendFixedCriteriaString() {
         for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()){
-            List<String> encodedCriteriaValueList = new LinkedList<>();
-
-            // Join all values into one string
-            StringBuilder sbTemp = new StringBuilder();
-            for(TerminologyCode value : criterion.getValue()){
-                sbTemp.append(value.getCode()).append('|').append(value.getSystem());
-                encodedCriteriaValueList.add(urlEncodeAndReset(sbTemp));
-            }
-            String valueString = String.join(",", encodedCriteriaValueList);
-
+            String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
     }
 
-    private void appendConceptFilterString() {
-        MappingEntry mapping = this.criterion.getMapping();
+    private String concatenateTerminologyCodes(TerminologyCode[] termCodes) {
         StringBuilder sbTemp = new StringBuilder();
-        // TODO: Tree expansion if necessary
-        TerminologyCode termCode = this.criterion.getTermCode();
-        this.sb.append(mapping.getTermCodeSearchParameter()).append('=');
-        sbTemp.append(termCode.getSystem()).append('|').append(termCode.getCode());
-        this.sb.append(urlEncodeAndReset(sbTemp));
+        List<String> encodedCriteriaValueList = new LinkedList<>();
+        for(TerminologyCode value : termCodes){
+            sbTemp.append(value.getCode()).append('|').append(value.getSystem());
+            encodedCriteriaValueList.add(urlEncodeAndReset(sbTemp));
+        }
+        return String.join(",", encodedCriteriaValueList);
     }
 
     private void appendValueFilterByType() {
@@ -87,7 +84,19 @@ public class QueryStringBuilder {
         else if (filter == FilterType.QUANTITY_RANGE){
             appendQuantityRangeFilterString();
         }
-        //TODO: handle FilterType.CONCEPT
+        else if (filter == FilterType.CONCEPT){
+            appendConceptFilterString();
+        }
+    }
+
+    private void appendConceptFilterString() {
+        ValueFilter valueFilter = this.criterion.getValueFilter();
+        String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
+        StringBuilder sbTemp = new StringBuilder();
+
+        sb.append(valueSearchParameter)
+                .append('=')
+                .append(concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
     }
 
     private void appendQuantityRangeFilterString() {
@@ -116,10 +125,14 @@ public class QueryStringBuilder {
     }
 
     private static String urlEncodeAndReset(StringBuilder strBuilder){
-        String encoded = URLEncoder.encode(strBuilder.toString(), StandardCharsets.UTF_8);
+        String encoded = urlEncode(strBuilder.toString());
         // Reset StringBuilder
         strBuilder.setLength(0);
         strBuilder.trimToSize();
         return encoded;
+    }
+
+    private static String urlEncode(String str) {
+        return URLEncoder.encode(str, StandardCharsets.UTF_8);
     }
 }
