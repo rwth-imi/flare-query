@@ -11,11 +11,11 @@ import javax.xml.transform.TransformerException;
 /**
  * Created by Lukas Szimtenings on 6/4/2021.
  */
-public class I2b2Parser implements FlareParser
+public class ParserI2B2 implements FlareParser
 {
     private final ModelTransformer transformer;
 
-    public I2b2Parser() throws TransformerConfigurationException
+    public ParserI2B2() throws TransformerConfigurationException
     {
         this.transformer = new ModelTransformer();
     }

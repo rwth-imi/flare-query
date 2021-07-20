@@ -92,7 +92,6 @@ public class QueryStringBuilder {
     private void appendConceptFilterString() {
         ValueFilter valueFilter = this.criterion.getValueFilter();
         String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-        StringBuilder sbTemp = new StringBuilder();
 
         sb.append(valueSearchParameter)
                 .append('=')

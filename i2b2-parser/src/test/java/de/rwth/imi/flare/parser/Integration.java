@@ -20,7 +20,7 @@ public class Integration {
 
     @Test
     public void testParser() throws IOException, TransformerConfigurationException {
-        I2b2Parser parser = new I2b2Parser();
+        ParserI2B2 parser = new ParserI2B2();
 
         String request = helpers.readResourceIntoString("i2b2_request.xml");
         Query parsed = parser.parse(request);
