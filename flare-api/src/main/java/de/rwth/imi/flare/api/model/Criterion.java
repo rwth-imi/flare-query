@@ -19,9 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Criterion
 {
-    @XmlElement(name = "termCode")
     private TerminologyCode termCode;
-    @XmlElement(name = "valueFilter")
     private ValueFilter valueFilter;
     private MappingEntry mapping;
 }
