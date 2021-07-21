@@ -63,13 +63,10 @@ public class Request implements Iterator<FlareResource> {
     private void fetchNextPage() throws IOException, InterruptedException, URISyntaxException {
         HttpRequest req = HttpRequest.newBuilder().uri(currentRequestUrl).GET().build();
         HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-        this.parseResponse(response);
-    }
-
-    private void parseResponse(HttpResponse<String> response) throws URISyntaxException {
         if(response.statusCode()/ 200 != 2){
             // TODO error handling
         }
+
         Bundle searchBundle = this.fhirParser.parseResource(Bundle.class, response.body());
         extractResourcesFromBundle(searchBundle);
         extractNextPageLink(searchBundle);
