@@ -5,11 +5,12 @@ import de.rwth.imi.flare.api.model.Criterion;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Requestor implements de.rwth.imi.flare.api.Requestor {
-    private URI serverBaseUrl;
+    private final URI serverBaseUrl;
 
     public Requestor(URI serverBaseUrl){
         this.serverBaseUrl = serverBaseUrl;
@@ -17,7 +18,12 @@ public class Requestor implements de.rwth.imi.flare.api.Requestor {
 
     @Override
     public Stream<FlareResource> execute(Criterion search) {
-        URI requestUrl = buildRequestUrl(search);
+        URI requestUrl;
+        try {
+            requestUrl = buildRequestUrl(search);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         Request request = new Request(requestUrl);
         return createStream(request);
     }
@@ -28,9 +34,10 @@ public class Requestor implements de.rwth.imi.flare.api.Requestor {
         return StreamSupport.stream(streamSource.spliterator(), false);
     }
 
-    private URI buildRequestUrl(Criterion search) {
+    private URI buildRequestUrl(Criterion search) throws URISyntaxException {
         // TODO: Find a way to properly concat URLs in Java
         String searchQuery = QueryStringBuilder.constructQueryString(search);
-        return serverBaseUrl.resolve(searchQuery);
+        String searchUrl = serverBaseUrl.toString() + searchQuery;
+        return new URI(searchUrl);
     }
 }
