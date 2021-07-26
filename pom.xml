@@ -10,16 +10,16 @@
     <packaging>pom</packaging>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
     </properties>
 
     <modules>
         <module>flare-api</module>
         <module>executor</module>
         <module>mapping</module>
-        <module>parser</module>
+        <module>i2b2-parser</module>
         <module>requestor</module>
-        <module>cli</module>
+        <module>flare-cli</module>
     </modules>
 </project>
