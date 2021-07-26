@@ -9,9 +9,6 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <xsd.sources.dir>src/main/resources</xsd.sources.dir>
-        <generated.classes.dir>${project.build.sourceDirectory}</generated.classes.dir>
-        <generated.classes.package>${project.groupId}.model</generated.classes.package>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
     </properties>
