@@ -1,17 +1,18 @@
-import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.model.*;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class ExecutorTest
 {
-    Executor executor = new FlareExecutor();
+    FlareExecutor executor = new FlareExecutor();
 
     @Test
     public void testExecutor() throws ExecutionException, InterruptedException {
         Query query = buildQuery();
-        executor.calculatePatientCount(query).get();
+        CompletableFuture<Integer> calc = executor.calculatePatientCount(query);
+        calc.get();
     }
 
     private Query buildQuery() {
