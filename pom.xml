@@ -18,7 +18,7 @@
         <module>flare-api</module>
         <module>executor</module>
         <module>mapping</module>
-        <module>i2b2-parser</module>
+        <module>parser-i2b2</module>
         <module>requestor</module>
         <module>flare-cli</module>
     </modules>

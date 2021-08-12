@@ -12,5 +12,5 @@ import java.io.IOException;
  */
 public interface FlareParser
 {
-    Query parse(String input) throws TransformerException, JAXBException, IOException;
+    Query parse(String input) throws IOException;
 }
