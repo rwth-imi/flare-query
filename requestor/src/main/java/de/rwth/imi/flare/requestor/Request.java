@@ -17,15 +17,20 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 
+/**
+ * Iterates over the paged results of a given FHIR query
+ */
 public class Request implements Iterator<FlareResource> {
-    private URI currentRequestUrl;
+    private URI nextPageUri;
+    //Stack of results returned by last request
     private final Stack<FlareResourceImpl> remainingPageResults;
     private final HttpClient client;
+    // Parses only JSON FHIR responses
     private final IParser fhirParser;
-    private final int attempts = 5;
+    private final int maxRequestAttempts = 5;
 
-    public Request(URI requestUrl, Authenticator auth){
-        this.currentRequestUrl = requestUrl;
+    public Request(URI FHIRRequestUrl, Authenticator auth){
+        this.nextPageUri = FHIRRequestUrl;
         this.client = HttpClient.newBuilder().authenticator(auth).build();
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new Stack<>();
@@ -35,7 +40,7 @@ public class Request implements Iterator<FlareResource> {
 
     @Override
     public boolean hasNext() {
-        return this.currentRequestUrl != null || !this.remainingPageResults.isEmpty();
+        return this.nextPageUri != null || !this.remainingPageResults.isEmpty();
     }
 
     @Override
@@ -44,9 +49,12 @@ public class Request implements Iterator<FlareResource> {
         return this.remainingPageResults.pop();
     }
 
+    /**
+     * Fetches next page if stack isn't full, and turns checked exceptions that should not be thrown into unchecked ones
+     */
     private void ensureStackFullness() {
         if(this.remainingPageResults.isEmpty()){
-            if(this.currentRequestUrl != null){
+            if(this.nextPageUri != null){
                 try {
                     fetchNextPage();
                 }
@@ -63,30 +71,13 @@ public class Request implements Iterator<FlareResource> {
         }
     }
 
+    /**
+     * Fetches the next page of search results and updates {@link #remainingPageResults} and {@link #nextPageUri}
+     */
     private void fetchNextPage() throws IOException, InterruptedException, URISyntaxException {
-        HttpRequest req = HttpRequest.newBuilder().uri(currentRequestUrl)
+        HttpRequest req = HttpRequest.newBuilder().uri(nextPageUri)
                 .GET().build();
-
-        HttpResponse<String> response;
-        int connectionsAttempted = 0;
-        while(true){
-            try {
-                response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                break;
-            }
-            catch (InterruptedException | IOException e)
-            {
-                if(connectionsAttempted < this.attempts-1)
-                {
-                    System.err.println("Failed to retrieve a url, trying again");
-                    connectionsAttempted++;
-                }
-                else{
-                    throw e;
-                }
-            }
-        }
-
+        HttpResponse<String> response = executeAllRequestAttempts(req);
         if(response.statusCode()/ 100 != 2){
             throw new IOException("Received HTTP status code indicating request failure: " + response.statusCode());
         }
@@ -96,6 +87,40 @@ public class Request implements Iterator<FlareResource> {
         extractNextPageLink(searchBundle);
     }
 
+    /**
+     * Executes the given request {@link #maxRequestAttempts} times or until it succeeds
+     * @param req request to be executed
+     * @return response given by the server
+     * @throws IOException if an I/O error occurs when sending or receiving more than {@link #maxRequestAttempts} times
+     * @throws InterruptedException if the operation is interrupted more than {@link #maxRequestAttempts} times
+     */
+    private HttpResponse<String> executeAllRequestAttempts(HttpRequest req) throws IOException, InterruptedException {
+        HttpResponse<String> response;
+        int connectionsAttempted = 0;
+        while(true){
+            try {
+                response = client.send(req, HttpResponse.BodyHandlers.ofString());
+                break;
+            }
+            catch (InterruptedException | IOException e)
+            {
+                if(connectionsAttempted < this.maxRequestAttempts -1)
+                {
+                    System.err.println("Failed to retrieve a url, trying again");
+                    connectionsAttempted++;
+                }
+                else{
+                    throw e;
+                }
+            }
+        }
+        return response;
+    }
+
+    /**
+     * Extracts the resources contained in a given bundle into the {@link #remainingPageResults} stack
+     * @param searchBundle Response to a search request currently being processed
+     */
     private void extractResourcesFromBundle(Bundle searchBundle) {
         List<Bundle.BundleEntryComponent> entries = searchBundle.getEntry();
         for(Bundle.BundleEntryComponent entry : entries){
@@ -104,13 +129,18 @@ public class Request implements Iterator<FlareResource> {
         }
     }
 
+    /**
+     * Extracts the Link to the next page of search results from a bundle into {@link #nextPageUri}
+     * @param searchBundle Response to the search request currently being processed
+     * @throws URISyntaxException If the URI contained in the bundle is not valid
+     */
     private void extractNextPageLink(Bundle searchBundle) throws URISyntaxException {
         Bundle.BundleLinkComponent nextLink = searchBundle.getLink(IBaseBundle.LINK_NEXT);
         if(nextLink == null){
-            this.currentRequestUrl = null;
+            this.nextPageUri = null;
         }
         else{
-            this.currentRequestUrl = new URI(nextLink.getUrl());
+            this.nextPageUri = new URI(nextLink.getUrl());
         }
     }
 }
