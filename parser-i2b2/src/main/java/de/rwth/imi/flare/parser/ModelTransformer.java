@@ -13,25 +13,41 @@ import java.util.Objects;
 
 /**
  * Created by Lukas Szimtenings on 6/18/2021.
+ * Uses a XSL transformation to transform a standard i2b2 query definition into an XML representation of a
+ * {@link de.rwth.imi.flare.api.model.Query Query}
  */
 public class ModelTransformer
 {
     private final Transformer transformer;
-    
+
+    /**
+     * Sets up a transformer based on the <a href="file:../../resources/i2b2_to_internal.xslt>xslt</a>
+     * @throws TransformerConfigurationException if the xslt is broken
+     */
     public ModelTransformer() throws TransformerConfigurationException
     {
         StreamSource styleSource = this.readResourceIntoStream("i2b2_to_internal.xslt");
         TransformerFactory factory = TransformerFactory.newInstance();
         this.transformer = factory.newTransformer(styleSource);
     }
-    
+
+    /**
+     * transforms an i2b2 query definition into an XML representation of a
+     * {@link de.rwth.imi.flare.api.model.Query Query}
+     * @param xml i2b2 query definition
+     * @return XML representation of {@link de.rwth.imi.flare.api.model.Query Query}
+     * @throws TransformerException if the given xml is not valid
+     */
     public String transform(String xml) throws TransformerException
     {
         StreamResult outputTarget = new StreamResult(new StringWriter());
         this.transformer.transform(new StreamSource(new StringReader(xml)), outputTarget);
         return outputTarget.getWriter().toString();
     }
-    
+
+    /**
+     * Helper method, reads file from resources and creates a StreamSource from it
+     */
     public StreamSource readResourceIntoStream(String resourcePath){
         InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(resourcePath);
         Objects.requireNonNull(resourceAsStream, "Resource cannot be found");
