@@ -23,7 +23,12 @@
                                         <xsl:value-of select="constrain_by_value/value_operator"/>
                                     </comparator>
                                     <unit>
-                                        <xsl:value-of select="constrain_by_value/value_unit_of_measure"/>
+                                        <code>
+                                            <xsl:value-of select="constrain_by_value/value_unit_of_measure"/>
+                                        </code>
+                                        <display>
+                                            <xsl:value-of select="constrain_by_value/value_unit_of_measure"/>
+                                        </display>
                                     </unit>
 
                                     <xsl:choose>

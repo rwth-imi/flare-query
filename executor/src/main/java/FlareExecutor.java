@@ -1,5 +1,4 @@
 import de.rwth.imi.flare.api.FlareResource;
-import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.requestor.Requestor;
@@ -57,8 +56,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Union all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(CriteriaGroup group) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = Arrays.stream(group.getCriteria())
+    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(Criterion[] group) {
+        final List<CompletableFuture<Set<String>>> idsPerCriterion = Arrays.stream(group)
                 .map(this::getPatientIdsFittingCriterion).collect(Collectors.toList());
 
         // Wait for all queries to finish execution
@@ -107,9 +106,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Intersect all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(CriteriaGroup group) {
+    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(Criterion[] group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
-        for (Criterion criterion : group.getCriteria()) {
+        for (Criterion criterion : group) {
             CompletableFuture<Set<String>> evaluableCriterion = getPatientIdsFittingCriterion(criterion);
             idsPerCriterion.add(evaluableCriterion);
         }

@@ -1,5 +1,6 @@
-package de.rwth.imi.flare.api.model;
+package de.rwth.imi.flare.api.model.xml;
 
+import de.rwth.imi.flare.api.model.Criterion;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;

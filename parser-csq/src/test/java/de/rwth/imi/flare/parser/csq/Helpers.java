@@ -1,4 +1,4 @@
-package de.rwth.imi.flare.parser;
+package de.rwth.imi.flare.parser.csq;
 
 import java.io.InputStream;
 import java.util.Scanner;

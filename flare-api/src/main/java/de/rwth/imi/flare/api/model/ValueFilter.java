@@ -23,7 +23,7 @@ public class ValueFilter
     private TerminologyCode[] selectedConcepts;
     private Comparator comparator;
     private Double value;
-    private String unit;
+    private TerminologyCode unit;
     private Double minValue;
     private Double maxValue;
 }

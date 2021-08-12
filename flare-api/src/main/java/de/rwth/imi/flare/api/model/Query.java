@@ -1,8 +1,8 @@
 package de.rwth.imi.flare.api.model;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlRootElement;
+import de.rwth.imi.flare.api.model.xml.CriteriaGroupAdapter;
+import jakarta.xml.bind.annotation.*;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Query
 {
-    private CriteriaGroup[] inclusionCriteria;
-    private CriteriaGroup[] exclusionCriteria;
+    @XmlJavaTypeAdapter(CriteriaGroupAdapter.class)
+    private Criterion[][] inclusionCriteria;
+    @XmlJavaTypeAdapter(CriteriaGroupAdapter.class)
+    private Criterion[][] exclusionCriteria;
 }

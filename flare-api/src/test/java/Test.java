@@ -1,4 +1,5 @@
 import de.rwth.imi.flare.api.model.*;
+import de.rwth.imi.flare.api.model.xml.CriteriaGroup;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
@@ -17,8 +18,8 @@ public class Test
     public static void main(String[] args) throws JAXBException
     {
         Query query = new Query();
-        query.setInclusionCriteria(new CriteriaGroup[]{createCriteriaConjunction(), createCriteriaConjunction()});
-        query.setExclusionCriteria(new CriteriaGroup[]{createCriteriaConjunction(), createCriteriaConjunction()});
+        query.setInclusionCriteria(new Criterion[][]{createCriteriaConjunction(), createCriteriaConjunction()});
+        query.setExclusionCriteria(new Criterion[][]{createCriteriaConjunction(), createCriteriaConjunction()});
         
         XMLSerialiser serialiser = new XMLSerialiser();
         System.out.println(serialiser.QueryToXmlString(query));
@@ -28,12 +29,16 @@ public class Test
         return counter++;
     }
     
-    public static CriteriaGroup createCriteriaConjunction(){
+    public static Criterion[] createCriteriaConjunction(){
         CriteriaGroup conj = new CriteriaGroup();
-        conj.setCriteria(new Criterion[]{createCriterion(), createCriterion(), createCriterion()});
-        return conj;
+        conj.setCriteria(createCriteriaArray());
+        return createCriteriaArray();
     }
-    
+
+    private static Criterion[] createCriteriaArray() {
+        return new Criterion[]{createCriterion(), createCriterion(), createCriterion()};
+    }
+
     public static Criterion createCriterion(){
         Criterion criterion = new Criterion();
         criterion.setTermCode(createTermCode());
