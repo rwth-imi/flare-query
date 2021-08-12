@@ -18,5 +18,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CriteriaGroup
 {
+    @XmlElement(name = "criterion")
     private Criterion[] criteria;
 }
