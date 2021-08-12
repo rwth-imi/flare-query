@@ -1,4 +1,4 @@
-package de.rwth.imi.flare.parser;
+package de.rwth.imi.flare.parser.i2b2;
 
 import de.rwth.imi.flare.api.model.*;
 import org.junit.jupiter.api.Assertions;
