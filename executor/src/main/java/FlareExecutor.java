@@ -12,6 +12,10 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+/**
+ * Asynchronously executes a complete Query by querying the single criteria
+ * and then executing a recombination of the different result sets according to the cnf
+ */
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     @Override
     public CompletableFuture<Integer> calculatePatientCount(Query mappedQuery) {
@@ -26,6 +30,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         return resultingIds.thenApply(Set::size);
     }
 
+    /**
+     * Build intersection of all group sets
+     */
     private CompletableFuture<Set<String>> getExcludedIds(Query query) {
         List<CompletableFuture<Set<String>>> excludedIdsByGroup =
                 Arrays.stream(query.getInclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
@@ -47,6 +54,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         });
     }
 
+    /**
+     * Union all criteria sets for a given group
+     */
     private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(CriteriaGroup group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = Arrays.stream(group.getCriteria())
                 .map(this::getPatientIdsFittingCriterion).collect(Collectors.toList());
@@ -127,6 +137,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
         Requestor requestor;
         try {
+            // TODO: make Base URI configurable by config file
             requestor = new Requestor(new URI("http://mock.url/replace/me"));
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
