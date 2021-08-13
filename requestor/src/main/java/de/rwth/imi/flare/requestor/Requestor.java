@@ -62,14 +62,14 @@ public class Requestor implements de.rwth.imi.flare.api.Requestor {
 
     /**
      * Builds the query string specified by the criterion, then executes said query string
-     * @param search single criterion
+     * @param searchCriterion single criterion
      * @return Stream that contains the results for the given criterion
      */
     @Override
-    public Stream<FlareResource> execute(Criterion search) {
+    public Stream<FlareResource> execute(Criterion searchCriterion) {
         URI requestUrl;
         try {
-            requestUrl = buildRequestUrl(search);
+            requestUrl = buildRequestUrl(searchCriterion);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }

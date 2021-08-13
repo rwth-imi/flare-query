@@ -7,10 +7,11 @@ import java.time.LocalDateTime;
  */
 public interface FlareResource
 {
-    public String getPatientId();
+    String getPatientId();
     
-    // TODO: Determine proper return type
-    // Also implement later on
+    // TODO: implement later on
     // public LocalDateTime getRelevantDate();
+
+    // TODO: Determine proper return type
     // public Object getRelevantValue();
 }

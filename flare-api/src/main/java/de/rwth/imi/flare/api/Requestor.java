@@ -5,9 +5,14 @@ import de.rwth.imi.flare.api.model.Criterion;
 import java.util.stream.Stream;
 
 /**
- * Created by Lukas Szimtenings on 6/4/2021.
+ * The Requestors purpose is to fetch all patients described by a single criterion and parsing them into a {@link FlareResource}.
  */
 public interface Requestor
 {
-    public Stream<FlareResource> execute(Criterion search);
+    /**
+     * Executes a search as defined by the given criterion and create a Stream on the results
+     * @param searchCriterion defines the search
+     * @return A stream of Resources matching the {@code searchCriterion}
+     */
+    Stream<FlareResource> execute(Criterion searchCriterion);
 }

@@ -5,9 +5,14 @@ import de.rwth.imi.flare.api.model.Query;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by Lukas Szimtenings on 6/2/2021.
+ * The Executor asynchronously executes an entire Query and aggregates the returned data
  */
 public interface Executor
 {
-    public CompletableFuture<Integer> calculatePatientCount(Query mappedQuery);
+    /**
+     * Executes the query, and aggregates the returned patients into a count
+     * @param mappedQuery Query with all mapping information
+     * @return A CompletableFuture that when executed yields the number of patients matching the given query
+     */
+    CompletableFuture<Integer> calculatePatientCount(Query mappedQuery);
 }
