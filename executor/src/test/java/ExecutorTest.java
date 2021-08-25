@@ -1,12 +1,23 @@
 import de.rwth.imi.flare.api.model.*;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class ExecutorTest
 {
-    FlareExecutor executor = new FlareExecutor();
+    BasicAuthRequestorConfig config;
+    FlareExecutor executor;
+
+    public ExecutorTest() throws URISyntaxException {
+        config = new BasicAuthRequestorConfig(
+                new URI("https://localhost:9443/fhir-server/api/v4/"),
+                "fhiruser",
+                "change-password");
+        executor = new FlareExecutor(config);
+    }
 
     @Test
     public void testExecutor() throws ExecutionException, InterruptedException {

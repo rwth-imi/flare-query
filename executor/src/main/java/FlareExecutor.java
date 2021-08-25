@@ -2,9 +2,9 @@ import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.requestor.Requestor;
+import de.rwth.imi.flare.requestor.RequestorConfig;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -16,6 +16,16 @@ import java.util.stream.Collectors;
  * and then executing a recombination of the different result sets according to the cnf
  */
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
+    private RequestorConfig config;
+
+    public void setConfig(RequestorConfig config){
+        this.config = config;
+    }
+
+    public FlareExecutor(RequestorConfig config){
+        this.config = config;
+    }
+
     @Override
     public CompletableFuture<Integer> calculatePatientCount(Query mappedQuery) {
         CompletableFuture<Set<String>> includedIds = getIncludedIds(mappedQuery);
@@ -134,15 +144,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * Get all ids fulfilling a given criterion
      */
     public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
-        Requestor requestor;
-        try {
-            // TODO: make Base URI configurable by config file
-            requestor = new Requestor(new URI("http://mock.url/replace/me"));
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        Requestor finalRequestor = requestor;
-        return CompletableFuture.supplyAsync(() -> finalRequestor.execute(criterion)
+        Requestor requestor = new Requestor(config);
+        return CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
                 .map(FlareResource::getPatientId)
                 .collect(Collectors.toSet()));
     }

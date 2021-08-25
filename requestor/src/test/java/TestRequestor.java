@@ -19,8 +19,8 @@ public class TestRequestor {
                         "change-password".toCharArray());
             }
         });
-        for (Request it = request; it.hasNext(); ) {
-            FlareResource res = it.next();
+        while (request.hasNext()) {
+            FlareResource res = request.next();
             System.out.println(res.getPatientId());
 
         }
