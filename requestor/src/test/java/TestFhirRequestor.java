@@ -7,7 +7,7 @@ import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class TestRequestor {
+public class TestFhirRequestor {
     @Test
     public void testRequest() throws URISyntaxException {
         String t = "https://localhost:9443/fhir-server/api/v4/Observation?code=I_COVAS_COV_M030_LAB_PARA_Q040&value-quantity=lt40";

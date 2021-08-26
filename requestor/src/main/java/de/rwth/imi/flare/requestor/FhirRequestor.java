@@ -12,13 +12,13 @@ import java.util.stream.StreamSupport;
 /**
  * Requestor implementation, takes a single criterion, builds a FHIR Query from it, and executes it
  */
-public class Requestor implements de.rwth.imi.flare.api.Requestor {
-    private final RequestorConfig config;
+public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
+    private final FhirRequestorConfig config;
 
     /**
      * @param requestorConfig Configuration to be used when crafting requests
      */
-    public Requestor(RequestorConfig requestorConfig) {
+    public FhirRequestor(FhirRequestorConfig requestorConfig) {
         this.config = requestorConfig;
     }
 

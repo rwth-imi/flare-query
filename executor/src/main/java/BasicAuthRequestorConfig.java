@@ -1,11 +1,11 @@
-import de.rwth.imi.flare.requestor.RequestorConfig;
+import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URI;
 
-public class BasicAuthRequestorConfig implements RequestorConfig {
+public class BasicAuthRequestorConfig implements FhirRequestorConfig {
     private final URI baseURI;
     private final String user;
     private final String password;

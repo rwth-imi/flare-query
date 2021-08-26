@@ -4,7 +4,7 @@ package de.rwth.imi.flare.requestor;
 import java.net.Authenticator;
 import java.net.URI;
 
-public interface RequestorConfig {
+public interface FhirRequestorConfig {
 
     /**
      *

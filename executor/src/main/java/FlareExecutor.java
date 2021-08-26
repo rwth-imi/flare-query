@@ -1,8 +1,8 @@
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
-import de.rwth.imi.flare.requestor.Requestor;
-import de.rwth.imi.flare.requestor.RequestorConfig;
+import de.rwth.imi.flare.requestor.FhirRequestor;
+import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
 
 import java.util.*;
@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
  * and then executing a recombination of the different result sets according to the cnf
  */
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
-    private RequestorConfig config;
+    private FhirRequestorConfig config;
 
-    public void setConfig(RequestorConfig config){
+    public void setConfig(FhirRequestorConfig config){
         this.config = config;
     }
 
-    public FlareExecutor(RequestorConfig config){
+    public FlareExecutor(FhirRequestorConfig config){
         this.config = config;
     }
 
@@ -144,7 +144,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * Get all ids fulfilling a given criterion
      */
     public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
-        Requestor requestor = new Requestor(config);
+        FhirRequestor requestor = new FhirRequestor(config);
         return CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
                 .map(FlareResource::getPatientId)
                 .collect(Collectors.toSet()));
