@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.parser.i2b2;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -28,6 +29,9 @@ public class ModelTransformer
     {
         StreamSource styleSource = this.readResourceIntoStream("i2b2_to_internal.xslt");
         TransformerFactory factory = TransformerFactory.newInstance();
+        // Disable Access to local files to avoid file disclosures or SSRF
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         this.transformer = factory.newTransformer(styleSource);
     }
 

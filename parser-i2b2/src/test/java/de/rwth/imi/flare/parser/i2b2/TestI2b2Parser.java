@@ -10,7 +10,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class Integration {
+class TestI2b2Parser {
     private Helpers helpers;
 
     @BeforeAll
@@ -19,7 +19,7 @@ public class Integration {
     }
 
     @Test
-    public void testParser() throws IOException, TransformerConfigurationException {
+    void testParser() throws IOException, TransformerConfigurationException {
         ParserI2B2 parser = new ParserI2B2();
 
         String request = helpers.readResourceIntoString("i2b2_request.xml");

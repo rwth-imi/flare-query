@@ -16,6 +16,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Iterates over the paged results of a given FHIR query
@@ -23,17 +24,17 @@ import java.util.*;
 public class Request implements Iterator<FlareResource> {
     private URI nextPageUri;
     //Stack of results returned by last request
-    private final Stack<FlareResourceImpl> remainingPageResults;
+    private final Deque<FlareResourceImpl> remainingPageResults;
     private final HttpClient client;
     // Parses only JSON FHIR responses
     private final IParser fhirParser;
     private final int maxRequestAttempts = 5;
 
-    public Request(URI FHIRRequestUrl, Authenticator auth){
-        this.nextPageUri = FHIRRequestUrl;
+    public Request(URI fhirRequestUrl, Authenticator auth){
+        this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().authenticator(auth).build();
         this.fhirParser = FhirContext.forR4().newJsonParser();
-        this.remainingPageResults = new Stack<>();
+        this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
         this.ensureStackFullness();
     }
@@ -52,7 +53,7 @@ public class Request implements Iterator<FlareResource> {
     /**
      * Fetches next page if stack isn't full, and turns checked exceptions that should not be thrown into unchecked ones
      */
-    private void ensureStackFullness() {
+    private void ensureStackFullness() throws NoSuchElementException {
         if(this.remainingPageResults.isEmpty()){
             if(this.nextPageUri != null){
                 try {

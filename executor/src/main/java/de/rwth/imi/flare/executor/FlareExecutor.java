@@ -1,3 +1,5 @@
+package de.rwth.imi.flare.executor;
+
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
@@ -68,7 +70,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      */
     private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(Criterion[] group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = Arrays.stream(group)
-                .map(this::getPatientIdsFittingCriterion).collect(Collectors.toList());
+                .map(this::getPatientIdsFittingCriterion).toList();
 
         // Wait for all queries to finish execution
         CompletableFuture<Void> allPatientIdsReceived = CompletableFuture.allOf(idsPerCriterion.toArray(new CompletableFuture[0]));

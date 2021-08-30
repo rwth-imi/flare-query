@@ -1,4 +1,6 @@
 import de.rwth.imi.flare.api.model.*;
+import de.rwth.imi.flare.executor.BasicAuthRequestorConfig;
+import de.rwth.imi.flare.executor.FlareExecutor;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;

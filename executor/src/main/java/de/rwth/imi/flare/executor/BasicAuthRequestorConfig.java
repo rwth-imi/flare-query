@@ -1,3 +1,5 @@
+package de.rwth.imi.flare.executor;
+
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,14 +34,12 @@ public class BasicAuthRequestorConfig implements FhirRequestorConfig {
      */
     @NotNull
     private Authenticator createAuth() {
-        String user = this.user;
-        String password = this.password;
         return new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(
-                        user,
-                        password.toCharArray());
+                        BasicAuthRequestorConfig.this.user,
+                        BasicAuthRequestorConfig.this.password.toCharArray());
             }
         };
     }
