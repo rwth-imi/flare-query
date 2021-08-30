@@ -8,9 +8,7 @@ import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +17,8 @@ import java.util.stream.Collectors;
  */
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     private FhirRequestorConfig config;
+    private final Executor futureExecutor = new ThreadPoolExecutor(4, 16, 10,
+            TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
 
     public void setConfig(FhirRequestorConfig config){
         this.config = config;
@@ -36,7 +36,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         {
             strings.removeAll(strings2);
             return strings;
-        });
+        }, this.futureExecutor);
 
         return resultingIds.thenApply(Set::size);
     }
@@ -149,6 +149,6 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         FhirRequestor requestor = new FhirRequestor(config);
         return CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
                 .map(FlareResource::getPatientId)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toSet()), this.futureExecutor);
     }
 }
