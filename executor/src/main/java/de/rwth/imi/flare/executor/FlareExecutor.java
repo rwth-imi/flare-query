@@ -17,15 +17,20 @@ import java.util.stream.Collectors;
  */
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     private FhirRequestorConfig config;
-    private final Executor futureExecutor = new ThreadPoolExecutor(4, 16, 10,
-            TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+    private Executor futureExecutor;
 
     public void setConfig(FhirRequestorConfig config){
         this.config = config;
     }
 
+    public void setFutureExecutor(Executor futureExecutor){
+        this.futureExecutor = futureExecutor;
+    }
+
     public FlareExecutor(FhirRequestorConfig config){
         this.config = config;
+        this.futureExecutor = new ThreadPoolExecutor(4, 16, 10,
+                TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
     }
 
     @Override
