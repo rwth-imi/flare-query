@@ -39,7 +39,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         CompletableFuture<Set<String>> excludedIds = getExcludedIds(mappedQuery);
         CompletableFuture<Set<String>> resultingIds = includedIds.thenCombineAsync(excludedIds, (strings, strings2) ->
         {
-            strings.removeAll(strings2);
+            if(strings2 != null){
+                strings.removeAll(strings2);
+            }
             return strings;
         }, this.futureExecutor);
 
@@ -58,8 +60,10 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         return groupExecutionFinished.thenApply(unused -> {
             Iterator<CompletableFuture<Set<String>>> excludedGroupsIterator = excludedIdsByGroup.iterator();
             try {
-                Set<String> evaluableCriterion;
-                evaluableCriterion = excludedGroupsIterator.next().get();
+                Set<String> evaluableCriterion = null;
+                if(excludedGroupsIterator.hasNext()){
+                    evaluableCriterion = excludedGroupsIterator.next().get();
+                }
                 while (excludedGroupsIterator.hasNext()) {
                     evaluableCriterion.retainAll(excludedGroupsIterator.next().get());
                 }
