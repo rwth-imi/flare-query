@@ -53,7 +53,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      */
     private CompletableFuture<Set<String>> getExcludedIds(Query query) {
         List<CompletableFuture<Set<String>>> excludedIdsByGroup =
-                Arrays.stream(query.getInclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
+                Arrays.stream(query.getExclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
                 .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
 
