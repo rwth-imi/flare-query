@@ -1,0 +1,15 @@
+{
+  "version": "http://to_be_decided.com/draft-1/schema#",
+  "display": "",
+  "inclusionCriteria": [
+    [
+      {
+        "termCode": {
+          "code": "119364003",
+          "system": "http://snomed.info/sct",
+          "display": "Serum specimen (specimen)"
+        }
+      }
+    ]
+  ]
+}

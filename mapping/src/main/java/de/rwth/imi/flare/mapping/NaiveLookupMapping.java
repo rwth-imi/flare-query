@@ -46,6 +46,9 @@ public class NaiveLookupMapping implements FhirResourceMapper {
     }
 
     private void lookupCriterionGroup(Criterion[][] exclusionCriteria) {
+        if(exclusionCriteria == null){
+            return;
+        }
         Arrays.stream(exclusionCriteria)
                 .forEach(criteriaSubGroup -> Arrays.stream(criteriaSubGroup)
                 .forEach(criterion -> criterion.setMapping(lookupCriterion(criterion))));

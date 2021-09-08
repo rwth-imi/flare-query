@@ -1,0 +1,23 @@
+{
+  "version": "http://to_be_decided.com/draft-1/schema#",
+  "inclusionCriteria": [
+      [
+          {
+              "termCode": {
+                  "code": "76769-9",
+                  "system": "http://loinc.org",
+                  "display": "Hemoglobin [Mass/volume] in Venous blood by Oximetry"
+              },
+              "valueFilter": {
+                  "type": "quantity-comparator",
+                  "comparator": "gt",
+                  "unit": {
+                      "code": "g/dL",
+                      "display": "g/dL"
+                  },
+                  "value": 7.0
+              }
+          }
+      ]
+  ]
+}
