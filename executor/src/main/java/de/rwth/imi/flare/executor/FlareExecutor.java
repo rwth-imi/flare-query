@@ -52,6 +52,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * Build intersection of all group sets
      */
     private CompletableFuture<Set<String>> getExcludedIds(Query query) {
+        if(query.getExclusionCriteria() == null){
+            return CompletableFuture.completedFuture(new HashSet<>());
+        }
         List<CompletableFuture<Set<String>>> excludedIdsByGroup =
                 Arrays.stream(query.getExclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
@@ -103,6 +106,10 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * Build union of all group sets
      */
     private CompletableFuture<Set<String>> getIncludedIds(Query query) {
+        if(query.getInclusionCriteria() == null){
+            return CompletableFuture.completedFuture(new HashSet<>());
+        }
+
         // Execute all group queries and wait for execution to finish
         List<CompletableFuture<Set<String>>> includedIdsByGroup =
                 Arrays.stream(query.getInclusionCriteria()).map(this::getIdsFittingInclusionGroup).toList();
