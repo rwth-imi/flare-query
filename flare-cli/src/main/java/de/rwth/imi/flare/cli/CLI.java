@@ -1,9 +1,11 @@
 package de.rwth.imi.flare.cli;
 
 import de.rwth.imi.flare.api.Executor;
+import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.api.model.Query;
-import de.rwth.imi.flare.executor.BasicAuthRequestorConfig;
+import de.rwth.imi.flare.mapping.NaiveLookupMapping;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
+import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -11,6 +13,8 @@ import picocli.CommandLine.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -24,6 +28,7 @@ import de.rwth.imi.flare.executor.FlareExecutor;
 
 import javax.xml.transform.TransformerConfigurationException;
 
+//TODO: Change to properties.ini
 @Command(name = "flare-cli", mixinStandardHelpOptions = true,
         description = "Executes a given query")
 class CLI implements Callable<Integer> {
@@ -31,20 +36,57 @@ class CLI implements Callable<Integer> {
     @Parameters(index = "0", description = "The request to be executed by FLARE")
     private File requestFile;
 
-    @Parameters(index = "1", description = "Mapping file")
-    private File mappingFile;
-
-    @Parameters(index = "2", description = "FHIR-server base uri")
+    @Parameters(index = "1", description = "FHIR-server base uri")
     private String fhirBaseUri;
 
-    @Parameters(index = "3", description = "FHIR-server username")
-    private String userName;
+    @Option(names = {"-u", "--username"}, description = "FHIR-server username")
+    private String userName = null;
 
-    @Parameters(index = "4", description = "FHIR-server password")
-    private String password;
+    @Option(names = {"-p", "--password"}, description = "FHIR-server password")
+    private String password = null;
 
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
     private Parser algorithm = Parser.I2B2;
+
+    private final Executor executor;
+
+    private final FhirResourceMapper mapping;
+
+    private FlareParser parser;
+
+    public CLI() throws IOException {
+        Authenticator auth = null;
+        if(this.userName != null && this.password != null){
+            auth = new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(
+                            userName,
+                            password.toCharArray());
+                }
+            };
+        }
+
+        Authenticator finalAuth = auth;
+        executor = new FlareExecutor(new FhirRequestorConfig() {
+            @Override
+            public Authenticator getAuthentication() {
+                return finalAuth;
+            }
+
+            @Override
+            public URI getBaseURI() {
+                URI uri = null;
+                try {
+                    uri = new URI(fhirBaseUri);
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+                return uri;
+            }
+        });
+        mapping = new NaiveLookupMapping();
+    }
 
     @Override
     public Integer call() throws Exception {
@@ -55,16 +97,18 @@ class CLI implements Callable<Integer> {
         return 0;
     }
 
-    private int executeQuery(Query mappedQuery) throws URISyntaxException, ExecutionException, InterruptedException {
-        Executor executor = new FlareExecutor(new BasicAuthRequestorConfig(new URI(this.fhirBaseUri), this.userName, this.password));
-        CompletableFuture<Integer> integerCompletableFuture = executor.calculatePatientCount(mappedQuery);
+    private int executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
+        CompletableFuture<Integer> integerCompletableFuture = this.executor.calculatePatientCount(mappedQuery);
         return integerCompletableFuture.get();
     }
 
-    /**
-     * TODO: Implement Query mapping
-     */
+
     private Query mapQuery(Query parsedQuery) {
+        try {
+            parsedQuery = mapping.mapResources(parsedQuery).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
         return parsedQuery;
     }
 
@@ -75,11 +119,12 @@ class CLI implements Callable<Integer> {
     }
 
     private FlareParser getParser() throws TransformerConfigurationException {
+        FlareParser parser = null;
         switch (this.algorithm) {
-            case CSQ -> new ParserCSQ();
-            case I2B2 -> new ParserI2B2();
+            case CSQ -> parser = new ParserCSQ();
+            case I2B2 -> parser = new ParserI2B2();
         }
-        return null;
+        return parser;
     }
 
     enum Parser {
@@ -87,7 +132,7 @@ class CLI implements Callable<Integer> {
         CSQ
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         int exitCode = new CommandLine(new CLI()).execute(args);
         System.exit(exitCode);
     }
