@@ -32,7 +32,10 @@ public class Request implements Iterator<FlareResource> {
 
     public Request(URI fhirRequestUrl, Authenticator auth){
         this.nextPageUri = fhirRequestUrl;
-        this.client = HttpClient.newBuilder().authenticator(auth).build();
+        if(auth != null)
+            this.client = HttpClient.newBuilder().authenticator(auth).build();
+        else
+            this.client = HttpClient.newBuilder().build();
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
