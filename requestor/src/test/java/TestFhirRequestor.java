@@ -10,19 +10,11 @@ import java.net.URISyntaxException;
 public class TestFhirRequestor {
     @Test
     public void testRequest() throws URISyntaxException {
-        String t = "https://localhost:9443/fhir-server/api/v4/Observation?code=I_COVAS_COV_M030_LAB_PARA_Q040&value-quantity=lt40";
-        Request request = new Request(new URI(t), new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(
-                        "fhiruser",
-                        "change-password".toCharArray());
-            }
-        });
+        String t = "http://localhost:8080/fhir/Condition?code=http%3A%2F%2Ffhir.de%2FCodeSystem%2Fdimdi%2Ficd-10-gm%7CJ45.9";
+        Request request = new Request(new URI(t), null);
         while (request.hasNext()) {
             FlareResource res = request.next();
             System.out.println(res.getPatientId());
-
         }
     }
 }
