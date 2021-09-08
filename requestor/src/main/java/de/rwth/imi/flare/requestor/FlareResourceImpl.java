@@ -35,15 +35,15 @@ public class FlareResourceImpl implements FlareResource {
     }
 
     private String extractId(Specimen specimen) {
-        return specimen.getSubject().getIdentifier().getValue();
+        return specimen.getSubject().getReference().toString();
     }
 
     private String extractId(Encounter encounter) {
-        return encounter.getSubject().getIdentifier().getValue();
+        return encounter.getSubject().getReference().toString();
     }
 
     private String extractId(Condition condition) {
-        return condition.getSubject().getIdentifier().getValue();
+        return condition.getSubject().getReference().toString();
     }
 
     private String extractId(Patient patient) {
@@ -51,7 +51,7 @@ public class FlareResourceImpl implements FlareResource {
     }
 
     private String extractId(Observation observation) {
-        return observation.getSubject().getIdentifier().getValue();
+        return observation.getSubject().getReference().toString();
     }
 
     @Override
