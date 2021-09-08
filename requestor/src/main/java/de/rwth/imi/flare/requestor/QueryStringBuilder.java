@@ -46,16 +46,19 @@ public class QueryStringBuilder {
         MappingEntry mapping = this.criterion.getMapping();
         this.sb.append(mapping.getFhirResourceType()).append('?');
 
-        if(this.criterion.getValueFilter() != null){
-            if(mapping.getTermCodeSearchParameter() != null){
-                StringBuilder sbTmp = new StringBuilder();
-                this.sb.append(mapping.getTermCodeSearchParameter()).append("=");
-                sbTmp.append(this.criterion.getTermCode().getSystem())
-                        .append("|")
-                        .append(this.criterion.getTermCode().getCode());
-                this.sb.append(urlEncodeAndReset(sbTmp)).append(("&"));
-            }
+        if(mapping.getTermCodeSearchParameter() != null){
+            StringBuilder sbTmp = new StringBuilder();
+            this.sb.append(mapping.getTermCodeSearchParameter()).append("=");
+            sbTmp.append(this.criterion.getTermCode().getSystem())
+                    .append("|")
+                    .append(this.criterion.getTermCode().getCode());
+            this.sb.append(urlEncodeAndReset(sbTmp));
+        }
 
+        if(this.criterion.getValueFilter() != null){
+            if( mapping.getTermCodeSearchParameter()!= null){
+                this.sb.append(("&"));
+            }
             appendValueFilterByType();
         }
 
@@ -154,7 +157,7 @@ public class QueryStringBuilder {
         StringBuilder sbTmp = new StringBuilder();
         List<String> encodedCriteriaValueList = new LinkedList<>();
         for(TerminologyCode value : termCodes){
-            sbTmp.append(value.getCode()).append('|').append(value.getSystem());
+            sbTmp.append(value.getSystem()).append('|').append(value.getCode());
             encodedCriteriaValueList.add(urlEncodeAndReset(sbTmp));
         }
         return String.join(",", encodedCriteriaValueList);
@@ -165,11 +168,14 @@ public class QueryStringBuilder {
      * @return url encoded contents of the {@code strBuilder}
      */
     private static String urlEncodeAndReset(StringBuilder strBuilder){
-        String encoded = urlEncode(strBuilder.toString());
-        // Reset StringBuilder
+        return urlEncode(reset(strBuilder));
+    }
+
+    private static String reset(StringBuilder strBuilder){
+        String text = strBuilder.toString();
         strBuilder.setLength(0);
         strBuilder.trimToSize();
-        return encoded;
+        return text;
     }
 
     private static String urlEncode(String str) {
