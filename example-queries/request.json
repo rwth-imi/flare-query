@@ -1,0 +1,25 @@
+{
+  "queryMetadata": {
+    "version": "http://to_be_decided.com/draft-1/schema#",
+    "timestamp": "2021-02-08T13:21:57",
+    "queryId": "531ffdae-c500-4e8e-a978-69ddf4682e83"
+  },
+  "query": {
+    "version": "http://to_be_decided.com/draft-1/schema#",
+    "display": "",
+    "inclusionCriteria": [
+      [
+        {
+          "termCode": {
+            "code": "J45.9",
+            "system": "http://fhir.de/CodeSystem/dimdi/icd-10-gm",
+            "version": "v1",
+            "display": "Asthma"
+          }
+        }
+      ]
+    ],
+    "exclusionCriteria": [
+    ]
+  }
+}

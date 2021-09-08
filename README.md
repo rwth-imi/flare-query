@@ -5,3 +5,10 @@
 ## Goal
 the goal of this project is to provide a library that allows for execution of i2b2 queries on a FHIR-server
 
+## Build
+
+
+## Setting up the environment
+```docker compose -f docker-compose.yml up```
+
+```init-testdata.sh```
