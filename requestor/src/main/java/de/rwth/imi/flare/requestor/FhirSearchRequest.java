@@ -78,9 +78,9 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * Fetches the next page of search results and updates {@link #remainingPageResults} and {@link #nextPageUri}
      */
     private void fetchNextPage() throws IOException, InterruptedException, URISyntaxException {
-        HttpRequest req = HttpRequest.newBuilder().uri(nextPageUri)
-                .GET().build();
-        HttpResponse<String> response = executeAllRequestAttempts(req);
+        System.out.println("Executing next URI: " + nextPageUri.toString());
+        HttpRequest req = HttpRequest.newBuilder().uri(nextPageUri).GET().build();
+        HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
         if(response.statusCode()/ 100 != 2){
             throw new IOException("Received HTTP status code indicating request failure: " + response.statusCode());
         }
@@ -88,36 +88,6 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
         Bundle searchBundle = this.fhirParser.parseResource(Bundle.class, response.body());
         extractResourcesFromBundle(searchBundle);
         extractNextPageLink(searchBundle);
-    }
-
-    /**
-     * Executes the given request {@link #maxRequestAttempts} times or until it succeeds
-     * @param req request to be executed
-     * @return response given by the server
-     * @throws IOException if an I/O error occurs when sending or receiving more than {@link #maxRequestAttempts} times
-     * @throws InterruptedException if the operation is interrupted more than {@link #maxRequestAttempts} times
-     */
-    private HttpResponse<String> executeAllRequestAttempts(HttpRequest req) throws IOException, InterruptedException {
-        HttpResponse<String> response;
-        int connectionsAttempted = 0;
-        while(true){
-            try {
-                response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                break;
-            }
-            catch (InterruptedException | IOException e)
-            {
-                if(connectionsAttempted < this.maxRequestAttempts -1)
-                {
-                    System.err.println("Failed to retrieve a url, trying again");
-                    connectionsAttempted++;
-                }
-                else{
-                    throw e;
-                }
-            }
-        }
-        return response;
     }
 
     /**
