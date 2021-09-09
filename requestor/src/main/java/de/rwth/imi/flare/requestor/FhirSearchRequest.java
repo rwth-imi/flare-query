@@ -19,18 +19,17 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
- * Iterates over the paged results of a given FHIR query
+ * Iterates over the paged results of a given FHIR search request
  */
-public class Request implements Iterator<FlareResource> {
+public class FhirSearchRequest implements Iterator<FlareResource> {
     private URI nextPageUri;
     //Stack of results returned by last request
     private final Deque<FlareResourceImpl> remainingPageResults;
     private final HttpClient client;
     // Parses only JSON FHIR responses
     private final IParser fhirParser;
-    private final int maxRequestAttempts = 5;
 
-    public Request(URI fhirRequestUrl, Authenticator auth){
+    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth){
         this.nextPageUri = fhirRequestUrl;
         if(auth != null)
             this.client = HttpClient.newBuilder().authenticator(auth).build();

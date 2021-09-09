@@ -13,10 +13,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Builds a query string for a criterion, use {@link #constructQueryString(Criterion searchCriterion)}<br>
+ * Builds a FHIR search query string for a criterion, use {@link #constructQueryString(Criterion searchCriterion)}<br>
  * For each query construction creates a new Class instance
  */
-public class QueryStringBuilder {
+public class SearchQueryStringBuilder {
     private final Criterion criterion;
     private final StringBuilder sb;
 
@@ -26,7 +26,7 @@ public class QueryStringBuilder {
      * @return query String that can be appended onto a FHIR Server URI, starts with the resource (e.g. Patient?...)
      */
     public static String constructQueryString(Criterion searchCriterion){
-        QueryStringBuilder builder = new QueryStringBuilder(searchCriterion);
+        SearchQueryStringBuilder builder = new SearchQueryStringBuilder(searchCriterion);
         builder.constructQueryString();
         return builder.sb.toString();
     }
@@ -34,7 +34,7 @@ public class QueryStringBuilder {
     /**
      * Initializes queryBuilder context
      */
-    private QueryStringBuilder(Criterion searchCriterion){
+    private SearchQueryStringBuilder(Criterion searchCriterion){
         this.sb = new StringBuilder();
         this.criterion = searchCriterion;
     }
@@ -151,7 +151,7 @@ public class QueryStringBuilder {
     /**
      * Helper method, joins an array of terminology codes with commas
      * @param termCodes Codes to be joined
-     * @return String looking like this: "code|system,code2|system2"...
+     * @return String looking like this: "system|code,system2|code2"...
      */
     private String concatenateTerminologyCodes(TerminologyCode[] termCodes) {
         StringBuilder sbTmp = new StringBuilder();

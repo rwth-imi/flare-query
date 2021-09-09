@@ -35,19 +35,19 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        Request request = new Request(requestUrl, this.config.getAuthentication());
-        return createStream(request);
+        FhirSearchRequest fhirSearchRequest = new FhirSearchRequest(requestUrl, this.config.getAuthentication());
+        return createStream(fhirSearchRequest);
     }
 
     @NotNull
-    private Stream<FlareResource> createStream(Request request) {
-        Iterable<FlareResource> streamSource = () -> request;
+    private Stream<FlareResource> createStream(FhirSearchRequest fhirSearchRequest) {
+        Iterable<FlareResource> streamSource = () -> fhirSearchRequest;
         return StreamSupport.stream(streamSource.spliterator(), false);
     }
 
     private URI buildRequestUrl(Criterion search) throws URISyntaxException {
         // TODO: Find a way to properly concat URLs in Java
-        String searchQuery = QueryStringBuilder.constructQueryString(search);
+        String searchQuery = SearchQueryStringBuilder.constructQueryString(search);
         String searchUrl = config.getBaseURI().toString() + searchQuery;
         return new URI(searchUrl);
     }
