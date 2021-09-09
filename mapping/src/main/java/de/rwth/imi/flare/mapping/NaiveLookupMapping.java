@@ -40,12 +40,12 @@ public class NaiveLookupMapping implements FhirResourceMapper {
 
     @Override
     public CompletableFuture<Query> mapResources(Query query) {
-        this.lookupCriterionGroup(query.getExclusionCriteria());
-        this.lookupCriterionGroup(query.getInclusionCriteria());
+        this.mapCriterionGroup(query.getExclusionCriteria());
+        this.mapCriterionGroup(query.getInclusionCriteria());
         return CompletableFuture.completedFuture(query);
     }
 
-    private void lookupCriterionGroup(Criterion[][] exclusionCriteria) {
+    private void mapCriterionGroup(Criterion[][] exclusionCriteria) {
         if(exclusionCriteria == null){
             return;
         }
