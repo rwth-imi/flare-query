@@ -154,13 +154,12 @@ public class SearchQueryStringBuilder {
      * @return String looking like this: "system|code,system2|code2"...
      */
     private String concatenateTerminologyCodes(TerminologyCode[] termCodes) {
-        StringBuilder sbTmp = new StringBuilder();
-        List<String> encodedCriteriaValueList = new LinkedList<>();
+        List<String> encodedTerminologyList = new LinkedList<>();
         for(TerminologyCode value : termCodes){
-            sbTmp.append(value.getSystem()).append('|').append(value.getCode());
-            encodedCriteriaValueList.add(urlEncodeAndReset(sbTmp));
+            String encodedTerminologyString = urlEncode(value.getSystem()+'|'+value.getCode());
+            encodedTerminologyList.add(encodedTerminologyString);
         }
-        return String.join(",", encodedCriteriaValueList);
+        return String.join(",", encodedTerminologyList);
     }
 
     /**
