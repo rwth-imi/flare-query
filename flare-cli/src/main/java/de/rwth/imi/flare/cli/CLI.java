@@ -6,6 +6,7 @@ import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.mapping.NaiveLookupMapping;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -48,30 +49,23 @@ class CLI implements Callable<Integer> {
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
     private Parser algorithm = Parser.I2B2;
 
-    private final Executor executor;
+    private Executor executor;
 
     private final FhirResourceMapper mapping;
 
     private FlareParser parser;
 
     public CLI() throws IOException {
-        Authenticator auth = null;
-        if(this.userName != null && this.password != null){
-            auth = new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(
-                            userName,
-                            password.toCharArray());
-                }
-            };
-        }
+        createExecutor();
+        mapping = new NaiveLookupMapping();
+    }
 
-        Authenticator finalAuth = auth;
+    private void createExecutor() {
+        Authenticator auth = createAuthenticator();
         executor = new FlareExecutor(new FhirRequestorConfig() {
             @Override
             public Authenticator getAuthentication() {
-                return finalAuth;
+                return auth;
             }
 
             @Override
@@ -85,15 +79,59 @@ class CLI implements Callable<Integer> {
                 return uri;
             }
         });
-        mapping = new NaiveLookupMapping();
+    }
+
+    @Nullable
+    private Authenticator createAuthenticator() {
+        Authenticator auth = null;
+        if(this.userName != null && this.password != null){
+            auth = new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(
+                            userName,
+                            password.toCharArray());
+                }
+            };
+        }
+        return auth;
+    }
+
+    private FlareParser getParser() throws TransformerConfigurationException {
+        FlareParser parser = null;
+        switch (this.algorithm) {
+            case CSQ -> parser = new ParserCSQ();
+            case I2B2 -> parser = new ParserI2B2();
+        }
+        return parser;
+    }
+
+    enum Parser {
+        I2B2,
+        CSQ
     }
 
     @Override
-    public Integer call() throws Exception {
-        Query parsedQuery = parseQuery();
-        Query mappedQuery = mapQuery(parsedQuery);
-        int queryResult = executeQuery(mappedQuery);
-        System.out.println(queryResult);
+    public Integer call() {
+        try {
+
+            Query parsedQuery = parseQuery();
+            Query mappedQuery = mapQuery(parsedQuery);
+            int queryResult = executeQuery(mappedQuery);
+            System.out.println(queryResult);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+            return -2;
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            return -3;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return -4;
+        }
         return 0;
     }
 
@@ -116,20 +154,6 @@ class CLI implements Callable<Integer> {
         String query = Files.readString(requestFile.toPath());
         FlareParser parser = getParser();
         return parser.parse(query);
-    }
-
-    private FlareParser getParser() throws TransformerConfigurationException {
-        FlareParser parser = null;
-        switch (this.algorithm) {
-            case CSQ -> parser = new ParserCSQ();
-            case I2B2 -> parser = new ParserI2B2();
-        }
-        return parser;
-    }
-
-    enum Parser {
-        I2B2,
-        CSQ
     }
 
     public static void main(String[] args) throws IOException {
