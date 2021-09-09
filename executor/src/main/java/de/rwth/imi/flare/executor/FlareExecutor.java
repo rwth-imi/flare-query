@@ -55,8 +55,11 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         if(query.getExclusionCriteria() == null){
             return CompletableFuture.completedFuture(new HashSet<>());
         }
+        // Async fetch all ids per group
         List<CompletableFuture<Set<String>>> excludedIdsByGroup =
                 Arrays.stream(query.getExclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
+
+        // Wait for async exec to finish
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
                 .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
 

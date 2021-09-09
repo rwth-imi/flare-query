@@ -8,6 +8,7 @@ public interface FhirRequestorConfig {
 
     /**
      *
+     * TODO: Figure out a way to set Header based authentication e.g. a consumer that modifies each request prior to exec
      * @return Authenticator that allows the Requestor to search for Resources on the server
      */
     Authenticator getAuthentication();

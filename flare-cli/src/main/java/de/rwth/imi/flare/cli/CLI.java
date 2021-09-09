@@ -40,10 +40,10 @@ class CLI implements Callable<Integer> {
     @Parameters(index = "1", description = "FHIR-server base uri")
     private String fhirBaseUri;
 
-    @Option(names = {"-u", "--username"}, description = "FHIR-server username")
+    @Option(names = {"-u", "--username"}, description = "FHIR-server username\n if either username or password are missing no authentication will be done")
     private String userName = null;
 
-    @Option(names = {"-p", "--password"}, description = "FHIR-server password")
+    @Option(names = {"-p", "--password"}, description = "FHIR-server password\n if either username or password are missing no authentication will be done")
     private String password = null;
 
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
@@ -84,6 +84,7 @@ class CLI implements Callable<Integer> {
     @Nullable
     private Authenticator createAuthenticator() {
         Authenticator auth = null;
+        // TODO: Log warning if only one parameter is provided
         if(this.userName != null && this.password != null){
             auth = new Authenticator() {
                 @Override

@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Query
 {
+    // TODO: document what each layer of the array means
     @XmlJavaTypeAdapter(CriteriaGroupAdapter.class)
     private Criterion[][] inclusionCriteria;
     @XmlJavaTypeAdapter(CriteriaGroupAdapter.class)
