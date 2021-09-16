@@ -11,10 +11,7 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class NaiveLookupMapping implements FhirResourceMapper {
@@ -61,6 +58,10 @@ public class NaiveLookupMapping implements FhirResourceMapper {
             return null;
         }
 
-        return this.lookupTable.get(termCode);
+        SourceMappingEntry mappingEntry = this.lookupTable.get(termCode);
+        if(mappingEntry == null){
+            throw new NoSuchElementException("No mapping entry for: " + termCode);
+        }
+        return mappingEntry;
     }
 }
