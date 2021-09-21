@@ -84,15 +84,7 @@ public class SearchQueryStringBuilder {
      * corresponding to the {@link FilterType} of the {@link ValueFilter filter}
      */
     private void appendValueFilterByType() {
-        MappingEntry mapping = this.criterion.getMapping();
-        StringBuilder sbTmp = new StringBuilder();
 
-        if(mapping.getTermCodeSearchParameter() != null){
-            TerminologyCode termCode = this.criterion.getTermCode();
-            sb.append(mapping.getTermCodeSearchParameter()).append('=');
-            sbTmp.append(termCode.getSystem()).append('|').append(termCode.getCode());
-            sb.append(urlEncodeAndReset(sbTmp));
-        }
         FilterType filter = this.criterion.getValueFilter().getType();
         if (filter == FilterType.QUANTITY_COMPARATOR){
             appendQuantityComparatorFilterString();
