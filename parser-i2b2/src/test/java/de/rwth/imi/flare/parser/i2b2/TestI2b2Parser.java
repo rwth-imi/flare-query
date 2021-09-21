@@ -32,17 +32,17 @@ class TestI2b2Parser {
 
         criterion1 = new Criterion(
                 new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Lymphozyten\\", "i2b2_sim", "Lymphozyten"),
-                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.LT, 40.0, createUnit("%"), null, null), null);
+                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 40.0, createUnit("%"), null, null), null);
         Criterion criterion2 = new Criterion(
                 new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Lymphozyten_absolut\\", "i2b2_sim", "Lymphozyten - absolut"),
-                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.LT, 3.0, createUnit("/nl"), null, null), null);
+                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 3.0, createUnit("/nl"), null, null), null);
         Criterion[] criteriaGroup2 = new Criterion[]{criterion1, criterion2};
 
 
         criterion1 = new Criterion(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Bilirubin\\", "i2b2_sim", "Bilirubin (gesamt)"),
-                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.LT, 8.0, createUnit("mg/dl"), null, null), null);
+                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 8.0, createUnit("mg/dl"), null, null), null);
         criterion2 = new Criterion(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Bilirubin_direkt\\", "i2b2_sim", "Bilirubin (direkt)"),
-                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.LT, 6.0, createUnit("mg/dl"), null, null), null);
+                new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 6.0, createUnit("mg/dl"), null, null), null);
         Criterion[] criteriaGroup3 = new Criterion[]{criterion1, criterion2};
 
         Query expectedResult = new Query();

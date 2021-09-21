@@ -10,10 +10,10 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlEnum()
 public enum Comparator
 {
-    GT,
-    GE,
-    LT,
-    LE,
-    EQ,
-    NE
+    gt,
+    ge,
+    lt,
+    le,
+    eq,
+    ne
 }

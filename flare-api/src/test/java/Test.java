@@ -56,7 +56,7 @@ public class Test
     public static ValueFilter createFilter(){
         ValueFilter filter = new ValueFilter();
         filter.setType(FilterType.QUANTITY_COMPARATOR);
-        filter.setComparator(Comparator.EQ);
+        filter.setComparator(Comparator.eq);
         filter.setValue((double)getAndInc());
         return filter;
     }
