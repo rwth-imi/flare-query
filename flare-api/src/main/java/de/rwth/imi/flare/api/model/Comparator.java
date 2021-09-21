@@ -7,7 +7,7 @@ import jakarta.xml.bind.annotation.XmlType;
  * Created by Lukas Szimtenings on 5/28/2021.
  */
 @XmlType(name = "ComparatorType")
-@XmlEnum
+@XmlEnum()
 public enum Comparator
 {
     GT,

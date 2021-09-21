@@ -34,7 +34,7 @@
                                     <xsl:choose>
                                         <!-- if a between operator is used, the boundaries are merged into a single tag -->
                                         <xsl:when test="constrain_by_value/value_operator/text()='between'">
-                                            <filter>QUANTITY_RANGE</filter>
+                                            <type>QUANTITY_RANGE</type>
 
                                             <xsl:param name="values_text"
                                                        select="constrain_by_value/value_constraint/text()"/>
@@ -66,7 +66,7 @@
 
                                         <!-- all other binary value operators -->
                                         <xsl:otherwise>
-                                            <filter>QUANTITY_COMPARATOR</filter>
+                                            <type>QUANTITY_COMPARATOR</type>
                                             <value>
                                                 <xsl:value-of select="constrain_by_value/value_constraint"/>
                                             </value>

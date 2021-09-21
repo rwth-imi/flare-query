@@ -93,7 +93,7 @@ public class SearchQueryStringBuilder {
             sbTmp.append(termCode.getSystem()).append('|').append(termCode.getCode());
             sb.append(urlEncodeAndReset(sbTmp));
         }
-        FilterType filter = this.criterion.getValueFilter().getFilter();
+        FilterType filter = this.criterion.getValueFilter().getType();
         if (filter == FilterType.QUANTITY_COMPARATOR){
             appendQuantityComparatorFilterString();
         }

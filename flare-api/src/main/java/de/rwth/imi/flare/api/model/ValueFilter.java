@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ValueFilter
 {
-    private FilterType filter;
+    private FilterType type;
     private TerminologyCode[] selectedConcepts;
     @XmlJavaTypeAdapter(CaseInsensitiveComparatorAdapter.class)
     private Comparator comparator;
