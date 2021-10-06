@@ -24,5 +24,5 @@ mvn clean install -DskipTests
 A CLI example project can be found under flare-cli, execution from Flare project root goes like this:
 
 ```
-java -jar flare-cli/target/flare-cli-1.0-SNAPSHOT-jar-with-dependencies.jar "example-queries\immunization-example.json" "http://localhost:8080/fhir/" -f CSQ
+java -jar flare-cli/target/flare-cli-1.0-SNAPSHOT-jar-with-dependencies.jar "example-queries/immunization-example.json" "http://localhost:8080/fhir/" -f CSQ
 ```
