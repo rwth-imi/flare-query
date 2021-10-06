@@ -112,3 +112,11 @@ buildNumber.properties
 hs_err_pid*
 
 /.gradle/
+.classpath
+.factorypath
+.project
+.settings
+.oh-my-zsh
+.vscode
+.zshrc
+
