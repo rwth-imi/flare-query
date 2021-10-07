@@ -47,7 +47,7 @@ class CLI implements Callable<Integer> {
     private String password = null;
 
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
-    private Parser algorithm = Parser.I2B2;
+    private QueryFormat algorithm = QueryFormat.I2B2;
 
     private Executor executor;
 
@@ -105,11 +105,6 @@ class CLI implements Callable<Integer> {
             case I2B2 -> parser = new ParserI2B2();
         }
         return parser;
-    }
-
-    enum Parser {
-        I2B2,
-        CSQ
     }
 
     @Override
