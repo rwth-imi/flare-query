@@ -24,7 +24,7 @@ public class FlareAlgorithmConfiguration {
     }
 
     @Bean
-    public Executor executor(Optional<Authenticator> auth, @Value("flare.fhir.server") String fhirBaseUri){
+    public Executor executor(Optional<Authenticator> auth, @Value("${flare.fhir.server}") String fhirBaseUri){
         Authenticator authenticator = auth.orElse(null);
         return new FlareExecutor(new FhirRequestorConfig() {
             @Override
@@ -47,8 +47,8 @@ public class FlareAlgorithmConfiguration {
 
     @Bean
     public Optional<Authenticator> createAuthenticator(
-            @Value("flare.fhir.user") String userName,
-            @Value("flare.fhir.password") String password) {
+            @Value("${flare.fhir.user}") String userName,
+            @Value("${flare.fhir.password}") String password) {
         if(userName != "" && password != ""){
             Authenticator auth = new Authenticator() {
                 @Override
