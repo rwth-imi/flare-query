@@ -22,7 +22,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>de.rwth.imi.flare.cli.CLI</mainClass>
+                            <mainClass> </mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
