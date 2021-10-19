@@ -22,16 +22,42 @@
 		<maven.compiler.target>16</maven.compiler.target>
 	</properties>
 	<dependencies>
+		<!-- Flare dependencies -->
 		<dependency>
 			<groupId>de.rwth.imi.flare</groupId>
 			<artifactId>flare-api</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
+			<groupId>de.rwth.imi.flare</groupId>
+			<artifactId>executor</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>de.rwth.imi.flare</groupId>
+			<artifactId>mapping</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>de.rwth.imi.flare</groupId>
+			<artifactId>parser-csq</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>de.rwth.imi.flare</groupId>
+			<artifactId>parser-i2b2</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Spring boot dependencies -->
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
@@ -43,18 +69,11 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>de.rwth.imi.flare</groupId>
-			<artifactId>executor</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>compile</scope>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.5.2</version>
 		</dependency>
-        <dependency>
-            <groupId>de.rwth.imi.flare</groupId>
-            <artifactId>mapping</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
+	</dependencies>
 
 	<build>
 		<plugins>
