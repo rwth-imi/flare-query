@@ -20,6 +20,7 @@
 		<java.version>16</java.version>
 		<maven.compiler.source>16</maven.compiler.source>
 		<maven.compiler.target>16</maven.compiler.target>
+		<start-class>de.rwth.imi.flare.server.ServerApplication</start-class>
 	</properties>
 	<dependencies>
 		<!-- Flare dependencies -->
