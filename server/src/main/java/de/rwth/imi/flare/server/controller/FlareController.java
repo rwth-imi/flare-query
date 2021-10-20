@@ -25,7 +25,6 @@ public class FlareController {
      * @param format Encoding, either I2B2 or CSQ
      */
     @PostMapping(path = "/execute")
-    //return "New Endpoint";
     public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         int queryResponse = this.queryEval.evaluate(query, format);
         return ResponseEntity.ok().body(String.valueOf(queryResponse));
