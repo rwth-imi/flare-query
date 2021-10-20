@@ -9,7 +9,7 @@ the goal of this project is to provide a library that allows for execution of fe
 ## Setting up the test-environment
 Set up FHIR test server
 
-```docker compose -f docker-compose.yml up```
+```docker-compose -f docker-compose.yml up```
 
 Load example data into FHIR server
 
