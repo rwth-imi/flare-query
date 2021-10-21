@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -26,7 +27,12 @@ public class FlareController {
      */
     @PostMapping(path = "/execute")
     public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
-        int queryResponse = this.queryEval.evaluate(query, format);
-        return ResponseEntity.ok().body(String.valueOf(queryResponse));
+        try {
+            int queryResponse = this.queryEval.evaluate(query, format);
+            return ResponseEntity.ok().body(String.valueOf(queryResponse));
+        }
+        catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
