@@ -1,6 +1,6 @@
 # Example request:
 ````bash
-curl --location --request POST 'localhost:80/query/execute' \
+curl --location --request POST 'http://localhost:8080/server-0.0.1-SNAPSHOT/query/execute/' \
 --header 'Accept-Encoding: CSQ' \
 --header 'Content-Type: application/json' \
 --data-raw '{
