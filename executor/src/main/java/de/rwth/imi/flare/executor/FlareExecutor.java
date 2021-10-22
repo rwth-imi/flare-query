@@ -30,7 +30,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     public FlareExecutor(FhirRequestorConfig config){
         this.config = config;
         this.futureExecutor = new ThreadPoolExecutor(4, 16, 10,
-                TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+                TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
 
     @Override
