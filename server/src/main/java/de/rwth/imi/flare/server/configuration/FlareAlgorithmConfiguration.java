@@ -3,7 +3,7 @@ package de.rwth.imi.flare.server.configuration;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.executor.FlareExecutor;
-import de.rwth.imi.flare.mapping.NaiveLookupMapping;
+import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

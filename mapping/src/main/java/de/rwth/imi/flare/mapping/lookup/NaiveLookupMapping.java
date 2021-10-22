@@ -1,4 +1,4 @@
-package de.rwth.imi.flare.mapping;
+package de.rwth.imi.flare.mapping.lookup;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -8,6 +8,7 @@ import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.api.model.TerminologyCode;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
+import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,14 +17,15 @@ import java.util.concurrent.CompletableFuture;
 
 public class NaiveLookupMapping implements FhirResourceMapper {
     Map<TerminologyCode, SourceMappingEntry> lookupTable;
+    QueryExpander queryExpander;
 
     public NaiveLookupMapping() throws IOException {
         InputStream lookupTableStream = this.getClass().getClassLoader().getResourceAsStream("codex-term-code-mapping.json");
         initLookupTable(lookupTableStream);
+        queryExpander = new QueryExpander();
     }
 
     public NaiveLookupMapping(InputStream lookupTable) throws IOException {
-        //TODO: Maybe validate if possible
         initLookupTable(lookupTable);
     }
 
@@ -37,6 +39,7 @@ public class NaiveLookupMapping implements FhirResourceMapper {
 
     @Override
     public CompletableFuture<Query> mapResources(Query query) {
+        queryExpander.expandQuery(query);
         this.mapCriterionGroup(query.getExclusionCriteria());
         this.mapCriterionGroup(query.getInclusionCriteria());
         return CompletableFuture.completedFuture(query);
