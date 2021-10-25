@@ -40,11 +40,7 @@ public class QueryExpander {
 
         // Consumer collecting all leaves of the expansion tree
         List<ExpansionTreeNode> expansionTreeLeaves = new ArrayList<>();
-        Consumer<ExpansionTreeNode> leafCollectorConsumer = expansionTreeNode -> {
-            if(expansionTreeNode.getChildren().isEmpty()) {
-                expansionTreeLeaves.add(expansionTreeNode);
-            }
-        };
+        Consumer<ExpansionTreeNode> leafCollectorConsumer = expansionTreeLeaves::add;
 
         // Collect all leaves
         searchRoot.bfs(leafCollectorConsumer);
