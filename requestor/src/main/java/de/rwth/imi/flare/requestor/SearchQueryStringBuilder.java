@@ -72,14 +72,11 @@ public class SearchQueryStringBuilder {
      */
     private void appendFixedCriteriaString() {
         for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()){
-            String curateCodeType = "code";
-            if(criterion.getType() == curateCodeType){
+            if(criterion.getType().equals("code")){
                 for (TerminologyCode valueMember : criterion.getValue()){
                     valueMember.setSystem("");
                 }
             }
-
-
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
@@ -166,8 +163,15 @@ public class SearchQueryStringBuilder {
      */
     private String concatenateTerminologyCodes(TerminologyCode[] termCodes) {
         List<String> encodedTerminologyList = new LinkedList<>();
+        String pipe = "|";
         for(TerminologyCode value : termCodes){
-            String encodedTerminologyString = urlEncode(value.getSystem()+'|'+value.getCode());
+            if(value.getSystem().equals("")){
+                //removes pipe
+                //pipe is not needed if there is no system to be specified in the FHIR URL
+                pipe = "";
+            }
+
+            String encodedTerminologyString = urlEncode(value.getSystem() + pipe + value.getCode());
             encodedTerminologyList.add(encodedTerminologyString);
         }
         return String.join(",", encodedTerminologyList);
