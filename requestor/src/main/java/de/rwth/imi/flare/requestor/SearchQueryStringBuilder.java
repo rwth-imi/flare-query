@@ -72,6 +72,14 @@ public class SearchQueryStringBuilder {
      */
     private void appendFixedCriteriaString() {
         for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()){
+            String curateCodeType = "code";
+            if(criterion.getType() == curateCodeType){
+                for (TerminologyCode valueMember : criterion.getValue()){
+                    valueMember.setSystem("");
+                }
+            }
+
+
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
@@ -147,7 +155,8 @@ public class SearchQueryStringBuilder {
         String system = filterUnit.getSystem();
         system = system==null?"":system;
         String code = filterUnit.getCode();
-        sbTemp.append(system).append("|").append(code);
+        //sbTemp.append(system).append("|").append(code);
+        sbTemp.append(system).append(code);
     }
 
     /**

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Controller
@@ -31,10 +32,17 @@ public class FlareController {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    @PostMapping(path = "/executeQuery")
+    @PostMapping(path = "/query/execute")
     //return "New Endpoint";
     public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         int queryResponse = this.queryEval.evaluate(query, format);
         return ResponseEntity.ok().body(String.valueOf(queryResponse));
     }
+
+    @PostMapping(path = "/query/translate")
+    public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) {
+        //List<List<List<String>>> queryResponse
+        return null;
+    }
+
 }
