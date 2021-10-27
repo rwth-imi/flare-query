@@ -11229,7 +11229,7 @@
                         "https://www.netzwerk-universitaetsmedizin.de/fhir/StructureDefinition/Specimen"
                     ]
                 },
-                "status": "availible",
+                "status": "available",
       "subject": {
         "reference": "Patient/5f58baa651c0c48667912fc2b6580b4b"
       },
