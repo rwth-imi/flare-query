@@ -165,13 +165,13 @@ public class SearchQueryStringBuilder {
         List<String> encodedTerminologyList = new LinkedList<>();
         String pipe = "|";
         for(TerminologyCode value : termCodes){
+            String encodedTerminologyString;
             if(value.getSystem().equals("")){
-                //removes pipe
                 //pipe is not needed if there is no system to be specified in the FHIR URL
-                pipe = "";
+                encodedTerminologyString = urlEncode(value.getCode());
+            } else {
+                encodedTerminologyString = urlEncode(value.getSystem() + pipe + value.getCode());
             }
-
-            String encodedTerminologyString = urlEncode(value.getSystem() + pipe + value.getCode());
             encodedTerminologyList.add(encodedTerminologyString);
         }
         return String.join(",", encodedTerminologyList);
