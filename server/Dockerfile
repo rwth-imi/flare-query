@@ -10,5 +10,5 @@ RUN mvn -f /home/app/server/pom.xml clean package -DskipTests
 # Package stage
 #
 FROM tomcat:9.0.54-jdk16-openjdk AS run
-COPY --from=build /home/app/server/target/server-0.0.1-SNAPSHOT.war /usr/local/tomcat/webapps/
+COPY --from=build /home/app/server/target/server-*.war /usr/local/tomcat/webapps/
 EXPOSE 8080
