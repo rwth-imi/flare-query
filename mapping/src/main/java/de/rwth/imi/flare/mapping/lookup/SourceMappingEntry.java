@@ -1,4 +1,4 @@
-package de.rwth.imi.flare.mapping;
+package de.rwth.imi.flare.mapping.lookup;
 
 import de.rwth.imi.flare.api.model.TerminologyCode;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;

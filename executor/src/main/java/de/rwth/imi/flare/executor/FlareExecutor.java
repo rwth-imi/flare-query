@@ -30,7 +30,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     public FlareExecutor(FhirRequestorConfig config){
         this.config = config;
         this.futureExecutor = new ThreadPoolExecutor(4, 16, 10,
-                TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+                TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
 
     @Override
@@ -51,27 +51,27 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Build intersection of all group sets
      */
-    private CompletableFuture<Set<String>> getExcludedIds(Query query) {
-        if(query.getExclusionCriteria() == null){
+    private CompletableFuture<Set<String>> getIncludedIds(Query query) {
+        if(query.getInclusionCriteria() == null){
             return CompletableFuture.completedFuture(new HashSet<>());
         }
         // Async fetch all ids per group
-        List<CompletableFuture<Set<String>>> excludedIdsByGroup =
-                Arrays.stream(query.getExclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
+        List<CompletableFuture<Set<String>>> includedIdsByGroup =
+                Arrays.stream(query.getInclusionCriteria()).map(this::getIdsFittingInclusionGroup).toList();
 
         // Wait for async exec to finish
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
-                .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
+                .allOf(includedIdsByGroup.toArray(new CompletableFuture[0]));
 
         return groupExecutionFinished.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> excludedGroupsIterator = excludedIdsByGroup.iterator();
+            Iterator<CompletableFuture<Set<String>>> includedGroupsIterator = includedIdsByGroup.iterator();
             try {
                 Set<String> evaluableCriterion = null;
-                if(excludedGroupsIterator.hasNext()){
-                    evaluableCriterion = excludedGroupsIterator.next().get();
+                if(includedGroupsIterator.hasNext()){
+                    evaluableCriterion = includedGroupsIterator.next().get();
                 }
-                while (excludedGroupsIterator.hasNext()) {
-                    evaluableCriterion.retainAll(excludedGroupsIterator.next().get());
+                while (includedGroupsIterator.hasNext()) {
+                    evaluableCriterion.retainAll(includedGroupsIterator.next().get());
                 }
                 return evaluableCriterion;
             } catch (InterruptedException | ExecutionException e) {
@@ -83,7 +83,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Union all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(Criterion[] group) {
+    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(Criterion[] group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = Arrays.stream(group)
                 .map(this::getPatientIdsFittingCriterion).toList();
 
@@ -108,20 +108,20 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Build union of all group sets
      */
-    private CompletableFuture<Set<String>> getIncludedIds(Query query) {
-        if(query.getInclusionCriteria() == null){
+    private CompletableFuture<Set<String>> getExcludedIds(Query query) {
+        if(query.getExclusionCriteria() == null){
             return CompletableFuture.completedFuture(new HashSet<>());
         }
 
         // Execute all group queries and wait for execution to finish
-        List<CompletableFuture<Set<String>>> includedIdsByGroup =
-                Arrays.stream(query.getInclusionCriteria()).map(this::getIdsFittingInclusionGroup).toList();
+        List<CompletableFuture<Set<String>>> excludedIdsByGroup =
+                Arrays.stream(query.getExclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
         CompletableFuture<Void> allPatientIdsReceived = CompletableFuture
-                .allOf(includedIdsByGroup.toArray(new CompletableFuture[0]));
+                .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
 
         // Build union of all groups
         return allPatientIdsReceived.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> groupIdsIterator = includedIdsByGroup.iterator();
+            Iterator<CompletableFuture<Set<String>>> groupIdsIterator = excludedIdsByGroup.iterator();
             Set<String> ret = new HashSet<>();
             while (groupIdsIterator.hasNext()) {
                 try {
@@ -137,7 +137,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Intersect all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(Criterion[] group) {
+    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(Criterion[] group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
         for (Criterion criterion : group) {
             CompletableFuture<Set<String>> evaluableCriterion = getPatientIdsFittingCriterion(criterion);

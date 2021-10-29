@@ -20,5 +20,12 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: fhir
 
+  flare:
+    build:
+      dockerfile: server/Dockerfile
+      context: .
+    ports:
+      - "8081:8080"
+
 volumes:
   blaze-data:

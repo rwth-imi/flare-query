@@ -3,7 +3,7 @@ package de.rwth.imi.flare.cli;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.api.model.Query;
-import de.rwth.imi.flare.mapping.NaiveLookupMapping;
+import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import org.jetbrains.annotations.Nullable;
