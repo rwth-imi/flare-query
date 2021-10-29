@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
@@ -25,7 +26,8 @@ public class FlareController {
      * @param query Query from body
      * @param format Encoding, either I2B2 or CSQ
      */
-    @PostMapping(path = "/execute")
+
+    @PostMapping(path = "/query/execute")
     public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         try {
             int queryResponse = this.queryEval.evaluate(query, format);
@@ -35,4 +37,11 @@ public class FlareController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping(path = "/query/translate")
+    public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) {
+        //List<List<List<String>>> queryResponse
+        return null;
+    }
+
 }

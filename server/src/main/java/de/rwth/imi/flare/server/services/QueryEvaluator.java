@@ -66,12 +66,13 @@ public class QueryEvaluator {
     }
 
     private Query mapQuery(Query parsedQuery) {
+        Query mappedQuery = null;
         try {
-            parsedQuery = this.mapper.mapResources(parsedQuery).get();
+            mappedQuery = this.mapper.mapResources(parsedQuery).get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-        return parsedQuery;
+        return mappedQuery;
     }
 
     private int executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {

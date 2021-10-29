@@ -72,6 +72,11 @@ public class SearchQueryStringBuilder {
      */
     private void appendFixedCriteriaString() {
         for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()){
+            if(criterion.getType().equals("code")){
+                for (TerminologyCode valueMember : criterion.getValue()){
+                    valueMember.setSystem("");
+                }
+            }
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
@@ -147,7 +152,8 @@ public class SearchQueryStringBuilder {
         String system = filterUnit.getSystem();
         system = system==null?"":system;
         String code = filterUnit.getCode();
-        sbTemp.append(system).append("|").append(code);
+        //sbTemp.append(system).append("|").append(code);
+        sbTemp.append(system).append(code);
     }
 
     /**
@@ -157,8 +163,15 @@ public class SearchQueryStringBuilder {
      */
     private String concatenateTerminologyCodes(TerminologyCode[] termCodes) {
         List<String> encodedTerminologyList = new LinkedList<>();
+        String pipe = "|";
         for(TerminologyCode value : termCodes){
-            String encodedTerminologyString = urlEncode(value.getSystem()+'|'+value.getCode());
+            String encodedTerminologyString;
+            if(value.getSystem().equals("")){
+                //pipe is not needed if there is no system to be specified in the FHIR URL
+                encodedTerminologyString = urlEncode(value.getCode());
+            } else {
+                encodedTerminologyString = urlEncode(value.getSystem() + pipe + value.getCode());
+            }
             encodedTerminologyList.add(encodedTerminologyString);
         }
         return String.join(",", encodedTerminologyList);
