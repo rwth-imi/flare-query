@@ -2,9 +2,10 @@
 # Build stage
 #
 FROM maven:3.8.3-openjdk-16 AS build
+ARG mavenOptions
 COPY / /home/app/
-RUN mvn -f /home/app/pom.xml clean install -DskipTests
-RUN mvn -f /home/app/server/pom.xml clean package -DskipTests
+RUN mvn ${mavenOptions} -f /home/app/pom.xml clean install -DskipTests
+RUN mvn ${mavenOptions} -f /home/app/server/pom.xml clean package -DskipTests
 
 #
 # Package stage
