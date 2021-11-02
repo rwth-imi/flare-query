@@ -1,4 +1,4 @@
-name: Build, Test and Publish Maven Package
+name: Build and Test Maven Package
 
 on:
   push:
@@ -10,6 +10,7 @@ on:
     - main
 
 jobs:
+
   build:
 
     runs-on: ubuntu-latest
