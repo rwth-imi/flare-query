@@ -39,11 +39,28 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
         return createStream(fhirSearchRequest);
     }
 
+    /**
+     * Override of execute. Returns URI as String instead of FlareResource stream.
+     * @param searchCriterion single criterion
+     * @return criterion parsed to FHIR URL String
+     */
+    @Override
+    public String translateCriterion(Criterion searchCriterion) {
+        URI requestUrl;
+        try {
+            requestUrl = buildRequestUrl(searchCriterion);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        return requestUrl.toString();
+    }
+
     @NotNull
     private Stream<FlareResource> createStream(FhirSearchRequest fhirSearchRequest) {
         Iterable<FlareResource> streamSource = () -> fhirSearchRequest;
         return StreamSupport.stream(streamSource.spliterator(), false);
     }
+
 
     private URI buildRequestUrl(Criterion search) throws URISyntaxException {
         // TODO: Find a way to properly concat URLs in Java

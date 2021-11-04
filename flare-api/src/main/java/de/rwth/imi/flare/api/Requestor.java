@@ -15,4 +15,6 @@ public interface Requestor
      * @return A stream of Resources matching the {@code searchCriterion}
      */
     Stream<FlareResource> execute(Criterion searchCriterion);
+
+    String translateCriterion(Criterion searchCriterion);
 }

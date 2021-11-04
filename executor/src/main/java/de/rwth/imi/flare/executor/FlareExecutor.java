@@ -6,10 +6,10 @@ import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
 
 /**
  * Asynchronously executes a complete Query by querying the single criteria
@@ -46,6 +46,59 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         }, this.futureExecutor);
 
         return resultingIds.thenApply(Set::size);
+    }
+
+    /**
+     * Separetes a mappedQuery into inclusion and exclusion criterions. Recombines them after parsing into StructuredQuery format.
+     * @param mappedQuery
+     * @return StructuredQuery
+     */
+    @Override
+    public List<List<List<String>>> translateMappedQuery(Query mappedQuery) {
+        //create new FhirRequestor by provided config
+        FhirRequestor translator = new FhirRequestor(config);
+        //split criterions into inculsion and exclusion
+        Criterion[][] inclusionCriteria = mappedQuery.getInclusionCriteria();
+        Criterion[][] exclusionCriteria = mappedQuery.getExclusionCriteria();
+        //translate criterions
+        List<List<String>> translatedInclusionCriteria = iterateCriterion(translator, inclusionCriteria);
+        List<List<String>> translatedExclusionCriteria = iterateCriterion(translator, exclusionCriteria);
+        //create new ArrayList and recombine inclusion and exclusion criterions into StructuredQuery format
+        List<List<List<String>>> combinedCriteria = new ArrayList<>();
+        combinedCriteria.add(translatedInclusionCriteria);
+        combinedCriteria.add(translatedExclusionCriteria);
+
+        return combinedCriteria;
+    }
+
+    /**
+     * Iterates over a criterion (inclusion or exclusion) and returns it as a translated component of the StructuredQuery format.
+     * @param translator FhirRequestor specified earlier
+     * @param criterion multiple criterions consisting of termcodes and valuefilters
+     * @return String list of FHIR Search Strings containing termcodes and nested valuefilters
+     */
+    private List<List<String>> iterateCriterion(FhirRequestor translator, Criterion[][] criterion){
+        //length of termCodes and valueFilter arrays in criterion for iteration
+        int numTermCodes = criterion.length;
+        int numValueFilter;
+        //return array
+        List<List<String>> termCodeList = new ArrayList<>();
+        //loop TermCodes
+        for (int i=0; i<numTermCodes; i++){
+            //get number of ValueFilters for current criterion
+            numValueFilter = criterion[i].length;
+            //temporal list of ValueFilters
+            List<String> valueFilterList = new ArrayList<>();
+            //loop ValueFilters
+            for (int j=0; j < numValueFilter; j++){
+                //translate current ValueFilter and add to list
+                valueFilterList.add(translator.translateCriterion(criterion[i][j]));
+            }
+            //add ValueFilter List to termCodeList
+            //creates new ArrayList to copy value
+            termCodeList.add(new ArrayList<>(valueFilterList));
+        }
+        return termCodeList;
     }
 
     /**

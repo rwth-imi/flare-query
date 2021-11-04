@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +28,7 @@ public class FlareController {
      * @param format Encoding, either I2B2 or CSQ
      */
 
-    @PostMapping(path = "/query/execute")
+    @PostMapping(path = "/execute")
     public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         try {
             int queryResponse = this.queryEval.evaluate(query, format);
@@ -38,10 +39,23 @@ public class FlareController {
         }
     }
 
-    @PostMapping(path = "/query/translate")
+    @PostMapping(path = "/translate")
     public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) {
-        //List<List<List<String>>> queryResponse
-        return null;
+        try{
+            List<List<List<String>>> translatedQuery = this.queryEval.translate(query, format);
+            return ResponseEntity.ok().body(translatedQuery);
+        }
+        catch(NoSuchElementException e){
+            //return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.ok().body(new ArrayList<>());
     }
-
 }

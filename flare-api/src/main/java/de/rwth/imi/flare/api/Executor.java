@@ -2,6 +2,7 @@ package de.rwth.imi.flare.api;
 
 import de.rwth.imi.flare.api.model.Query;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -15,4 +16,6 @@ public interface Executor
      * @return A CompletableFuture that when executed yields the number of patients matching the given query
      */
     CompletableFuture<Integer> calculatePatientCount(Query mappedQuery);
+
+    List<List<List<String>>> translateMappedQuery(Query mappedQuery);
 }

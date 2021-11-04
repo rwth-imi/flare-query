@@ -12,7 +12,7 @@ import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -52,6 +52,23 @@ public class QueryEvaluator {
         return queryResult;
     }
 
+    /**
+     * parses, mappes and translates a posted query to the StructuredQuery format.
+     * @param query posted query from post request
+     * @param format
+     * @return StructuredQuery
+     * @throws TransformerConfigurationException
+     * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    public List<List<List<String>>> translate(String query, QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+        Query parsedQuery = parseQuery(query, format);
+        Query mappedQuery = mapQuery(parsedQuery);
+        return translateQuery(mappedQuery);
+    }
+
+
     private Query parseQuery(String query, QueryFormat format) throws IOException, TransformerConfigurationException {
         FlareParser parser = getParser(format);
         return parser.parse(query);
@@ -80,4 +97,12 @@ public class QueryEvaluator {
         return integerCompletableFuture.get();
     }
 
+    /**
+     * executes translations of the provided mappedQuery
+     * @param mappedQuery
+     * @return
+     */
+    private List<List<List<String>>> translateQuery(Query mappedQuery) {
+        return this.executor.translateMappedQuery(mappedQuery);
+    }
 }
