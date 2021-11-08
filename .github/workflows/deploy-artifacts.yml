@@ -90,7 +90,7 @@ jobs:
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v2
       with:
-        path: ./server/Dockerfile
+        file: ./server/Dockerfile
         build-args: |
           mavenOptions="-q"
         push: true
