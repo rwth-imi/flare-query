@@ -5,16 +5,16 @@ on:
     workflows: ["Build and Test Maven Package"]
     types: [completed]
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  WORKFLOW_REF: ${{ github.event.workflow_run.head_branch }}
+
 jobs:
 
   deploy-maven-package:
 
     if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v') }}
     runs-on: ubuntu-latest
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      WORKFLOW_REF: ${{ github.event.workflow_run.head_branch }}
 
     steps:
     - name: Checkout Repository
