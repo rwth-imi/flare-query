@@ -6,7 +6,6 @@ import de.rwth.imi.flare.api.FlareResource;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
