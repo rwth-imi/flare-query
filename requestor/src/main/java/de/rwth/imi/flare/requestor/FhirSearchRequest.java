@@ -41,59 +41,6 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
         this.ensureStackFullness(true);
     }
 
-    /**
-     * creates an initial POST Request for a FHIR Search.
-     * This is done to bypass the 2.083 character limit for a URL in a GET request.
-     * @return post request
-     */
-    private HttpRequest buildPostRequest(){
-        String uri = this.nextPageUri.getScheme() + "://" + this.nextPageUri.getAuthority() + this.nextPageUri.getPath() + "/_search";
-        String query = this.nextPageUri.getQuery();
-
-        HttpRequest request = HttpRequest.newBuilder(
-                URI.create(uri))
-                .header("Prefer", "handling=strict")
-                .header("Accept-Encoding", "CSQ")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(query))
-                .build();
-
-        return request;
-    }
-
-    /**
-     * executes an initial POST Reuest
-     */
-    private void initialPOST() {
-        if(this.remainingPageResults.isEmpty()){
-            if(this.nextPageUri != null){
-                try {
-                    HttpRequest postRequest = buildPostRequest();
-                    System.out.println("Executing URI: " + nextPageUri.toString());
-                    //HttpRequest req = HttpRequest.newBuilder().uri(nextPageUri).POST(HttpRequest.BodyPublishers.ofString(stringPostQuery)).build();
-                    HttpResponse<String> response = client.send(postRequest, HttpResponse.BodyHandlers.ofString());
-                    if(response.statusCode()/ 100 != 2){
-                        throw new IOException("Received HTTP status code indicating request failure: " + response.statusCode());
-                    }
-
-                    Bundle searchBundle = this.fhirParser.parseResource(Bundle.class, response.body());
-                    extractResourcesFromBundle(searchBundle);
-                    extractNextPageLink(searchBundle);
-                }
-                // If these Exceptions get thrown, execution can not continue.
-                catch (InterruptedException | URISyntaxException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-            else{
-                throw new NoSuchElementException();
-            }
-        }
-    }
-
-
     @Override
     public boolean hasNext() {
         return this.nextPageUri != null || !this.remainingPageResults.isEmpty();
@@ -107,19 +54,13 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
 
     /**
      * Fetches next page if stack isn't full, and turns checked exceptions that should not be thrown into unchecked ones
+     * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
-    private void ensureStackFullness(boolean isInitialPost) throws NoSuchElementException {
+    private void ensureStackFullness(boolean sendPostRequest) throws NoSuchElementException {
         if(this.remainingPageResults.isEmpty()){
             if(this.nextPageUri != null){
                 try {
-                    // use POST if it is the first request
-                    if(isInitialPost){
-                        initialPOST();
-                    }
-                    // use GET for any other request that follows
-                    else{
-                        fetchNextPage();
-                    }
+                    fetchNextPage(sendPostRequest);
                 }
                 // If these Exceptions get thrown, execution can not continue.
                 catch (InterruptedException | URISyntaxException e) {
@@ -136,10 +77,42 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
 
     /**
      * Fetches the next page of search results and updates {@link #remainingPageResults} and {@link #nextPageUri}
+     * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
-    private void fetchNextPage() throws IOException, InterruptedException, URISyntaxException {
+    private void fetchNextPage(boolean sendPostRequest) throws IOException, InterruptedException, URISyntaxException {
         System.out.println("Executing next URI: " + nextPageUri.toString());
-        HttpRequest req = HttpRequest.newBuilder().uri(nextPageUri).GET().build();
+        HttpRequest req = sendPostRequest ? buildPostRequest() : HttpRequest.newBuilder().uri(nextPageUri).GET().build();
+        executeRequestAndProcessResponse(req);
+    }
+
+    /**
+     * creates an initial POST Request for a FHIR Search.
+     * This is done to bypass the 2.083 character limit for a URL in a GET request.
+     * @return post request
+     */
+    private HttpRequest buildPostRequest(){
+        String uri = this.nextPageUri.getScheme() + "://" + this.nextPageUri.getAuthority() + this.nextPageUri.getPath() + "/_search";
+        String query = this.nextPageUri.getQuery();
+
+        return HttpRequest.newBuilder(
+                        URI.create(uri))
+                .header("Prefer", "handling=strict")
+                .header("Accept-Encoding", "CSQ")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(query))
+                .build();
+    }
+
+    /**
+     * Executes a given HttpRequest.
+     * Parses both the nextPageLink and the resources contained in the response bundle
+     *
+     * @param req request to be executed
+     * @throws IOException Thrown when a non 2xx http code is received
+     * @throws InterruptedException Thrown by the HttpClient
+     * @throws URISyntaxException Thrown when the FHIR Server returns a malformed URI
+     */
+    private void executeRequestAndProcessResponse(HttpRequest req) throws IOException, InterruptedException, URISyntaxException {
         HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
         if(response.statusCode()/ 100 != 2){
             throw new IOException("Received HTTP status code indicating request failure: " + response.statusCode());
