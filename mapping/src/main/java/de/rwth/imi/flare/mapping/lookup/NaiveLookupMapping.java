@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.FhirResourceMapper;
+import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.api.model.TerminologyCode;
@@ -45,13 +46,13 @@ public class NaiveLookupMapping implements FhirResourceMapper {
         return CompletableFuture.completedFuture(query);
     }
 
-    private void mapCriterionGroup(Criterion[][] exclusionCriteria) {
+    private void mapCriterionGroup(List<CriteriaGroup> exclusionCriteria) {
         if(exclusionCriteria == null){
             return;
         }
-        Arrays.stream(exclusionCriteria)
-                .forEach(criteriaSubGroup -> Arrays.stream(criteriaSubGroup)
-                .forEach(criterion -> criterion.setMapping(lookupCriterion(criterion))));
+        exclusionCriteria
+                .forEach(criteriaSubGroup -> criteriaSubGroup.getCriteria()
+                        .forEach(criterion -> criterion.setMapping(lookupCriterion(criterion))));
     }
 
     public MappingEntry lookupCriterion(Criterion criterion){

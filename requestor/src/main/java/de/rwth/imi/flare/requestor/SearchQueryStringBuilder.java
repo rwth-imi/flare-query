@@ -161,7 +161,7 @@ public class SearchQueryStringBuilder {
      * @param termCodes Codes to be joined
      * @return String looking like this: "system|code,system2|code2"...
      */
-    private String concatenateTerminologyCodes(TerminologyCode[] termCodes) {
+    private String concatenateTerminologyCodes(List<TerminologyCode> termCodes) {
         List<String> encodedTerminologyList = new LinkedList<>();
         String pipe = "|";
         for(TerminologyCode value : termCodes){

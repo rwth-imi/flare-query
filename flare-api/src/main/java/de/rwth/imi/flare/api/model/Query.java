@@ -1,11 +1,11 @@
 package de.rwth.imi.flare.api.model;
 
-import de.rwth.imi.flare.api.model.xml.CriteriaGroupAdapter;
 import jakarta.xml.bind.annotation.*;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * Created by Lukas Szimtenings on 6/2/2021.
@@ -17,9 +17,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Query
 {
-    // TODO: document what each layer of the array means
-    @XmlJavaTypeAdapter(CriteriaGroupAdapter.class)
-    private Criterion[][] inclusionCriteria;
-    @XmlJavaTypeAdapter(CriteriaGroupAdapter.class)
-    private Criterion[][] exclusionCriteria;
+    private List<CriteriaGroup> inclusionCriteria;
+    private List<CriteriaGroup> exclusionCriteria;
 }

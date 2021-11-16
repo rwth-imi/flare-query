@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Created by Lukas Szimtenings on 5/28/2021.
  */
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class ValueFilter
 {
     private FilterType type;
-    private TerminologyCode[] selectedConcepts;
+    private List<TerminologyCode> selectedConcepts;
     @XmlJavaTypeAdapter(CaseInsensitiveComparatorAdapter.class)
     private Comparator comparator;
     private Double value;
