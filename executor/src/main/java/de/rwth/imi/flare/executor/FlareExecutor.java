@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.executor;
 
 import de.rwth.imi.flare.api.FlareResource;
+import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.requestor.FhirRequestor;
@@ -58,8 +59,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         //create new FhirRequestor by provided config
         FhirRequestor translator = new FhirRequestor(config);
         //split criterions into inculsion and exclusion
-        Criterion[][] inclusionCriteria = mappedQuery.getInclusionCriteria();
-        Criterion[][] exclusionCriteria = mappedQuery.getExclusionCriteria();
+        List<CriteriaGroup> inclusionCriteria = mappedQuery.getInclusionCriteria();
+        List<CriteriaGroup> exclusionCriteria = mappedQuery.getExclusionCriteria();
         //translate criterions
         List<List<String>> translatedInclusionCriteria = iterateCriterion(translator, inclusionCriteria);
         List<List<String>> translatedExclusionCriteria = iterateCriterion(translator, exclusionCriteria);
@@ -77,23 +78,13 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * @param criterion multiple criterions consisting of termcodes and valuefilters
      * @return String list of FHIR Search Strings containing termcodes and nested valuefilters
      */
-    private List<List<String>> iterateCriterion(FhirRequestor translator, Criterion[][] criterion){
-        //length of termCodes and valueFilter arrays in criterion for iteration
-        int numTermCodes = criterion.length;
-        int numValueFilter;
+    private List<List<String>> iterateCriterion(FhirRequestor translator, List<CriteriaGroup> criterion){
         //return array
         List<List<String>> termCodeList = new ArrayList<>();
         //loop TermCodes
-        for (int i=0; i<numTermCodes; i++){
-            //get number of ValueFilters for current criterion
-            numValueFilter = criterion[i].length;
+        for (CriteriaGroup criteriaGrp : criterion) {
             //temporal list of ValueFilters
-            List<String> valueFilterList = new ArrayList<>();
-            //loop ValueFilters
-            for (int j=0; j < numValueFilter; j++){
-                //translate current ValueFilter and add to list
-                valueFilterList.add(translator.translateCriterion(criterion[i][j]));
-            }
+            List<String> valueFilterList = criteriaGrp.getCriteria().stream().map(translator::translateCriterion).collect(Collectors.toList());
             //add ValueFilter List to termCodeList
             //creates new ArrayList to copy value
             termCodeList.add(new ArrayList<>(valueFilterList));
@@ -110,7 +101,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         }
         // Async fetch all ids per group
         List<CompletableFuture<Set<String>>> includedIdsByGroup =
-                Arrays.stream(query.getInclusionCriteria()).map(this::getIdsFittingInclusionGroup).toList();
+                query.getInclusionCriteria().stream().map(this::getIdsFittingInclusionGroup).toList();
 
         // Wait for async exec to finish
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
@@ -136,8 +127,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Union all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(Criterion[] group) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = Arrays.stream(group)
+    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(CriteriaGroup group) {
+        final List<CompletableFuture<Set<String>>> idsPerCriterion = group.getCriteria().stream()
                 .map(this::getPatientIdsFittingCriterion).toList();
 
         // Wait for all queries to finish execution
@@ -168,7 +159,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
 
         // Execute all group queries and wait for execution to finish
         List<CompletableFuture<Set<String>>> excludedIdsByGroup =
-                Arrays.stream(query.getExclusionCriteria()).map(this::getIdsFittingExclusionGroup).toList();
+                query.getExclusionCriteria().stream().map(this::getIdsFittingExclusionGroup).toList();
         CompletableFuture<Void> allPatientIdsReceived = CompletableFuture
                 .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
 
@@ -190,9 +181,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Intersect all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(Criterion[] group) {
+    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(CriteriaGroup group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
-        for (Criterion criterion : group) {
+        for (Criterion criterion : group.getCriteria()) {
             CompletableFuture<Set<String>> evaluableCriterion = getPatientIdsFittingCriterion(criterion);
             idsPerCriterion.add(evaluableCriterion);
         }

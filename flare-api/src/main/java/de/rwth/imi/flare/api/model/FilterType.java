@@ -12,13 +12,10 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlEnum
 public enum FilterType
 {
-    @XmlEnumValue("concept")
     @JsonProperty("concept")
     CONCEPT,
     @JsonProperty("quantity-comparator")
-    @XmlEnumValue("quantity-comparator")
     QUANTITY_COMPARATOR,
     @JsonProperty("quantity-range")
-    @XmlEnumValue("quantity-range")
     QUANTITY_RANGE
 }

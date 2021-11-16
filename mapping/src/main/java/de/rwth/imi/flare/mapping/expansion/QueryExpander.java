@@ -3,6 +3,7 @@ package de.rwth.imi.flare.mapping.expansion;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 
@@ -58,24 +59,30 @@ public class QueryExpander {
 
 
     public void expandQuery(Query query){
-        Criterion[][] expandedExclusionCriteria = query.getExclusionCriteria();
-        Criterion[][] expandedInclusionCriteria = query.getInclusionCriteria();
-        expandedExclusionCriteria = expandedExclusionCriteria == null ? new Criterion[][]{} : expandedExclusionCriteria;
-        expandedInclusionCriteria = expandedInclusionCriteria == null ? new Criterion[][]{} : expandedInclusionCriteria;
+        List<CriteriaGroup> expandedExclusionCriteria = query.getExclusionCriteria();
+        List<CriteriaGroup> expandedInclusionCriteria = query.getInclusionCriteria();
+        expandedExclusionCriteria = expandedExclusionCriteria == null ? new ArrayList<>() : expandedExclusionCriteria;
+        expandedInclusionCriteria = expandedInclusionCriteria == null ? new ArrayList<>() : expandedInclusionCriteria;
         query.setExclusionCriteria(expandCriteriaGroups(expandedExclusionCriteria));
         query.setInclusionCriteria(expandCriteriaGroups(expandedInclusionCriteria));
     }
 
-    public Criterion[][] expandCriteriaGroups(Criterion[][] criteriaGroups){
-        List<Criterion[]> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.length);
-        for(Criterion[] subgroup: criteriaGroups){
-            List<Criterion> expandedCriteria = new LinkedList<>();
-            for(Criterion criterion : subgroup){
-                List<Criterion> expandedCriterion = expandCriterion(criterion);
-                expandedCriteria.addAll(expandedCriterion);
-            }
-            expandedCriteriaGroups.add(expandedCriteria.toArray(new Criterion[]{}));
+    public List<CriteriaGroup> expandCriteriaGroups(List<CriteriaGroup> criteriaGroups){
+        List<CriteriaGroup> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
+        for(CriteriaGroup subgroup: criteriaGroups){
+            CriteriaGroup expandedCriteria = expandCriteriaGroup(subgroup);
+            expandedCriteriaGroups.add(expandedCriteria);
         }
-        return expandedCriteriaGroups.toArray(new Criterion[][]{});
+        return expandedCriteriaGroups;
+    }
+
+    private CriteriaGroup expandCriteriaGroup(CriteriaGroup originalCriteriaGroup) {
+        LinkedList<Criterion> expandedCriteria = new LinkedList<>();
+        CriteriaGroup expandedCriteriaGroup = new CriteriaGroup(expandedCriteria);
+        for(Criterion criterion : originalCriteriaGroup.getCriteria()){
+            List<Criterion> expandedCriterion = expandCriterion(criterion);
+            expandedCriteria.addAll(expandedCriterion);
+        }
+        return expandedCriteriaGroup;
     }
 }

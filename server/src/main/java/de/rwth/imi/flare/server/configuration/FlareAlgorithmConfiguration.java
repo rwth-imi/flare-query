@@ -49,7 +49,7 @@ public class FlareAlgorithmConfiguration {
     public Optional<Authenticator> createAuthenticator(
             @Value("${flare.fhir.user}") String userName,
             @Value("${flare.fhir.password}") String password) {
-        if(userName != "" && password != ""){
+        if(!userName.equals("") && !password.equals("")){
             Authenticator auth = new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {

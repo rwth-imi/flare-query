@@ -1,13 +1,10 @@
-package de.rwth.imi.flare.api.model.xml;
+package de.rwth.imi.flare.api.model;
 
-import de.rwth.imi.flare.api.model.Criterion;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 /**
  * Created by Lukas Szimtenings on 6/25/2021.
@@ -20,5 +17,5 @@ import lombok.NoArgsConstructor;
 public class CriteriaGroup
 {
     @XmlElement(name = "criterion")
-    private Criterion[] criteria;
+    private List<Criterion> criteria;
 }

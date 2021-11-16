@@ -1,12 +1,11 @@
 import de.rwth.imi.flare.api.model.*;
-import de.rwth.imi.flare.api.model.xml.CriteriaGroup;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Marshaller;
-import jakarta.xml.bind.Unmarshaller;
+import de.rwth.imi.flare.api.model.CriteriaGroup;
+import jakarta.xml.bind.*;
 
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Lukas Szimtenings on 6/25/2021.
@@ -18,25 +17,46 @@ public class Test
     public static void main(String[] args) throws JAXBException
     {
         Query query = new Query();
-        query.setInclusionCriteria(new Criterion[][]{createCriteriaConjunction(), createCriteriaConjunction()});
-        query.setExclusionCriteria(new Criterion[][]{createCriteriaConjunction(), createCriteriaConjunction()});
+        //query.setInclusionCriteria(new ArrayList<>(List.of(createCriteriaArray(), createCriteriaArray())));
+        //query.setExclusionCriteria(new ArrayList<>(List.of(createCriteriaArray(), createCriteriaArray())));
         
         XMLSerialiser serialiser = new XMLSerialiser();
         System.out.println(serialiser.QueryToXmlString(query));
+
+/*        CriteriaGroup criteriaGroup = new CriteriaGroup(query.getInclusionCriteria().get(0));
+        StringWriter strWriter = new StringWriter();
+        serialiser.marshaller.marshal(criteriaGroup, strWriter);
+        System.out.println(strWriter);
+
+
+        CriteriaGroup criteriaGroup2 = new CriteriaGroup(query.getInclusionCriteria().get(1));
+        ArrayList<CriteriaGroup> criteriaGroups = new ArrayList<>();
+        criteriaGroups.add(criteriaGroup);
+        criteriaGroups.add(criteriaGroup2);
+        strWriter = new StringWriter();
+        serialiser.marshaller.marshal(new InclusionCriteria(criteriaGroups), strWriter);
+       //System.out.println(strWriter);
+
+        I2B2Query i2b2Query = new I2B2Query();
+        i2b2Query.setInclusionCriteria(criteriaGroups);
+        i2b2Query.setExclusionCriteria(criteriaGroups);
+        strWriter = new StringWriter();
+        serialiser.marshaller.marshal(i2b2Query, strWriter);
+        //System.out.println(strWriter);
+
+        /*
+        strWriter = new StringWriter();
+        serialiser.marshaller.marshal(new ExclusionCriteria(criteriaGroups), strWriter);
+        System.out.println(strWriter);
+        */
     }
     
     public static int getAndInc(){
         return counter++;
     }
-    
-    public static Criterion[] createCriteriaConjunction(){
-        CriteriaGroup conj = new CriteriaGroup();
-        conj.setCriteria(createCriteriaArray());
-        return createCriteriaArray();
-    }
 
-    private static Criterion[] createCriteriaArray() {
-        return new Criterion[]{createCriterion(), createCriterion(), createCriterion()};
+    private static ArrayList<Criterion> createCriteriaArray() {
+        return new ArrayList<>(List.of(createCriterion(), createCriterion(), createCriterion()));
     }
 
     public static Criterion createCriterion(){
