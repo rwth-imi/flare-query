@@ -2,7 +2,6 @@ import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
-import de.rwth.imi.flare.executor.BasicAuthRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import org.junit.jupiter.api.Test;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -29,7 +27,7 @@ public class ExecutorTest
     public void testExecutor() throws ExecutionException, InterruptedException {
         Query query = buildQuery();
         CompletableFuture<Integer> calc = executor.calculatePatientCount(query);
-        calc.get();
+        System.out.printf("found %d values", calc.get());
     }
 
     private Query buildQuery() {
@@ -43,9 +41,5 @@ public class ExecutorTest
         expectedResult.setInclusionCriteria(List.of(criteriaGroup1));
         expectedResult.setExclusionCriteria(new ArrayList<>());
         return expectedResult;
-    }
-
-    public TerminologyCode createUnit(String name){
-        return new TerminologyCode(name, null, name);
     }
 }
