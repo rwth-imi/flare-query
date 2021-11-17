@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Created by Lukas Szimtenings on 5/28/2021.
  */
@@ -23,4 +25,6 @@ public class Criterion
     private TerminologyCode termCode;
     private ValueFilter valueFilter;
     private MappingEntry mapping;
+    private List<AttributeFilter> attributeFilters;
+    private TimeRestriction timeRestriction;
 }
