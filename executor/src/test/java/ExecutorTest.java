@@ -1,5 +1,4 @@
 import de.rwth.imi.flare.api.model.*;
-import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
@@ -33,7 +32,7 @@ public class ExecutorTest
     private Query buildQuery() {
         TerminologyCode female_terminology = new TerminologyCode("76689-9", "http://loinc.org", "Sex assigned at birth");
         ValueFilter female_filter = new ValueFilter(null, List.of(new TerminologyCode("female", "http://hl7.org/fhir/administrative-gender", "Female")), null, null , null, null, null);
-        MappingEntry mapping = new MappingEntry("Observation","code", "value-concept", new FixedCriteria[]{});
+        MappingEntry mapping = new MappingEntry("Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
         Criterion criterion1 = new Criterion(female_terminology, female_filter, mapping, null, null);
         CriteriaGroup criteriaGroup1 = new CriteriaGroup(List.of(criterion1));
 
