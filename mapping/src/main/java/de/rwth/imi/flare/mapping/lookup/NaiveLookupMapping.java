@@ -16,6 +16,14 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Implements a naive lookup strategy, that parses a JSON file following
+ * {@see <a href="https://github.com/num-codex/codex-gecco-to-ui-profiles/blob/main/schema/term-code-mapping-schema.json">the codex mapping schema<a>}
+ *
+ *  Attaches the {@link de.rwth.imi.flare.api.model.mapping.MappingEntry corresponding MappingEntry} to each
+ *  {@link de.rwth.imi.flare.api.model.Criterion Criterion} by using the
+ *  {@link de.rwth.imi.flare.api.model.Criterion#getTermCode() Criterions termCode} as a key when looking for the mapping.
+ */
 public class NaiveLookupMapping implements FhirResourceMapper {
     Map<TerminologyCode, SourceMappingEntry> lookupTable;
     QueryExpander queryExpander;
