@@ -19,7 +19,7 @@ import java.util.List;
 public class AttributeFilter {
     private FilterType type;
     private TerminologyCode attributeCode;
-    private List<TerminologyCode> selectedConcept;
+    private List<TerminologyCode> selectedConcepts;
     @XmlJavaTypeAdapter(CaseInsensitiveComparatorAdapter.class)
     private Comparator comparator;
     private Double value;
