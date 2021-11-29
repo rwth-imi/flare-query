@@ -1,9 +1,6 @@
 package de.rwth.imi.flare.requestor;
 
-import de.rwth.imi.flare.api.model.Criterion;
-import de.rwth.imi.flare.api.model.TerminologyCode;
-import de.rwth.imi.flare.api.model.FilterType;
-import de.rwth.imi.flare.api.model.ValueFilter;
+import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
@@ -65,6 +62,10 @@ public class SearchQueryStringBuilder {
         if(mapping.getFixedCriteria() != null){
             appendFixedCriteriaString();
         }
+
+        if(this.criterion.getAttributeFilters() != null){
+            appendAttributeSearchParameterString();
+        }
     }
 
     /**
@@ -79,6 +80,14 @@ public class SearchQueryStringBuilder {
             }
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
+        }
+    }
+
+    private void appendAttributeSearchParameterString() {
+        for (AttributeFilter attributeFilter : this.criterion.getAttributeFilters()){
+            String attributeCode = attributeFilter.getAttributeCode().getCode();
+            String concepts = concatenateTerminologyCodes(attributeFilter.getSelectedConcepts());
+            this.sb.append('&').append(attributeCode).append('=').append(concepts);
         }
     }
 
