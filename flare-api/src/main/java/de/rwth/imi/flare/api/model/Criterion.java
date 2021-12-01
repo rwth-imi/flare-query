@@ -22,7 +22,7 @@ import java.util.List;
 @Builder(toBuilder = true)
 public class Criterion
 {
-    private TerminologyCode termCode;
+    private List<TerminologyCode> termCode;
     private ValueFilter valueFilter;
     private MappingEntry mapping;
     private List<AttributeFilter> attributeFilters;

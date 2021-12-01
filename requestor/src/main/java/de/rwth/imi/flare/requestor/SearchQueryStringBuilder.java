@@ -40,31 +40,34 @@ public class SearchQueryStringBuilder {
      * Constructs the query string into {@link #sb}
      */
     private void constructQueryString(){
-        MappingEntry mapping = this.criterion.getMapping();
-        this.sb.append(mapping.getFhirResourceType()).append('?');
+        MappingEntry mappings = this.criterion.getMapping();
 
-        if(mapping.getTermCodeSearchParameter() != null){
-            StringBuilder sbTmp = new StringBuilder();
-            this.sb.append(mapping.getTermCodeSearchParameter()).append("=");
-            sbTmp.append(this.criterion.getTermCode().getSystem())
-                    .append("|")
-                    .append(this.criterion.getTermCode().getCode());
-            this.sb.append(urlEncodeAndReset(sbTmp));
-        }
+        for (TerminologyCode singleTermCode : this.criterion.getTermCode()){
+            this.sb.append(mappings.getFhirResourceType()).append('?');
 
-        if(this.criterion.getValueFilter() != null){
-            if( mapping.getTermCodeSearchParameter()!= null){
-                this.sb.append(("&"));
+            if(mappings.getTermCodeSearchParameter() != null){
+                StringBuilder sbTmp = new StringBuilder();
+                this.sb.append(mappings.getTermCodeSearchParameter()).append("=");
+                sbTmp.append(singleTermCode.getSystem())
+                        .append("|")
+                        .append(singleTermCode.getCode());
+                this.sb.append(urlEncodeAndReset(sbTmp));
             }
-            appendValueFilterByType();
-        }
 
-        if(mapping.getFixedCriteria() != null){
-            appendFixedCriteriaString();
-        }
+            if(this.criterion.getValueFilter() != null){
+                if( mappings.getTermCodeSearchParameter()!= null){
+                    this.sb.append(("&"));
+                }
+                appendValueFilterByType();
+            }
 
-        if(this.criterion.getAttributeFilters() != null){
-            appendAttributeSearchParameterString();
+            if(mappings.getFixedCriteria() != null){
+                appendFixedCriteriaString();
+            }
+
+            if(this.criterion.getAttributeFilters() != null){
+                appendAttributeSearchParameterString();
+            }
         }
     }
 
@@ -128,8 +131,7 @@ public class SearchQueryStringBuilder {
      */
     private void appendQuantityRangeFilterString() {
         ValueFilter valueFilter = this.criterion.getValueFilter();
-        MappingEntry mapping = this.criterion.getMapping();
-        String valueSearchParameter = mapping.getValueSearchParameter();
+        String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
         StringBuilder sbTmp = new StringBuilder();
 
         sb.append(valueSearchParameter).append("=");
