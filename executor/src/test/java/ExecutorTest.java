@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -30,7 +31,7 @@ public class ExecutorTest
     }
 
     private Query buildQuery() {
-        TerminologyCode female_terminology = new TerminologyCode("76689-9", "http://loinc.org", "Sex assigned at birth");
+        List<TerminologyCode> female_terminology = Arrays.asList(new TerminologyCode("76689-9", "http://loinc.org", "Sex assigned at birth"));
         ValueFilter female_filter = new ValueFilter(null, List.of(new TerminologyCode("female", "http://hl7.org/fhir/administrative-gender", "Female")), null, null , null, null, null);
         MappingEntry mapping = new MappingEntry("Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
         Criterion criterion1 = new Criterion(female_terminology, female_filter, mapping, null, null);

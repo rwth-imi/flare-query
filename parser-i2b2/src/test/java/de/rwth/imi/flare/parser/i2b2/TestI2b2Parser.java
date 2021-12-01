@@ -8,6 +8,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -26,23 +27,23 @@ class TestI2b2Parser {
         String request = helpers.readResourceIntoString("i2b2_request.xml");
         Query parsed = parser.parse(request);
 
-        TerminologyCode male_terminology = new TerminologyCode("\\\\i2b2_DEMO\\i2b2\\Demographics\\Gender\\Male\\", "i2b2_sim", "Male");
+        List<TerminologyCode> male_terminology = Arrays.asList(new TerminologyCode("\\\\i2b2_DEMO\\i2b2\\Demographics\\Gender\\Male\\", "i2b2_sim", "Male"));
         Criterion criterion1 = new Criterion(male_terminology,
                 null, null, null, null);//new ValueFilter(FilterType.CONCEPT, new TerminologyCode[]{male_terminology}, null, null, null, null, null, null));
         CriteriaGroup criteriaGroup1 = new CriteriaGroup(List.of(criterion1));
 
         criterion1 = new Criterion(
-                new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Lymphozyten\\", "i2b2_sim", "Lymphozyten"),
+                Arrays.asList(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Lymphozyten\\", "i2b2_sim", "Lymphozyten")),
                 new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 40.0, createUnit("%"), null, null), null, null, null);
         Criterion criterion2 = new Criterion(
-                new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Lymphozyten_absolut\\", "i2b2_sim", "Lymphozyten - absolut"),
+                Arrays.asList(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Lymphozyten_absolut\\", "i2b2_sim", "Lymphozyten - absolut")),
                 new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 3.0, createUnit("/nl"), null, null), null, null, null);
         CriteriaGroup criteriaGroup2 = new CriteriaGroup(List.of(criterion1, criterion2));
 
 
-        criterion1 = new Criterion(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Bilirubin\\", "i2b2_sim", "Bilirubin (gesamt)"),
+        criterion1 = new Criterion(Arrays.asList(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Bilirubin\\", "i2b2_sim", "Bilirubin (gesamt)")),
                 new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 8.0, createUnit("mg/dl"), null, null), null, null, null);
-        criterion2 = new Criterion(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Bilirubin_direkt\\", "i2b2_sim", "Bilirubin (direkt)"),
+        criterion2 = new Criterion(Arrays.asList(new TerminologyCode("\\\\i2b2_DIAG\\i2b2\\Measurements\\Bilirubin_direkt\\", "i2b2_sim", "Bilirubin (direkt)")),
                 new ValueFilter(FilterType.QUANTITY_COMPARATOR, null, Comparator.lt, 6.0, createUnit("mg/dl"), null, null), null, null, null);
         CriteriaGroup criteriaGroup3 = new CriteriaGroup(List.of(criterion1, criterion2));
 
