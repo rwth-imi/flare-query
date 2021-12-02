@@ -3,11 +3,11 @@
   "inclusionCriteria": [
     [
       {
-        "termCode": {
+        "termCode": [{
           "code": "76689-9",
           "system": "http://loinc.org",
           "display": "Sex assigned at birth"
-        },
+        }],
         "valueFilter": {
           "type": "concept",
           "selectedConcepts": [

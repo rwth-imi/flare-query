@@ -4,11 +4,11 @@
   "inclusionCriteria": [
     [
       {
-        "termCode": {
+        "termCode": [{
           "code": "119364003",
           "system": "http://snomed.info/sct",
           "display": "Serum specimen (specimen)"
-        }
+        }]
       }
     ]
   ]
