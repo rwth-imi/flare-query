@@ -41,10 +41,9 @@ public class SearchQueryStringBuilder {
      */
     private void constructQueryString(){
         MappingEntry mappings = this.criterion.getMapping();
-
+        this.sb.append(mappings.getFhirResourceType()).append('?');
+        
         for (TerminologyCode singleTermCode : this.criterion.getTermCode()){
-            this.sb.append(mappings.getFhirResourceType()).append('?');
-
             if(mappings.getTermCodeSearchParameter() != null){
                 StringBuilder sbTmp = new StringBuilder();
                 this.sb.append(mappings.getTermCodeSearchParameter()).append("=");
@@ -53,22 +52,24 @@ public class SearchQueryStringBuilder {
                         .append(singleTermCode.getCode());
                 this.sb.append(urlEncodeAndReset(sbTmp));
             }
-
-            if(this.criterion.getValueFilter() != null){
-                if( mappings.getTermCodeSearchParameter()!= null){
-                    this.sb.append(("&"));
-                }
-                appendValueFilterByType();
-            }
-
-            if(mappings.getFixedCriteria() != null){
-                appendFixedCriteriaString();
-            }
-
-            if(this.criterion.getAttributeFilters() != null){
-                appendAttributeSearchParameterString();
-            }
         }
+        
+        if(this.criterion.getValueFilter() != null){
+            if( mappings.getTermCodeSearchParameter()!= null){
+                this.sb.append(("&"));
+            }
+            appendValueFilterByType();
+        }
+    
+        if(mappings.getFixedCriteria() != null){
+            appendFixedCriteriaString();
+        }
+    
+        if(this.criterion.getAttributeFilters() != null){
+            appendAttributeSearchParameterString();
+        }
+        
+        appendTimeConstraints();
     }
 
     /**
@@ -84,6 +85,26 @@ public class SearchQueryStringBuilder {
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
+    }
+    
+    private void appendTimeConstraints(){
+        StringBuilder sbTemp = new StringBuilder();
+        
+        TimeRestriction timeRestriction = this.criterion.getTimeRestriction();
+        String timeRestrictionParameter = this.criterion.getMapping().getTimeRestrictionParameter();
+        if(timeRestrictionParameter == null || timeRestriction == null){
+            return;
+        }
+        
+        String beforeDate = timeRestriction.getBeforeDate();
+        String afterDate = timeRestriction.getAfterDate();
+        if(beforeDate != null){
+            sbTemp.append("&").append(beforeDate).append("=gt").append(beforeDate);
+        }
+        if(afterDate != null){
+            sbTemp.append("&").append(beforeDate).append("=lt").append(afterDate);
+        }
+        this.sb.append(sbTemp);
     }
 
     /**
