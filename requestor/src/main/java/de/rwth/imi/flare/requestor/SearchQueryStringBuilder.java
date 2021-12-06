@@ -86,8 +86,17 @@ public class SearchQueryStringBuilder {
         }
     }
 
+    /**
+     * Appends the attributeFilter as given by the mapping
+     */
     private void appendAttributeSearchParameterString() {
         for (AttributeFilter attributeFilter : this.criterion.getAttributeFilters()){
+            //T O D O: update equals(CONCEPT) with new types in the mapping
+            if(attributeFilter.getType().name().equals("CONCEPT")){
+                for (TerminologyCode singleTermCode : attributeFilter.getSelectedConcepts()){
+                    singleTermCode.setSystem("");
+                }
+            }
             String attributeCode = attributeFilter.getAttributeCode().getCode();
             String concepts = concatenateTerminologyCodes(attributeFilter.getSelectedConcepts());
             this.sb.append('&').append(attributeCode).append('=').append(concepts);
