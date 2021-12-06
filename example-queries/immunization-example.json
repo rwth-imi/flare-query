@@ -3,11 +3,13 @@
   "inclusionCriteria": [
     [
       {
-        "termCode":[ {
-          "code": "836377006",
-          "system": "http://snomed.info/sct",
-          "display": "Influenza vaccine"
-        }]
+        "termCode": [
+          {
+            "code": "836377006",
+            "system": "http://snomed.info/sct",
+            "display": "Influenza vaccine"
+          }
+        ]
       }
     ]
   ],
