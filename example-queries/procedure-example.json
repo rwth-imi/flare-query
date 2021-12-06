@@ -1,15 +1,17 @@
 {
   "version": "http://to_be_decided.com/draft-1/schema#",
   "inclusionCriteria": [
-      [
+    [
+      {
+        "termCode": [
           {
-              "termCode": {
-                  "code": "53950000",
-                  "system": "http://snomed.info/sct",
-                  "display": "ademhalingstherapie (verrichting)"
-              }
+            "code": "53950000",
+            "system": "http://snomed.info/sct",
+            "display": "ademhalingstherapie (verrichting)"
           }
-      ]
+        ]
+      }
+    ]
   ],
   "display": ""
 }

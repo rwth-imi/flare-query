@@ -1,15 +1,17 @@
 {
   "version": "http://to_be_decided.com/draft-1/schema#",
   "inclusionCriteria": [
-      [
+    [
+      {
+        "termCode": [
           {
-              "termCode": {
-                  "code": "836377006",
-                  "system": "http://snomed.info/sct",
-                  "display": "Influenza vaccine"
-              }
+            "code": "836377006",
+            "system": "http://snomed.info/sct",
+            "display": "Influenza vaccine"
           }
-      ]
+        ]
+      }
+    ]
   ],
   "display": ""
 }

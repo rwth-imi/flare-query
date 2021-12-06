@@ -1,9 +1,6 @@
 package de.rwth.imi.flare.requestor;
 
-import de.rwth.imi.flare.api.model.Criterion;
-import de.rwth.imi.flare.api.model.TerminologyCode;
-import de.rwth.imi.flare.api.model.FilterType;
-import de.rwth.imi.flare.api.model.ValueFilter;
+import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
@@ -43,27 +40,34 @@ public class SearchQueryStringBuilder {
      * Constructs the query string into {@link #sb}
      */
     private void constructQueryString(){
-        MappingEntry mapping = this.criterion.getMapping();
-        this.sb.append(mapping.getFhirResourceType()).append('?');
+        MappingEntry mappings = this.criterion.getMapping();
 
-        if(mapping.getTermCodeSearchParameter() != null){
-            StringBuilder sbTmp = new StringBuilder();
-            this.sb.append(mapping.getTermCodeSearchParameter()).append("=");
-            sbTmp.append(this.criterion.getTermCode().getSystem())
-                    .append("|")
-                    .append(this.criterion.getTermCode().getCode());
-            this.sb.append(urlEncodeAndReset(sbTmp));
-        }
+        for (TerminologyCode singleTermCode : this.criterion.getTermCode()){
+            this.sb.append(mappings.getFhirResourceType()).append('?');
 
-        if(this.criterion.getValueFilter() != null){
-            if( mapping.getTermCodeSearchParameter()!= null){
-                this.sb.append(("&"));
+            if(mappings.getTermCodeSearchParameter() != null){
+                StringBuilder sbTmp = new StringBuilder();
+                this.sb.append(mappings.getTermCodeSearchParameter()).append("=");
+                sbTmp.append(singleTermCode.getSystem())
+                        .append("|")
+                        .append(singleTermCode.getCode());
+                this.sb.append(urlEncodeAndReset(sbTmp));
             }
-            appendValueFilterByType();
-        }
 
-        if(mapping.getFixedCriteria() != null){
-            appendFixedCriteriaString();
+            if(this.criterion.getValueFilter() != null){
+                if( mappings.getTermCodeSearchParameter()!= null){
+                    this.sb.append(("&"));
+                }
+                appendValueFilterByType();
+            }
+
+            if(mappings.getFixedCriteria() != null){
+                appendFixedCriteriaString();
+            }
+
+            if(this.criterion.getAttributeFilters() != null){
+                appendAttributeSearchParameterString();
+            }
         }
     }
 
@@ -79,6 +83,23 @@ public class SearchQueryStringBuilder {
             }
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
+        }
+    }
+
+    /**
+     * Appends the attributeFilter as given by the mapping
+     */
+    private void appendAttributeSearchParameterString() {
+        for (AttributeFilter attributeFilter : this.criterion.getAttributeFilters()){
+            //T O D O: update equals(CONCEPT) with new types in the mapping
+            if(attributeFilter.getType().name().equals("CONCEPT")){
+                for (TerminologyCode singleTermCode : attributeFilter.getSelectedConcepts()){
+                    singleTermCode.setSystem("");
+                }
+            }
+            String attributeCode = attributeFilter.getAttributeCode().getCode();
+            String concepts = concatenateTerminologyCodes(attributeFilter.getSelectedConcepts());
+            this.sb.append('&').append(attributeCode).append('=').append(concepts);
         }
     }
 
@@ -119,8 +140,7 @@ public class SearchQueryStringBuilder {
      */
     private void appendQuantityRangeFilterString() {
         ValueFilter valueFilter = this.criterion.getValueFilter();
-        MappingEntry mapping = this.criterion.getMapping();
-        String valueSearchParameter = mapping.getValueSearchParameter();
+        String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
         StringBuilder sbTmp = new StringBuilder();
 
         sb.append(valueSearchParameter).append("=");

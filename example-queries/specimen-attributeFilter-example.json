@@ -1,0 +1,60 @@
+{
+  "version": "http://to_be_decided.com/draft-1/schema#",
+  "display": "",
+  "inclusionCriteria": [
+    [
+      {
+        "termCode": [
+          {
+            "code": "119373006",
+            "system": "http://snomed.info/sct",
+            "version": "http://snomed.info/sct/900000000000207008/version/20210731",
+            "display": "Amniotic fluid specimen (specimen)"
+          }
+        ],
+        "attributeFilters": [
+          {
+            "attributeCode": {
+              "code": "status",
+              "system": "num.abide",
+              "display": "status"
+            },
+            "type": "concept",
+            "selectedConcepts": [
+              {
+                "code": "available",
+                "display": "Available",
+                "system": "http://hl7.org/fhir/specimen-status"
+              },
+              {
+                "code": "unavailable",
+                "display": "Unavailable",
+                "system": "http://hl7.org/fhir/specimen-status"
+              }
+            ]
+          },
+          {
+            "attributeCode": {
+              "code": "bodysite",
+              "system": "mii.module_specimen",
+              "display": "Specimen body site"
+            },
+            "type": "concept",
+            "selectedConcepts": [
+              {
+                "code": "C76.2",
+                "display": "Abdomen o.n.A.",
+                "system": "http://hl7.org/fhir/sid/icd-o-3"
+              },
+              {
+                "code": "C24.1",
+                "display": "Ampulla Vateri",
+                "system": "http://hl7.org/fhir/sid/icd-o-3"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+}

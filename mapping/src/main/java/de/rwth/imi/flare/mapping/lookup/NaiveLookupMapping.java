@@ -54,17 +54,17 @@ public class NaiveLookupMapping implements FhirResourceMapper {
         return CompletableFuture.completedFuture(query);
     }
 
-    private void mapCriterionGroup(List<CriteriaGroup> exclusionCriteria) {
-        if(exclusionCriteria == null){
+    private void mapCriterionGroup(List<CriteriaGroup> criterionGroup) {
+        if(criterionGroup == null){
             return;
         }
-        exclusionCriteria
+        criterionGroup
                 .forEach(criteriaSubGroup -> criteriaSubGroup.getCriteria()
                         .forEach(criterion -> criterion.setMapping(lookupCriterion(criterion))));
     }
 
     public MappingEntry lookupCriterion(Criterion criterion){
-        TerminologyCode termCode = criterion.getTermCode();
+        TerminologyCode termCode = criterion.getTermCode().get(0);
 
         if(termCode == null){
             return null;

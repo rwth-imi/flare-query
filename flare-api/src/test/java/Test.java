@@ -5,6 +5,7 @@ import jakarta.xml.bind.*;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -66,10 +67,10 @@ public class Test
         return criterion;
     }
     
-    public static TerminologyCode createTermCode(){
-        TerminologyCode termCode = new TerminologyCode();
-        termCode.setCode("Code"+getAndInc());
-        termCode.setSystem("System"+getAndInc());
+    public static List<TerminologyCode> createTermCode(){
+        List<TerminologyCode> termCode = Arrays.asList(new TerminologyCode());
+        termCode.get(0).setCode("Code"+getAndInc());
+        termCode.get(0).setSystem("System"+getAndInc());
         return termCode;
     }
     
