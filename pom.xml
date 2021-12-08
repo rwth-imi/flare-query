@@ -22,7 +22,6 @@
         <module>requestor</module>
         <module>flare-cli</module>
         <module>parser-csq</module>
-        <module>server</module>
     </modules>
     <build>
         <pluginManagement>
