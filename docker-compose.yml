@@ -26,6 +26,12 @@ services:
       context: .
     ports:
       - "8081:8080"
+    environment:
+      MAPPINGS_FILE: ${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/codex-feasibility-backend/ontology}/codex-term-code-mapping.json
+      CONCEPT_TREE_FILE: ${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/codex-feasibility-backend/ontology}/codex-code-tree.json
+    volumes:
+      - ${FLARE_LOCAL_CONCEPT_TREE_PATH:-./ontology/codex-code-tree.json}:${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/codex-feasibility-backend/ontology}/codex-code-tree.json
+      - ${FLARE_LOCAL_TERM_CODE_MAPPING_PATH:-./ontology/codex-term-code-mapping.json}:${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/codex-feasibility-backend/ontology}/codex-term-code-mapping.json
 
 volumes:
   blaze-data:

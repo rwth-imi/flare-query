@@ -1,10 +1,21 @@
 package de.rwth.imi.flare.server.configuration;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
+import de.rwth.imi.flare.api.model.TerminologyCode;
 import de.rwth.imi.flare.executor.FlareExecutor;
+import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
+import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
+import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +29,35 @@ import java.util.Optional;
 
 @Configuration
 public class FlareAlgorithmConfiguration {
+
     @Bean
-    public FhirResourceMapper mapper() throws IOException {
-        return new NaiveLookupMapping();
+    public Map<TerminologyCode, SourceMappingEntry> loadMappingFile(@Value("${app.mappingsFile}") String mappingsFile)
+        throws IOException {
+
+        var lookupTable = new HashMap<TerminologyCode, SourceMappingEntry>();
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        List<SourceMappingEntry> sourceMappingEntries = objectMapper.readValue(new File(mappingsFile), new TypeReference<>() {});
+        sourceMappingEntries.forEach(sourceMappingEntry -> lookupTable.put(sourceMappingEntry.getKey(), sourceMappingEntry));
+        return lookupTable;
+    }
+
+
+    @Bean
+    public ExpansionTreeNode loadExpansionTree(@Value("${app.conceptTreeFile}") String conceptTreeFile)
+        throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return objectMapper.readValue(new File(conceptTreeFile), new TypeReference<>() {});
+    }
+
+    @Bean
+    public QueryExpander expander(ExpansionTreeNode loadExpansionTree) throws IOException {
+        return new QueryExpander(loadExpansionTree);
+    }
+
+    @Bean
+    public FhirResourceMapper mapper(Map<TerminologyCode, SourceMappingEntry> loadMFile, QueryExpander expander) throws IOException {
+        return new NaiveLookupMapping(loadMFile, expander);
     }
 
     @Bean

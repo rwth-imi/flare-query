@@ -1,15 +1,12 @@
 package de.rwth.imi.flare.mapping.expansion;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.api.model.TerminologyCode;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -19,18 +16,9 @@ import java.util.function.Consumer;
 public class QueryExpander {
     private ExpansionTreeNode expansionTree;
 
-    public QueryExpander(InputStream expansionTreeStream) throws IOException {
-        loadTree(expansionTreeStream);
-    }
 
-    public QueryExpander() throws IOException {
-        InputStream expansionTreeStream = this.getClass().getClassLoader().getResourceAsStream("codex-code-tree.json");
-        loadTree(expansionTreeStream);
-    }
-
-    private void loadTree(InputStream expansionTreeStream) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        expansionTree = objectMapper.readValue(expansionTreeStream, new TypeReference<>() {});
+    public QueryExpander(ExpansionTreeNode expansionTree) throws IOException {
+        this.expansionTree = expansionTree;
     }
 
     private List<Criterion> expandCriterion(Criterion criterion){

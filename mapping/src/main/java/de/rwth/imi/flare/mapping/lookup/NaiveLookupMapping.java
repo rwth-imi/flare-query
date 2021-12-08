@@ -11,10 +11,13 @@ import de.rwth.imi.flare.api.model.TerminologyCode;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
  * Implements a naive lookup strategy, that parses a JSON file following
@@ -24,27 +27,33 @@ import java.util.concurrent.CompletableFuture;
  *  {@link de.rwth.imi.flare.api.model.Criterion Criterion} by using the
  *  {@link de.rwth.imi.flare.api.model.Criterion#getTermCode() Criterions termCode} as a key when looking for the mapping.
  */
+
 public class NaiveLookupMapping implements FhirResourceMapper {
     Map<TerminologyCode, SourceMappingEntry> lookupTable;
     QueryExpander queryExpander;
 
-    public NaiveLookupMapping() throws IOException {
-        InputStream lookupTableStream = this.getClass().getClassLoader().getResourceAsStream("codex-term-code-mapping.json");
-        initLookupTable(lookupTableStream);
-        queryExpander = new QueryExpander();
+    public NaiveLookupMapping(Map<TerminologyCode, SourceMappingEntry> lookupTable, QueryExpander queryExpander) throws IOException {
+        this.lookupTable = lookupTable;
+        this.queryExpander = queryExpander;
+        //queryExpander = new QueryExpander(conceptTreeFile);
     }
 
-    public NaiveLookupMapping(InputStream lookupTable) throws IOException {
+
+
+    /*public NaiveLookupMapping(InputStream lookupTable) throws IOException {
         initLookupTable(lookupTable);
-    }
+    }*/
 
+    /*
     private void initLookupTable(InputStream lookupTable) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         List<SourceMappingEntry> sourceMappingEntries = objectMapper.readValue(lookupTable, new TypeReference<>() {});
 
+
         this.lookupTable = new HashMap<>();
         sourceMappingEntries.forEach(sourceMappingEntry -> this.lookupTable.put(sourceMappingEntry.getKey(), sourceMappingEntry));
     }
+    */
 
     @Override
     public CompletableFuture<Query> mapResources(Query query) {
