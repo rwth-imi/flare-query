@@ -1,4 +1,5 @@
 
 FROM tomcat:9.0.54-jdk16-openjdk AS run
-COPY /target/server-*.war /usr/local/tomcat/webapps/flare.war
+COPY ontology /opt/flare/ontology
+COPY server/target/server-*.war /usr/local/tomcat/webapps/flare.war
 EXPOSE 8080
