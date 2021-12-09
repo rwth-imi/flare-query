@@ -19,6 +19,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
+      with:
+        ref: '${WORKFLOW_REF}'
 
     - name: Set Up JDK 17
       uses: actions/setup-java@v1
@@ -53,6 +55,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
+      with:
+        ref: '${WORKFLOW_REF}'
 
     - name: Set Up JDK 17
       uses: actions/setup-java@v1
