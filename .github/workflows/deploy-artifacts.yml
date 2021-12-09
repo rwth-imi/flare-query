@@ -43,7 +43,7 @@ jobs:
       run: mvn -q versions:set -DnewVersion="${{ steps.prep.outputs.version }}" -DprocessAllModules=true
 
     - name: Build and Deploy Maven Packages
-      run: mvn -q deploy -DskipTests
+      run: mvn deploy -DskipTests
 
   deploy-docker-image:
 
