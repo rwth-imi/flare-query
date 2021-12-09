@@ -1,0 +1,137 @@
+name: Build, Test and Deploy Maven Package and Docker Image
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - v[0-9]+.[0-9]+**
+  pull_request:
+    branches:
+    - master
+jobs:
+
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v1
+      with:
+        java-version: 17
+
+    - name: Cache Local Maven Repo
+      uses: actions/cache@v2.1.2
+      with:
+        path: ~/.m2/repository
+        key: maven-repo
+
+    - name: Start FHIR test server
+      run: docker-compose -f docker-compose-test.yml up -d
+
+    - name: Wait for FHIR Server Running
+      uses: ifaxity/wait-on-action@v1
+      with:
+        resource: http-get://localhost:8080/fhir/CapabilityStatement
+        timeout: 60000
+
+    - name: Initialize FHIR test data
+      run: bash ./init-testdata.sh
+
+    - name: Build
+      run: mvn -B package
+
+  deploy-maven-package:
+
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set Up JDK 17
+      uses: actions/setup-java@v1
+      with:
+        java-version: 17
+
+    - name: Cache Local Maven Repo
+      uses: actions/cache@v2.1.2
+      with:
+        path: ~/.m2/repository
+        key: maven-repo
+
+    - name: Add GitHub Server Credentials to Maven settings.xml
+      uses: s4u/maven-settings-action@v2.4.0
+
+    - name: Prepare Version
+      id: prep
+      run: |
+        echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
+
+    - name: Set Version in Maven Parent Project and Submodules
+      run: mvn -q versions:set -DnewVersion="${{ steps.prep.outputs.version }}" -DprocessAllModules=true
+
+    - name: Build and Deploy Maven Packages
+      run: mvn deploy -DskipTests
+
+  deploy-docker-image:
+
+    needs: deploy-maven-package
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set Up JDK 17
+      uses: actions/setup-java@v1
+      with:
+        java-version: 17
+
+    - name: Cache Local Maven Repo
+      uses: actions/cache@v2.1.2
+      with:
+        path: ~/.m2/repository
+        key: maven-repo
+
+    - name: Prepare Version
+      id: prep
+      run: |
+        echo ::set-output name=repository::$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
+        echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
+
+    - name: Set Version in Maven Parent Project and Submodules
+      run: mvn -q versions:set -DnewVersion="${{ steps.prep.outputs.version }}" -DprocessAllModules=true
+
+    - name: Set Version in Server Project
+      run: mvn -q -f ./server/pom.xml versions:set -DnewVersion="${{ steps.prep.outputs.version }}"
+
+    - name: Update Server Dependencies Version
+      run: mvn -q -f ./server/pom.xml versions:use-dep-version -Dincludes="de.rwth.imi.flare" -DdepVersion="${{ steps.prep.outputs.version }}"
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v2
+      with:
+        file: ./server/Dockerfile
+        build-args: |
+          mavenOptions="-q"
+        push: true
+        tags: |
+          ghcr.io/${{ steps.prep.outputs.repository }}:latest
+          ghcr.io/${{ steps.prep.outputs.repository }}:${{ steps.prep.outputs.version }}
+
