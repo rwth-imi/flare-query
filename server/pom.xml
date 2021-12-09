@@ -115,6 +115,13 @@
             </plugin>
         </plugins>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>githubTest</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/rwth-imi/flare-query</url>
+        </repository>
+    </distributionManagement>
     <repositories>
         <repository>
             <id>github</id>
@@ -128,11 +135,5 @@
             </snapshots>
         </repository>
     </repositories>
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/rwth-imi/flare-query</url>
-        </repository>
-    </distributionManagement>
+
 </project>
