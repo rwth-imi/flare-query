@@ -23,7 +23,7 @@ public class QueryExpander {
 
     private List<Criterion> expandCriterion(Criterion criterion){
 
-        List<TerminologyCode> termCodes = criterion.getTermCode();
+        List<TerminologyCode> termCodes = criterion.getTermCodes();
         List<Criterion> expandedCriteria = new ArrayList<>();
         for(TerminologyCode singleTermCode: termCodes){
             // Find the given criterion in the tree
@@ -46,7 +46,7 @@ public class QueryExpander {
             for(ExpansionTreeNode expandedLeaf : expansionTreeLeaves){
 
                 TerminologyCode newTermCode = expandedLeaf.getTermCode();
-                Criterion leafCriterion = criterionBuilder.termCode(Arrays.asList(newTermCode)).build();
+                Criterion leafCriterion = criterionBuilder.termCodes(Arrays.asList(newTermCode)).build();
                 expandedCriteria.add(leafCriterion);
             }
         }

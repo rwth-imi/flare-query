@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
  *
  *  Attaches the {@link de.rwth.imi.flare.api.model.mapping.MappingEntry corresponding MappingEntry} to each
  *  {@link de.rwth.imi.flare.api.model.Criterion Criterion} by using the
- *  {@link de.rwth.imi.flare.api.model.Criterion#getTermCode() Criterions termCode} as a key when looking for the mapping.
+ *  {@link de.rwth.imi.flare.api.model.Criterion#getTermCodes() Criterions termCode} as a key when looking for the mapping.
  */
 
 public class NaiveLookupMapping implements FhirResourceMapper {
@@ -73,7 +73,7 @@ public class NaiveLookupMapping implements FhirResourceMapper {
     }
 
     public MappingEntry lookupCriterion(Criterion criterion){
-        TerminologyCode termCode = criterion.getTermCode().get(0);
+        TerminologyCode termCode = criterion.getTermCodes().get(0);
 
         if(termCode == null){
             return null;

@@ -42,7 +42,7 @@ public class SearchQueryStringBuilder {
     private void constructQueryString(){
         MappingEntry mappings = this.criterion.getMapping();
 
-        for (TerminologyCode singleTermCode : this.criterion.getTermCode()){
+        for (TerminologyCode singleTermCode : this.criterion.getTermCodes()){
             this.sb.append(mappings.getFhirResourceType()).append('?');
 
             if(mappings.getTermCodeSearchParameter() != null){
