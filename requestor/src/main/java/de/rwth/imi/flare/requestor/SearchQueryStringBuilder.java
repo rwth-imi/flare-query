@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.requestor;
 
 import de.rwth.imi.flare.api.model.*;
+import de.rwth.imi.flare.api.model.mapping.AttributeSearchParameter;
 import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
@@ -41,34 +42,34 @@ public class SearchQueryStringBuilder {
      */
     private void constructQueryString(){
         MappingEntry mappings = this.criterion.getMapping();
+        TerminologyCode termCode = this.criterion.getTermCodes().get(0);
 
-        for (TerminologyCode singleTermCode : this.criterion.getTermCodes()){
-            this.sb.append(mappings.getFhirResourceType()).append('?');
+        this.sb.append(mappings.getFhirResourceType()).append('?');
 
-            if(mappings.getTermCodeSearchParameter() != null){
-                StringBuilder sbTmp = new StringBuilder();
-                this.sb.append(mappings.getTermCodeSearchParameter()).append("=");
-                sbTmp.append(singleTermCode.getSystem())
-                        .append("|")
-                        .append(singleTermCode.getCode());
-                this.sb.append(urlEncodeAndReset(sbTmp));
-            }
-
-            if(this.criterion.getValueFilter() != null){
-                if( mappings.getTermCodeSearchParameter()!= null){
-                    this.sb.append(("&"));
-                }
-                appendValueFilterByType();
-            }
-
-            if(mappings.getFixedCriteria() != null){
-                appendFixedCriteriaString();
-            }
-
-            if(this.criterion.getAttributeFilters() != null){
-                appendAttributeSearchParameterString();
-            }
+        if(mappings.getTermCodeSearchParameter() != null){
+            StringBuilder sbTmp = new StringBuilder();
+            this.sb.append(mappings.getTermCodeSearchParameter()).append("=");
+            sbTmp.append(termCode.getSystem())
+                    .append("|")
+                    .append(termCode.getCode());
+            this.sb.append(urlEncodeAndReset(sbTmp));
         }
+
+        if(this.criterion.getValueFilter() != null){
+            if( mappings.getTermCodeSearchParameter()!= null){
+                this.sb.append(("&"));
+            }
+            appendValueFilterByType();
+        }
+
+        if(mappings.getFixedCriteria() != null){
+            appendFixedCriteriaString();
+        }
+
+        if(this.criterion.getAttributeFilters() != null){
+            appendAttributeSearchParameterString();
+        }
+
     }
 
     /**
@@ -86,20 +87,46 @@ public class SearchQueryStringBuilder {
         }
     }
 
+
+    private AttributeSearchParameter getSearchParameter(List<AttributeSearchParameter> attSearchParams, TerminologyCode key){
+
+        for(int i = 0 ; i < attSearchParams.size(); i++){
+
+            AttributeSearchParameter cur = attSearchParams.get(i);
+
+            if(cur.getAttributeKey().getCode().equals(key.getCode()) && cur.getAttributeKey().getSystem().equals(key.getSystem())){
+                return attSearchParams.get(i);
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Appends the attributeFilter as given by the mapping
      */
     private void appendAttributeSearchParameterString() {
+
+        List<AttributeSearchParameter> searchParams = this.criterion.getMapping().getAttributeSearchParameters();
+
         for (AttributeFilter attributeFilter : this.criterion.getAttributeFilters()){
-            //T O D O: update equals(CONCEPT) with new types in the mapping
-            if(attributeFilter.getType().name().equals("CONCEPT")){
+
+            AttributeSearchParameter attSearchParam = this.getSearchParameter(searchParams, attributeFilter.getAttributeCode());
+
+            if(attSearchParam.getAttributeType().equalsIgnoreCase("code")){
                 for (TerminologyCode singleTermCode : attributeFilter.getSelectedConcepts()){
                     singleTermCode.setSystem("");
                 }
             }
-            String attributeCode = attributeFilter.getAttributeCode().getCode();
+
             String concepts = concatenateTerminologyCodes(attributeFilter.getSelectedConcepts());
-            this.sb.append('&').append(attributeCode).append('=').append(concepts);
+
+            if(this.sb.indexOf("?") == sb.length() - 1 ) {
+                this.sb.append(attSearchParam.getAttributeSearchParameter()).append('=').append(concepts);
+            } else {
+                this.sb.append('&').append(attSearchParam.getAttributeSearchParameter()).append('=').append(concepts);
+            }
+
         }
     }
 
