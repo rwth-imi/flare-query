@@ -70,6 +70,7 @@ public class SearchQueryStringBuilder {
             appendAttributeSearchParameterString();
         }
 
+        appendTimeConstraints();
     }
 
     /**
@@ -85,6 +86,27 @@ public class SearchQueryStringBuilder {
             String valueString = concatenateTerminologyCodes(criterion.getValue());
             this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
         }
+    }
+
+    private void appendTimeConstraints(){
+        StringBuilder sbTemp = new StringBuilder();
+
+        TimeRestriction timeRestriction = this.criterion.getTimeRestriction();
+        String timeRestrictionParameter = this.criterion.getMapping().getTimeRestrictionParameter();
+        if(timeRestrictionParameter == null || timeRestriction == null){
+            return;
+        }
+
+        String beforeDate = timeRestriction.getBeforeDate();
+        String afterDate = timeRestriction.getAfterDate();
+
+        if(beforeDate != null){
+            sbTemp.append("&").append(timeRestrictionParameter).append("=gt").append(beforeDate);
+        }
+        if(afterDate != null){
+            sbTemp.append("&").append(timeRestrictionParameter).append("=lt").append(afterDate);
+        }
+        this.sb.append(sbTemp);
     }
 
 
