@@ -101,10 +101,10 @@ public class SearchQueryStringBuilder {
         String afterDate = timeRestriction.getAfterDate();
 
         if(beforeDate != null){
-            sbTemp.append("&").append(timeRestrictionParameter).append("=gt").append(beforeDate);
+            sbTemp.append("&").append(timeRestrictionParameter).append("=le").append(beforeDate);
         }
         if(afterDate != null){
-            sbTemp.append("&").append(timeRestrictionParameter).append("=lt").append(afterDate);
+            sbTemp.append("&").append(timeRestrictionParameter).append("=ge").append(afterDate);
         }
         this.sb.append(sbTemp);
     }
