@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.mapping.expansion;
 
 
+import com.google.common.collect.Sets;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
@@ -9,8 +10,10 @@ import de.rwth.imi.flare.api.model.TerminologyCode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class QueryExpander {
@@ -59,7 +62,7 @@ public class QueryExpander {
         List<CriteriaGroup> expandedInclusionCriteria = query.getInclusionCriteria();
         expandedExclusionCriteria = expandedExclusionCriteria == null ? new ArrayList<>() : expandedExclusionCriteria;
         expandedInclusionCriteria = expandedInclusionCriteria == null ? new ArrayList<>() : expandedInclusionCriteria;
-        query.setExclusionCriteria(expandCriteriaGroups(expandedExclusionCriteria));
+        query.setExclusionCriteria(expandCriteriaGroupsExcl(expandedExclusionCriteria));
         query.setInclusionCriteria(expandCriteriaGroups(expandedInclusionCriteria));
     }
 
@@ -80,5 +83,33 @@ public class QueryExpander {
             expandedCriteria.addAll(expandedCriterion);
         }
         return expandedCriteriaGroup;
+    }
+
+    public List<CriteriaGroup> expandCriteriaGroupsExcl(List<CriteriaGroup> criteriaGroups){
+        List<CriteriaGroup> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
+
+        LinkedList<Set<Criterion>> tmpList  = new LinkedList<>();
+        for(CriteriaGroup subgroup: criteriaGroups){
+            tmpList.addAll(expandCriteriaGroupExcl(subgroup));
+        }
+
+        Set<List<Criterion>> productList = Sets.cartesianProduct(tmpList);
+
+        for (List<Criterion> criterionList : productList) {
+            expandedCriteriaGroups.add(new CriteriaGroup(criterionList));
+        }
+
+        return expandedCriteriaGroups;
+    }
+
+    private LinkedList<Set<Criterion>> expandCriteriaGroupExcl(CriteriaGroup originalCriteriaGroup) {
+        LinkedList<Set<Criterion>> tmpList = new LinkedList<>();
+        for(Criterion criterion : originalCriteriaGroup.getCriteria()) {
+            Set<Criterion> expandedCriterion = new HashSet<>(expandCriterion(criterion));
+            tmpList.add(expandedCriterion);
+        }
+
+        return tmpList;
+
     }
 }
