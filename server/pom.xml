@@ -22,6 +22,7 @@
         <java.version>16</java.version>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
+        <log4j2.version>2.16.0</log4j2.version>
         <start-class>de.rwth.imi.flare.server.ServerApplication</start-class>
     </properties>
     <dependencies>
@@ -75,6 +76,11 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>de.rwth.imi.flare</groupId>
+            <artifactId>flare-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
