@@ -96,7 +96,10 @@ public class QueryExpander {
         Set<List<Criterion>> productList = Sets.cartesianProduct(tmpList);
 
         for (List<Criterion> criterionList : productList) {
-            expandedCriteriaGroups.add(new CriteriaGroup(criterionList));
+
+            if(criterionList.size() > 0) {
+                expandedCriteriaGroups.add(new CriteriaGroup(criterionList));
+            }
         }
 
         return expandedCriteriaGroups;
