@@ -13,10 +13,8 @@
     <groupId>de.rwth.imi.flare</groupId>
     <artifactId>server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
-    <name>server</name>
+    <name>flareWebService</name>
     <description>Web server providing an http API to FLARE</description>
-
 
     <properties>
         <java.version>16</java.version>
