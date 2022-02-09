@@ -61,8 +61,42 @@ public class FlareAlgorithmConfiguration {
     }
 
     @Bean
-    public Executor executor(Optional<Authenticator> auth, @Value("${flare.fhir.server}") String fhirBaseUri){
-        Authenticator authenticator = auth.orElse(null);
+    public Optional<Authenticator> createAuthenticator(
+        @Value("${flare.fhir.user}") String userName,
+        @Value("${flare.fhir.password}") String password) {
+        if(!userName.equals("") && !password.equals("")){
+            Authenticator auth = new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(
+                        userName,
+                        password.toCharArray());
+                }
+            };
+            return Optional.of(auth);
+        }
+        return Optional.empty();
+    }
+
+    @Bean
+    public Executor executor( @Value("${flare.fhir.user}") String userName, @Value("${flare.fhir.password}") String password,
+        @Value("${flare.fhir.server}") String fhirBaseUri){
+
+        //Authenticator authenticator = auth.orElse(null);
+        Authenticator auth = null;
+        if(!userName.equals("") && !password.equals("")){
+                auth = new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(
+                        userName,
+                        password.toCharArray());
+                }
+            };
+        }
+
+        Authenticator authenticator = auth;
+
         return new FlareExecutor(new FhirRequestorConfig() {
             @Override
             public Authenticator getAuthentication() {
@@ -82,21 +116,5 @@ public class FlareAlgorithmConfiguration {
         });
     }
 
-    @Bean
-    public Optional<Authenticator> createAuthenticator(
-            @Value("${flare.fhir.user}") String userName,
-            @Value("${flare.fhir.password}") String password) {
-        if(!userName.equals("") && !password.equals("")){
-            Authenticator auth = new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(
-                            userName,
-                            password.toCharArray());
-                }
-            };
-            return Optional.of(auth);
-        }
-        return Optional.empty();
-    }
+
 }
