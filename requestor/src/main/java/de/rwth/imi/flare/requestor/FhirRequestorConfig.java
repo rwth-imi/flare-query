@@ -3,6 +3,7 @@ package de.rwth.imi.flare.requestor;
 
 import java.net.Authenticator;
 import java.net.URI;
+import java.util.Optional;
 
 public interface FhirRequestorConfig {
 
@@ -11,7 +12,7 @@ public interface FhirRequestorConfig {
      * TODO: Figure out a way to set Header based authentication e.g. a consumer that modifies each request prior to exec
      * @return Authenticator that allows the Requestor to search for Resources on the server
      */
-    Authenticator getAuthentication();
+    Optional<Authenticator> getAuthentication();
 
     /**
      *

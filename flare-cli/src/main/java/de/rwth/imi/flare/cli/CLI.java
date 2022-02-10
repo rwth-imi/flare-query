@@ -16,6 +16,7 @@ import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -98,10 +99,10 @@ class CLI implements Callable<Integer> {
     }
 
     private void createExecutor() {
-        Authenticator auth = createAuthenticator();
+        Optional<Authenticator> auth = Optional.ofNullable(createAuthenticator());
         executor = new FlareExecutor(new FhirRequestorConfig() {
             @Override
-            public Authenticator getAuthentication() {
+            public Optional<Authenticator> getAuthentication() {
                 return auth;
             }
 

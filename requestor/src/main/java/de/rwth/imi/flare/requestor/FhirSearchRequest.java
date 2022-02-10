@@ -31,10 +31,16 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
 
     public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth){
         this.nextPageUri = fhirRequestUrl;
-        if(auth != null)
-            this.client = HttpClient.newBuilder().authenticator(auth).build();
-        else
-            this.client = HttpClient.newBuilder().build();
+        this.client = HttpClient.newBuilder().authenticator(auth).build();
+        this.fhirParser = FhirContext.forR4().newJsonParser();
+        this.remainingPageResults = new LinkedBlockingDeque<>();
+        // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
+        this.ensureStackFullness(true);
+    }
+
+    public FhirSearchRequest(URI fhirRequestUrl){
+        this.nextPageUri = fhirRequestUrl;
+        this.client = HttpClient.newBuilder().build();
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext

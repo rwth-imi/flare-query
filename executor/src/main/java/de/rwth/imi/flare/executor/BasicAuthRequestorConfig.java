@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.executor;
 
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.Authenticator;
@@ -19,8 +20,8 @@ public class BasicAuthRequestorConfig implements FhirRequestorConfig {
     }
 
     @Override
-    public Authenticator getAuthentication() {
-        return this.createAuth();
+    public Optional<Authenticator> getAuthentication() {
+        return Optional.of(this.createAuth());
     }
 
     @Override

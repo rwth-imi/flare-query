@@ -4,6 +4,7 @@ import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
 import java.net.Authenticator;
 import java.net.URI;
+import java.util.Optional;
 
 public class AuthlessRequestorConfig implements FhirRequestorConfig{
     private final URI baseURI;
@@ -13,8 +14,8 @@ public class AuthlessRequestorConfig implements FhirRequestorConfig{
     }
 
     @Override
-    public Authenticator getAuthentication() {
-        return null;
+    public Optional<Authenticator> getAuthentication() {
+        return Optional.empty();
     }
 
     @Override

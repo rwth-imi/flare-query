@@ -26,6 +26,7 @@ import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import org.springframework.lang.Nullable;
 
 @Configuration
 public class FlareAlgorithmConfiguration {
@@ -61,7 +62,7 @@ public class FlareAlgorithmConfiguration {
     }
 
     @Bean
-    public Optional<Authenticator> createAuthenticator(
+    public Authenticator createAuthenticator(
         @Value("${flare.fhir.user}") String userName,
         @Value("${flare.fhir.password}") String password) {
         if(!userName.equals("") && !password.equals("")){
@@ -73,34 +74,19 @@ public class FlareAlgorithmConfiguration {
                         password.toCharArray());
                 }
             };
-            return Optional.of(auth);
+            return auth;
         }
-        return Optional.empty();
+        return null;
     }
 
     @Bean
-    public Executor executor( @Value("${flare.fhir.user}") String userName, @Value("${flare.fhir.password}") String password,
+    public Executor executor(@Nullable Authenticator auth,
         @Value("${flare.fhir.server}") String fhirBaseUri){
-
-        //Authenticator authenticator = auth.orElse(null);
-        Authenticator auth = null;
-        if(!userName.equals("") && !password.equals("")){
-                auth = new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(
-                        userName,
-                        password.toCharArray());
-                }
-            };
-        }
-
-        Authenticator authenticator = auth;
 
         return new FlareExecutor(new FhirRequestorConfig() {
             @Override
-            public Authenticator getAuthentication() {
-                return authenticator;
+            public Optional<Authenticator> getAuthentication() {
+                return Optional.ofNullable(auth);
             }
 
             @Override
