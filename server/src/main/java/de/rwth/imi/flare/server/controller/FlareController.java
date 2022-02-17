@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 @RestController
+@CrossOrigin
 @RequestMapping(value = "query")
 public class FlareController {
 
@@ -28,8 +29,8 @@ public class FlareController {
      * @param format Encoding, either I2B2 or CSQ
      */
 
-    @PostMapping(path = "/execute")
-    public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    @PostMapping(path = "/execute/{format}")
+    public ResponseEntity<String> executeQuery(@RequestBody String query, @PathVariable QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         try {
             int queryResponse = this.queryEval.evaluate(query, format);
             return ResponseEntity.ok().body(String.valueOf(queryResponse));
@@ -39,8 +40,9 @@ public class FlareController {
         }
     }
 
-    @PostMapping(path = "/translate")
-    public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) {
+    @PostMapping(path = "/translate/{format}")
+    public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @PathVariable QueryFormat format) {
+        
         try{
             List<List<List<String>>> translatedQuery = this.queryEval.translate(query, format);
             return ResponseEntity.ok().body(translatedQuery);

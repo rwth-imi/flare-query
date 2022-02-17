@@ -86,7 +86,6 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
     private void fetchNextPage(boolean sendPostRequest) throws IOException, InterruptedException, URISyntaxException {
-        System.out.println("Executing next URI: " + nextPageUri.toString());
         HttpRequest req = sendPostRequest ? buildPostRequest() : HttpRequest.newBuilder().uri(nextPageUri).GET().build();
         executeRequestAndProcessResponse(req);
     }

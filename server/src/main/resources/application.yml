@@ -13,3 +13,11 @@ flare:
 
 springdoc:
   packagesToScan: de.rwth.imi.flare.server.controller
+
+logging:
+  level:
+    root: ${LOG_LEVEL:warn}
+
+cors:
+  allowedOrigins:
+    - "*"

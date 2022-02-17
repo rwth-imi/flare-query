@@ -24,34 +24,65 @@ public class FlareResourceImpl implements FlareResource {
      */
     private void extractId() {
         ResourceType resourceType = this.underlyingFhirResource.getResourceType();
-        // TODO: Find a way to do map extractor methods to resource types that doesn't involve a switch statement
+
         switch (resourceType) {
             case Observation -> this.patientId = extractId((Observation) this.underlyingFhirResource);
             case Patient -> this.patientId = extractId((Patient) this.underlyingFhirResource);
             case Condition -> this.patientId = extractId((Condition) this.underlyingFhirResource);
             case Specimen -> this.patientId = extractId((Specimen) this.underlyingFhirResource);
             case Encounter -> this.patientId = extractId((Encounter) this.underlyingFhirResource);
+            case Procedure -> this.patientId = extractId((Procedure) this.underlyingFhirResource);
+            case MedicationAdministration -> this.patientId = extractId((MedicationAdministration) this.underlyingFhirResource);
+            case MedicationStatement -> this.patientId = extractId((MedicationStatement) this.underlyingFhirResource);
+            case Immunization -> this.patientId = extractId((Immunization) this.underlyingFhirResource);
+            case Consent -> this.patientId = extractId((Consent) this.underlyingFhirResource);
+            case DiagnosticReport -> this.patientId = extractId((DiagnosticReport) this.underlyingFhirResource);
+
         }
     }
 
     private String extractId(Specimen specimen) {
-        return specimen.getSubject().getReference().toString();
+        return specimen.getSubject().getReference();
     }
 
     private String extractId(Encounter encounter) {
-        return encounter.getSubject().getReference().toString();
+        return encounter.getSubject().getReference();
     }
 
     private String extractId(Condition condition) {
-        return condition.getSubject().getReference().toString();
+        return condition.getSubject().getReference();
     }
 
     private String extractId(Patient patient) {
-        return patient.getIdentifierFirstRep().getValue();
+        return patient.getId();
+    }
+
+    private String extractId(Procedure patient) {
+        return patient.getSubject().getReference();
     }
 
     private String extractId(Observation observation) {
-        return observation.getSubject().getReference().toString();
+        return observation.getSubject().getReference();
+    }
+
+    private String extractId(MedicationAdministration medicationAdministration) {
+        return medicationAdministration.getSubject().getReference();
+    }
+
+    private String extractId(MedicationStatement medicationStatement) {
+        return medicationStatement.getSubject().getReference();
+    }
+
+    private String extractId(Immunization immunization) {
+        return immunization.getPatient().getReference();
+    }
+
+    private String extractId(Consent consent) {
+        return consent.getPatient().getReference();
+    }
+
+    private String extractId(DiagnosticReport diagnosticReport) {
+        return diagnosticReport.getSubject().getReference();
     }
 
     @Override

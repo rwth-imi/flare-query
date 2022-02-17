@@ -76,8 +76,8 @@ public class QueryEvaluator {
     private FlareParser getParser(QueryFormat format) throws TransformerConfigurationException {
         FlareParser parser = null;
         switch (format) {
-            case CSQ -> parser = new ParserCSQ();
-            case I2B2 -> parser = new ParserI2B2();
+            case sq -> parser = new ParserCSQ();
+            case i2b2 -> parser = new ParserI2B2();
         }
         return parser;
     }
