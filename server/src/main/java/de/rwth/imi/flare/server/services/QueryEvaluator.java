@@ -45,7 +45,7 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public int evaluate(String query, QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public int evaluate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
         Query mappedQuery = mapQuery(parsedQuery);
         int queryResult = executeQuery(mappedQuery);
@@ -62,22 +62,22 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public List<List<List<String>>> translate(String query, QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public List<List<List<String>>> translate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
         Query mappedQuery = mapQuery(parsedQuery);
         return translateQuery(mappedQuery);
     }
 
 
-    private Query parseQuery(String query, QueryFormat format) throws IOException, TransformerConfigurationException {
+    private Query parseQuery(String query, String format) throws IOException, TransformerConfigurationException {
         FlareParser parser = getParser(format);
         return parser.parse(query);
     }
-    private FlareParser getParser(QueryFormat format) throws TransformerConfigurationException {
+    private FlareParser getParser(String format) throws TransformerConfigurationException {
         FlareParser parser = null;
         switch (format) {
-            case sq -> parser = new ParserCSQ();
-            case i2b2 -> parser = new ParserI2B2();
+            case "application/sq+json" -> parser = new ParserCSQ();
+            case "text/i2b2" -> parser = new ParserI2B2();
         }
         return parser;
     }
