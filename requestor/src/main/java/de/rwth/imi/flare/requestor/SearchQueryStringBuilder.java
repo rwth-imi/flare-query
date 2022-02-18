@@ -55,6 +55,12 @@ public class SearchQueryStringBuilder {
             this.sb.append(urlEncodeAndReset(sbTmp));
         }
 
+        if(this.criterion.getMapping().getFhirResourceType().equals("Consent")){
+            ValueFilter valueFilter = this.criterion.getValueFilter();
+            this.sb.append('$').append(concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
+            return;
+        }
+
         if(this.criterion.getValueFilter() != null){
             if( mappings.getTermCodeSearchParameter()!= null){
                 this.sb.append(("&"));
@@ -235,7 +241,11 @@ public class SearchQueryStringBuilder {
         String pipe = "|";
         for(TerminologyCode value : termCodes){
             String encodedTerminologyString;
-            if(value.getSystem().equals("")){
+
+            if(this.criterion.getMapping().getValueTypeFhir() != null &&
+                this.criterion.getMapping().getValueTypeFhir().equals("code")){
+                encodedTerminologyString = urlEncode(value.getCode());
+            } else if(value.getSystem().equals("")){
                 //pipe is not needed if there is no system to be specified in the FHIR URL
                 encodedTerminologyString = urlEncode(value.getCode());
             } else {

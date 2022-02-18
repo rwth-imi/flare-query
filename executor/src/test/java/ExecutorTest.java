@@ -33,7 +33,7 @@ public class ExecutorTest
     private Query buildQuery() {
         List<TerminologyCode> female_terminology = Arrays.asList(new TerminologyCode("76689-9", "http://loinc.org", "Sex assigned at birth"));
         ValueFilter female_filter = new ValueFilter(null, List.of(new TerminologyCode("female", "http://hl7.org/fhir/administrative-gender", "Female")), null, null , null, null, null);
-        MappingEntry mapping = new MappingEntry("Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
+        MappingEntry mapping = new MappingEntry(null, "Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
         Criterion criterion1 = new Criterion(female_terminology, female_filter, mapping, null, null);
         CriteriaGroup criteriaGroup1 = new CriteriaGroup(List.of(criterion1));
 
