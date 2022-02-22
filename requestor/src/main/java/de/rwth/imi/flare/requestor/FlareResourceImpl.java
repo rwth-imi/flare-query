@@ -37,52 +37,52 @@ public class FlareResourceImpl implements FlareResource {
             case Immunization -> this.patientId = extractId((Immunization) this.underlyingFhirResource);
             case Consent -> this.patientId = extractId((Consent) this.underlyingFhirResource);
             case DiagnosticReport -> this.patientId = extractId((DiagnosticReport) this.underlyingFhirResource);
-
         }
+
     }
 
-    private String extractId(Specimen specimen) {
-        return specimen.getSubject().getReference();
+    private String extractId(Specimen resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Encounter encounter) {
-        return encounter.getSubject().getReference();
+    private String extractId(Encounter resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Condition condition) {
-        return condition.getSubject().getReference();
+    private String extractId(Condition resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
     private String extractId(Patient patient) {
-        return patient.getId();
+        return patient.getIdElement().getIdPart();
     }
 
-    private String extractId(Procedure patient) {
-        return patient.getSubject().getReference();
+    private String extractId(Procedure resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Observation observation) {
-        return observation.getSubject().getReference();
+    private String extractId(Observation resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(MedicationAdministration medicationAdministration) {
-        return medicationAdministration.getSubject().getReference();
+    private String extractId(MedicationAdministration resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(MedicationStatement medicationStatement) {
-        return medicationStatement.getSubject().getReference();
+    private String extractId(MedicationStatement resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Immunization immunization) {
-        return immunization.getPatient().getReference();
+    private String extractId(Immunization resource) {
+        return resource.getPatient().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Consent consent) {
-        return consent.getPatient().getReference();
+    private String extractId(Consent resource) {
+        return resource.getPatient().getReferenceElement().getIdPart();
     }
 
-    private String extractId(DiagnosticReport diagnosticReport) {
-        return diagnosticReport.getSubject().getReference();
+    private String extractId(DiagnosticReport resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
     @Override
