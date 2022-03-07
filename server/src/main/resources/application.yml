@@ -10,6 +10,7 @@ flare:
     server: ${FLARE_FHIR_SERVER_URL:http://fhir-server:8080/fhir/}
     user: ${FLARE_FHIR_USER:}
     password: ${FLARE_FHIR_PW:}
+    pagecount: ${FLARE_FHIR_PAGE_COUNT:}
 
 springdoc:
   packagesToScan: de.rwth.imi.flare.server.controller

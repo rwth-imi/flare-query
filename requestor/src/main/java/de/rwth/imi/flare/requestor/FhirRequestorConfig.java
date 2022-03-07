@@ -20,4 +20,12 @@ public interface FhirRequestorConfig {
      * would return the Patient with ID 1
      */
     URI getBaseURI();
+
+
+    /**
+     *
+     * @return String setting the number of resources per page
+     *
+     */
+    String getPageCount();
 }

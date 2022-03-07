@@ -8,9 +8,12 @@ import java.util.Optional;
 
 public class AuthlessRequestorConfig implements FhirRequestorConfig{
     private final URI baseURI;
+    private final String pagecount;
 
-    public AuthlessRequestorConfig(URI baseUri){
+    public AuthlessRequestorConfig(URI baseUri, String pagecount){
         this.baseURI = baseUri;
+        this.pagecount = pagecount;
+
     }
 
     @Override
@@ -21,5 +24,10 @@ public class AuthlessRequestorConfig implements FhirRequestorConfig{
     @Override
     public URI getBaseURI() {
         return this.baseURI;
+    }
+
+    @Override
+    public String getPageCount() {
+        return this.pagecount;
     }
 }

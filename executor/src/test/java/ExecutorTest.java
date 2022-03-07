@@ -19,7 +19,7 @@ public class ExecutorTest
     FlareExecutor executor;
 
     public ExecutorTest() throws URISyntaxException {
-        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"));
+        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50");
         executor = new FlareExecutor(config);
     }
 

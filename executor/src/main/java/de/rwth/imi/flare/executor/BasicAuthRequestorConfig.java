@@ -44,4 +44,13 @@ public class BasicAuthRequestorConfig implements FhirRequestorConfig {
             }
         };
     }
+
+    /**
+     * Creates a basic Authenticator
+     * @return Authenticator containing credentials for the FHIR server
+     */
+    @NotNull
+    public String getPageCount() {
+        return "500";
+    }
 }

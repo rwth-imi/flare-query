@@ -60,6 +60,9 @@ class CLI implements Callable<Integer> {
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
     private QueryFormat algorithm = QueryFormat.I2B2;
 
+    @Option(names = {"-c", "pagecount"}, description = "Number of resources per page as result from fhir server")
+    private String pagecount = "";
+
     private Executor executor;
 
     private final FhirResourceMapper mapping;
@@ -116,6 +119,12 @@ class CLI implements Callable<Integer> {
                 }
                 return uri;
             }
+
+            @Override
+            public String getPageCount() {
+                return pagecount;
+            }
+
         });
     }
 

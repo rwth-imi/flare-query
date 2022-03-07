@@ -81,7 +81,7 @@ public class FlareAlgorithmConfiguration {
 
     @Bean
     public Executor executor(@Nullable Authenticator auth,
-        @Value("${flare.fhir.server}") String fhirBaseUri){
+        @Value("${flare.fhir.server}") String fhirBaseUri,@Value("${flare.fhir.pagecount}") String fhirSearchPageCount ){
 
         return new FlareExecutor(new FhirRequestorConfig() {
             @Override
@@ -98,6 +98,11 @@ public class FlareAlgorithmConfiguration {
                     e.printStackTrace();
                 }
                 return uri;
+            }
+
+            @Override
+            public String getPageCount() {
+                return fhirSearchPageCount;
             }
         });
     }
