@@ -106,8 +106,6 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
             query = query + "&_count=" + this.pagecount;
         }
 
-        System.out.println(query);
-
         return HttpRequest.newBuilder(
                         URI.create(uri))
                 .header("Prefer", "handling=strict")
