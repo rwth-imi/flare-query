@@ -45,11 +45,10 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public int evaluate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public CompletableFuture<Integer> evaluate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
         Query mappedQuery = mapQuery(parsedQuery);
-        int queryResult = executeQuery(mappedQuery);
-        return queryResult;
+        return executeQuery(mappedQuery);
     }
 
     /**
@@ -92,9 +91,8 @@ public class QueryEvaluator {
         return mappedQuery;
     }
 
-    private int executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
-        CompletableFuture<Integer> integerCompletableFuture = this.executor.calculatePatientCount(mappedQuery);
-        return integerCompletableFuture.get();
+    private CompletableFuture<Integer> executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
+        return this.executor.calculatePatientCount(mappedQuery);
     }
 
     /**

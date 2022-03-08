@@ -3,6 +3,7 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -19,7 +20,7 @@ public class ExecutorTest
     FlareExecutor executor;
 
     public ExecutorTest() throws URISyntaxException {
-        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50");
+        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50", new FlareThreadPoolConfig(4,16,10));
         executor = new FlareExecutor(config);
     }
 

@@ -28,4 +28,12 @@ public interface FhirRequestorConfig {
      *
      */
     String getPageCount();
+
+
+    /**
+     *
+     * @return FlareThradPoolConfig, setting the configuration of the thread pool
+     * used by Flare
+     */
+     FlareThreadPoolConfig getThreadPoolConfig();
 }

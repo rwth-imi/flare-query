@@ -1,10 +1,8 @@
 package de.rwth.imi.flare.server.controller;
 
-import de.rwth.imi.flare.server.QueryFormat;
 import de.rwth.imi.flare.server.services.QueryEvaluator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,9 +29,10 @@ public class FlareController {
 
     @PostMapping(path = "/execute")
     public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Content-Type") String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+
         try {
-            int queryResponse = this.queryEval.evaluate(query, format);
-            return ResponseEntity.ok().body(String.valueOf(queryResponse));
+            var queryResponse = this.queryEval.evaluate(query, format);
+            return ResponseEntity.ok().body(String.valueOf(queryResponse.get()));
         }
         catch (NoSuchElementException e){
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -12,6 +12,7 @@ import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,9 @@ public class FlareAlgorithmConfiguration {
 
     @Bean
     public Executor executor(@Nullable Authenticator auth,
-        @Value("${flare.fhir.server}") String fhirBaseUri,@Value("${flare.fhir.pagecount}") String fhirSearchPageCount ){
+        @Value("${flare.fhir.server}") String fhirBaseUri,@Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
+                @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
+                @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds){
 
         return new FlareExecutor(new FhirRequestorConfig() {
             @Override
@@ -103,6 +106,11 @@ public class FlareAlgorithmConfiguration {
             @Override
             public String getPageCount() {
                 return fhirSearchPageCount;
+            }
+
+            @Override
+            public FlareThreadPoolConfig getThreadPoolConfig() {
+                return new FlareThreadPoolConfig(corePoolSize,maxPoolSize,keepAliveTimeSeconds);
             }
         });
     }

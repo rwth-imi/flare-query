@@ -13,6 +13,7 @@ import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,6 +124,11 @@ class CLI implements Callable<Integer> {
             @Override
             public String getPageCount() {
                 return pagecount;
+            }
+
+            @Override
+            public FlareThreadPoolConfig getThreadPoolConfig() {
+                return new FlareThreadPoolConfig(4,16,10);
             }
 
         });
