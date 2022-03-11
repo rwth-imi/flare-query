@@ -45,11 +45,10 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public int evaluate(String query, QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public CompletableFuture<Integer> evaluate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
         Query mappedQuery = mapQuery(parsedQuery);
-        int queryResult = executeQuery(mappedQuery);
-        return queryResult;
+        return executeQuery(mappedQuery);
     }
 
     /**
@@ -62,22 +61,22 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public List<List<List<String>>> translate(String query, QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public List<List<List<String>>> translate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
         Query mappedQuery = mapQuery(parsedQuery);
         return translateQuery(mappedQuery);
     }
 
 
-    private Query parseQuery(String query, QueryFormat format) throws IOException, TransformerConfigurationException {
+    private Query parseQuery(String query, String format) throws IOException, TransformerConfigurationException {
         FlareParser parser = getParser(format);
         return parser.parse(query);
     }
-    private FlareParser getParser(QueryFormat format) throws TransformerConfigurationException {
+    private FlareParser getParser(String format) throws TransformerConfigurationException {
         FlareParser parser = null;
         switch (format) {
-            case CSQ -> parser = new ParserCSQ();
-            case I2B2 -> parser = new ParserI2B2();
+            case "application/sq+json" -> parser = new ParserCSQ();
+            case "text/i2b2" -> parser = new ParserI2B2();
         }
         return parser;
     }
@@ -92,9 +91,8 @@ public class QueryEvaluator {
         return mappedQuery;
     }
 
-    private int executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
-        CompletableFuture<Integer> integerCompletableFuture = this.executor.calculatePatientCount(mappedQuery);
-        return integerCompletableFuture.get();
+    private CompletableFuture<Integer> executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
+        return this.executor.calculatePatientCount(mappedQuery);
     }
 
     /**

@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MappingEntry {
+    private String valueTypeFhir;
     private String fhirResourceType;
     private String termCodeSearchParameter;
     private String valueSearchParameter;

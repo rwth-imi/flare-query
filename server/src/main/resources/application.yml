@@ -1,0 +1,28 @@
+app:
+  mappingsFile: ${MAPPINGS_FILE:/opt/flare/ontology/codex-term-code-mapping.json}
+  conceptTreeFile: ${CONCEPT_TREE_FILE:/opt/flare/ontology/codex-code-tree.json}
+
+server:
+  port: ${FLARE_SERVER_PORT:8080}
+
+flare:
+  fhir:
+    server: ${FLARE_FHIR_SERVER_URL:http://fhir-server:8080/fhir/}
+    user: ${FLARE_FHIR_USER:}
+    password: ${FLARE_FHIR_PW:}
+    pagecount: ${FLARE_FHIR_PAGE_COUNT:}
+  exec:
+    corePoolSize: ${FLARE_EXEC_CORE_POOL_SIZE:4}
+    maxPoolSize: ${FLARE_EXEC_MAX_POOL_SIZE:16}
+    keepAliveTimeSeconds: ${FLARE_EXEC_KEEP_ALIVE_TIME_SECONDS:10}
+
+springdoc:
+  packagesToScan: de.rwth.imi.flare.server.controller
+
+logging:
+  level:
+    root: ${LOG_LEVEL:warn}
+
+cors:
+  allowedOrigins:
+    - "*"

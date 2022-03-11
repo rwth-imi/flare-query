@@ -62,7 +62,7 @@ public class Test
 
     public static Criterion createCriterion(){
         Criterion criterion = new Criterion();
-        criterion.setTermCode(createTermCode());
+        criterion.setTermCodes(createTermCode());
         criterion.setValueFilter(createFilter());
         return criterion;
     }

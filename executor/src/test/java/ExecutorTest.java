@@ -3,6 +3,7 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -19,7 +20,7 @@ public class ExecutorTest
     FlareExecutor executor;
 
     public ExecutorTest() throws URISyntaxException {
-        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"));
+        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50", new FlareThreadPoolConfig(4,16,10));
         executor = new FlareExecutor(config);
     }
 
@@ -32,8 +33,8 @@ public class ExecutorTest
 
     private Query buildQuery() {
         List<TerminologyCode> female_terminology = Arrays.asList(new TerminologyCode("76689-9", "http://loinc.org", "Sex assigned at birth"));
-        ValueFilter female_filter = new ValueFilter(null, List.of(new TerminologyCode("female", "http://hl7.org/fhir/administrative-gender", "Female")), null, null , null, null, null);
-        MappingEntry mapping = new MappingEntry("Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
+        ValueFilter female_filter = new ValueFilter(FilterType.CONCEPT, List.of(new TerminologyCode("female", "http://hl7.org/fhir/administrative-gender", "Female")), null, null , null, null, null);
+        MappingEntry mapping = new MappingEntry(null, "Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
         Criterion criterion1 = new Criterion(female_terminology, female_filter, mapping, null, null);
         CriteriaGroup criteriaGroup1 = new CriteriaGroup(List.of(criterion1));
 

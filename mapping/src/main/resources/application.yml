@@ -1,0 +1,3 @@
+app:
+  mappingsFile: ${MAPPINGS_FILE:/opt/flare/ontology/codex-term-code-mapping.json}
+  conceptTreeFile: ${CONCEPT_TREE_FILE:/opt/flare/ontology/codex-code-tree.json}

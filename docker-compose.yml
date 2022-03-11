@@ -2,23 +2,15 @@ version: "3.7"
 
 services:
   fhir-server:
-    container_name: fhir-server
     image: "ghcr.io/num-codex/blaze:0.14"
     environment:
       BASE_URL: "http://fhir-server:8080"
       JAVA_TOOL_OPTIONS: "-Xmx4g"
       LOG_LEVEL: debug
     ports:
-      - ${PORT_BLAZE_FHIR:-127.0.0.1:8080}:8080
+      - ${PORT_BLAZE_FHIR:-127.0.0.1:8082}:8080
     volumes:
       - "blaze-data:/app/data"
-
-  db:
-    image: postgres:12.6-alpine
-    restart: always
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: fhir
 
   flare:
     build:
@@ -26,6 +18,12 @@ services:
       context: .
     ports:
       - "8081:8080"
+    environment:
+      MAPPINGS_FILE: ${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/flare/ontology}/codex-term-code-mapping.json
+      CONCEPT_TREE_FILE: ${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/flare/ontology}/codex-code-tree.json
+    volumes:
+      - ${FLARE_LOCAL_CONCEPT_TREE_PATH:-./ontology/codex-code-tree.json}:${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/flare/ontology}/codex-code-tree.json
+      - ${FLARE_LOCAL_TERM_CODE_MAPPING_PATH:-./ontology/codex-term-code-mapping.json}:${FLARE_ONTOLOGY_FILES_FOLDER:-/opt/flare/ontology}/codex-term-code-mapping.json
 
 volumes:
   blaze-data:

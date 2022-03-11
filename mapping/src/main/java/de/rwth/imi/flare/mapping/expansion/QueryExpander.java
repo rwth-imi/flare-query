@@ -1,41 +1,32 @@
 package de.rwth.imi.flare.mapping.expansion;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.google.common.collect.Sets;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.api.model.TerminologyCode;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class QueryExpander {
     private ExpansionTreeNode expansionTree;
 
-    public QueryExpander(InputStream expansionTreeStream) throws IOException {
-        loadTree(expansionTreeStream);
-    }
 
-    public QueryExpander() throws IOException {
-        InputStream expansionTreeStream = this.getClass().getClassLoader().getResourceAsStream("codex-code-tree.json");
-        loadTree(expansionTreeStream);
-    }
-
-    private void loadTree(InputStream expansionTreeStream) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        expansionTree = objectMapper.readValue(expansionTreeStream, new TypeReference<>() {});
+    public QueryExpander(ExpansionTreeNode expansionTree) throws IOException {
+        this.expansionTree = expansionTree;
     }
 
     private List<Criterion> expandCriterion(Criterion criterion){
 
-        List<TerminologyCode> termCodes = criterion.getTermCode();
+        List<TerminologyCode> termCodes = criterion.getTermCodes();
         List<Criterion> expandedCriteria = new ArrayList<>();
         for(TerminologyCode singleTermCode: termCodes){
             // Find the given criterion in the tree
@@ -58,7 +49,7 @@ public class QueryExpander {
             for(ExpansionTreeNode expandedLeaf : expansionTreeLeaves){
 
                 TerminologyCode newTermCode = expandedLeaf.getTermCode();
-                Criterion leafCriterion = criterionBuilder.termCode(Arrays.asList(newTermCode)).build();
+                Criterion leafCriterion = criterionBuilder.termCodes(Arrays.asList(newTermCode)).build();
                 expandedCriteria.add(leafCriterion);
             }
         }
@@ -71,7 +62,7 @@ public class QueryExpander {
         List<CriteriaGroup> expandedInclusionCriteria = query.getInclusionCriteria();
         expandedExclusionCriteria = expandedExclusionCriteria == null ? new ArrayList<>() : expandedExclusionCriteria;
         expandedInclusionCriteria = expandedInclusionCriteria == null ? new ArrayList<>() : expandedInclusionCriteria;
-        query.setExclusionCriteria(expandCriteriaGroups(expandedExclusionCriteria));
+        query.setExclusionCriteria(expandCriteriaGroupsExcl(expandedExclusionCriteria));
         query.setInclusionCriteria(expandCriteriaGroups(expandedInclusionCriteria));
     }
 
@@ -92,5 +83,36 @@ public class QueryExpander {
             expandedCriteria.addAll(expandedCriterion);
         }
         return expandedCriteriaGroup;
+    }
+
+    public List<CriteriaGroup> expandCriteriaGroupsExcl(List<CriteriaGroup> criteriaGroups){
+        List<CriteriaGroup> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
+
+        LinkedList<Set<Criterion>> tmpList  = new LinkedList<>();
+        for(CriteriaGroup subgroup: criteriaGroups){
+            tmpList.addAll(expandCriteriaGroupExcl(subgroup));
+        }
+
+        Set<List<Criterion>> productList = Sets.cartesianProduct(tmpList);
+
+        for (List<Criterion> criterionList : productList) {
+
+            if(criterionList.size() > 0) {
+                expandedCriteriaGroups.add(new CriteriaGroup(criterionList));
+            }
+        }
+
+        return expandedCriteriaGroups;
+    }
+
+    private LinkedList<Set<Criterion>> expandCriteriaGroupExcl(CriteriaGroup originalCriteriaGroup) {
+        LinkedList<Set<Criterion>> tmpList = new LinkedList<>();
+        for(Criterion criterion : originalCriteriaGroup.getCriteria()) {
+            Set<Criterion> expandedCriterion = new HashSet<>(expandCriterion(criterion));
+            tmpList.add(expandedCriterion);
+        }
+
+        return tmpList;
+
     }
 }

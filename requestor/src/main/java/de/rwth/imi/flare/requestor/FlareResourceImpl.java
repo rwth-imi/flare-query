@@ -24,34 +24,65 @@ public class FlareResourceImpl implements FlareResource {
      */
     private void extractId() {
         ResourceType resourceType = this.underlyingFhirResource.getResourceType();
-        // TODO: Find a way to do map extractor methods to resource types that doesn't involve a switch statement
+
         switch (resourceType) {
             case Observation -> this.patientId = extractId((Observation) this.underlyingFhirResource);
             case Patient -> this.patientId = extractId((Patient) this.underlyingFhirResource);
             case Condition -> this.patientId = extractId((Condition) this.underlyingFhirResource);
             case Specimen -> this.patientId = extractId((Specimen) this.underlyingFhirResource);
             case Encounter -> this.patientId = extractId((Encounter) this.underlyingFhirResource);
+            case Procedure -> this.patientId = extractId((Procedure) this.underlyingFhirResource);
+            case MedicationAdministration -> this.patientId = extractId((MedicationAdministration) this.underlyingFhirResource);
+            case MedicationStatement -> this.patientId = extractId((MedicationStatement) this.underlyingFhirResource);
+            case Immunization -> this.patientId = extractId((Immunization) this.underlyingFhirResource);
+            case Consent -> this.patientId = extractId((Consent) this.underlyingFhirResource);
+            case DiagnosticReport -> this.patientId = extractId((DiagnosticReport) this.underlyingFhirResource);
         }
+
     }
 
-    private String extractId(Specimen specimen) {
-        return specimen.getSubject().getReference().toString();
+    private String extractId(Specimen resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Encounter encounter) {
-        return encounter.getSubject().getReference().toString();
+    private String extractId(Encounter resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
-    private String extractId(Condition condition) {
-        return condition.getSubject().getReference().toString();
+    private String extractId(Condition resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
     private String extractId(Patient patient) {
-        return patient.getIdentifierFirstRep().getValue();
+        return patient.getIdElement().getIdPart();
     }
 
-    private String extractId(Observation observation) {
-        return observation.getSubject().getReference().toString();
+    private String extractId(Procedure resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
+    }
+
+    private String extractId(Observation resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
+    }
+
+    private String extractId(MedicationAdministration resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
+    }
+
+    private String extractId(MedicationStatement resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
+    }
+
+    private String extractId(Immunization resource) {
+        return resource.getPatient().getReferenceElement().getIdPart();
+    }
+
+    private String extractId(Consent resource) {
+        return resource.getPatient().getReferenceElement().getIdPart();
+    }
+
+    private String extractId(DiagnosticReport resource) {
+        return resource.getSubject().getReferenceElement().getIdPart();
     }
 
     @Override

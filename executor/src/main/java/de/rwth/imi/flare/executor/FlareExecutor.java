@@ -7,6 +7,7 @@ import de.rwth.imi.flare.api.model.Query;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
+import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -30,7 +31,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
 
     public FlareExecutor(FhirRequestorConfig config){
         this.config = config;
-        this.futureExecutor = new ThreadPoolExecutor(4, 16, 10,
+        FlareThreadPoolConfig poolConfig =  this.config.getThreadPoolConfig();
+        this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
                 TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
 

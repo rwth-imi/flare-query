@@ -7066,12 +7066,7 @@
       "encounter": {
         "reference": "Encounter/68b157940b50eb031e94379dbbc96f0c"
       },
-      "_effectiveDateTime": {
-        "extension": [ {
-          "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
-          "valueCode": "unknown"
-        } ]
-      },
+      "effectiveDateTime": "2021-06-01T13:06:06+13:00",
       "valueQuantity": {
         "value": 8.5,
         "unit": "g/dL",

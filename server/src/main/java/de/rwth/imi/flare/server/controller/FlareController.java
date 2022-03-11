@@ -1,10 +1,8 @@
 package de.rwth.imi.flare.server.controller;
 
-import de.rwth.imi.flare.server.QueryFormat;
 import de.rwth.imi.flare.server.services.QueryEvaluator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 @RestController
+@CrossOrigin
 @RequestMapping(value = "query")
 public class FlareController {
 
@@ -29,10 +28,11 @@ public class FlareController {
      */
 
     @PostMapping(path = "/execute")
-    public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Content-Type") String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+
         try {
-            int queryResponse = this.queryEval.evaluate(query, format);
-            return ResponseEntity.ok().body(String.valueOf(queryResponse));
+            var queryResponse = this.queryEval.evaluate(query, format);
+            return ResponseEntity.ok().body(String.valueOf(queryResponse.get()));
         }
         catch (NoSuchElementException e){
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -40,7 +40,8 @@ public class FlareController {
     }
 
     @PostMapping(path = "/translate")
-    public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @RequestHeader("Accept-Encoding") QueryFormat format) {
+    public ResponseEntity<List<List<List<String>>>> translateQuery(@RequestBody String query, @RequestHeader("Content-Type") String format) {
+        
         try{
             List<List<List<String>>> translatedQuery = this.queryEval.translate(query, format);
             return ResponseEntity.ok().body(translatedQuery);

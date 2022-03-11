@@ -28,13 +28,22 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
     private final HttpClient client;
     // Parses only JSON FHIR responses
     private final IParser fhirParser;
+    private final String pagecount;
 
-    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth){
+    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount){
         this.nextPageUri = fhirRequestUrl;
-        if(auth != null)
-            this.client = HttpClient.newBuilder().authenticator(auth).build();
-        else
-            this.client = HttpClient.newBuilder().build();
+        this.client = HttpClient.newBuilder().authenticator(auth).build();
+        this.pagecount = pagecount;
+        this.fhirParser = FhirContext.forR4().newJsonParser();
+        this.remainingPageResults = new LinkedBlockingDeque<>();
+        // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
+        this.ensureStackFullness(true);
+    }
+
+    public FhirSearchRequest(URI fhirRequestUrl, String pagecount){
+        this.nextPageUri = fhirRequestUrl;
+        this.client = HttpClient.newBuilder().build();
+        this.pagecount = pagecount;
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
@@ -80,7 +89,6 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
     private void fetchNextPage(boolean sendPostRequest) throws IOException, InterruptedException, URISyntaxException {
-        System.out.println("Executing next URI: " + nextPageUri.toString());
         HttpRequest req = sendPostRequest ? buildPostRequest() : HttpRequest.newBuilder().uri(nextPageUri).GET().build();
         executeRequestAndProcessResponse(req);
     }
@@ -93,6 +101,10 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
     private HttpRequest buildPostRequest(){
         String uri = this.nextPageUri.getScheme() + "://" + this.nextPageUri.getAuthority() + this.nextPageUri.getPath() + "/_search";
         String query = this.nextPageUri.getQuery();
+
+        if ( ! this.pagecount.isEmpty()){
+            query = query + "&_count=" + this.pagecount;
+        }
 
         return HttpRequest.newBuilder(
                         URI.create(uri))

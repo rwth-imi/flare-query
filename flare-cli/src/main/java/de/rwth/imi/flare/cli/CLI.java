@@ -1,11 +1,23 @@
 package de.rwth.imi.flare.cli;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.api.model.Query;
+import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
+import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
+import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
+import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -49,22 +61,52 @@ class CLI implements Callable<Integer> {
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
     private QueryFormat algorithm = QueryFormat.I2B2;
 
+    @Option(names = {"-c", "pagecount"}, description = "Number of resources per page as result from fhir server")
+    private String pagecount = "";
+
     private Executor executor;
 
     private final FhirResourceMapper mapping;
 
     private FlareParser parser;
 
-    public CLI() throws IOException {
+    public CLI(FhirResourceMapper mapper) throws IOException {
         createExecutor();
-        mapping = new NaiveLookupMapping();
+        mapping = mapper;
+    }
+
+    public static Map<TerminologyCode, SourceMappingEntry> loadMappingFile()
+        throws IOException {
+
+        var lookupTable = new HashMap<TerminologyCode, SourceMappingEntry>();
+        ObjectMapper objectMapper = new ObjectMapper().configure(
+            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        List<SourceMappingEntry> sourceMappingEntries = objectMapper.readValue(new File("ontology/codex-term-code-mapping.json"), new TypeReference<>() {});
+        sourceMappingEntries.forEach(sourceMappingEntry -> lookupTable.put(sourceMappingEntry.getKey(), sourceMappingEntry));
+        return lookupTable;
+    }
+
+    public static ExpansionTreeNode loadExpansionTree()
+        throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return objectMapper.readValue(new File("ontology/codex-code-tree.json"), new TypeReference<>() {});
+    }
+
+    public static QueryExpander expander() throws IOException {
+        return new QueryExpander(loadExpansionTree());
+    }
+
+
+    public static FhirResourceMapper mapper() throws IOException {
+        return new NaiveLookupMapping(loadMappingFile(), expander());
     }
 
     private void createExecutor() {
-        Authenticator auth = createAuthenticator();
+        Optional<Authenticator> auth = Optional.ofNullable(createAuthenticator());
         executor = new FlareExecutor(new FhirRequestorConfig() {
             @Override
-            public Authenticator getAuthentication() {
+            public Optional<Authenticator> getAuthentication() {
                 return auth;
             }
 
@@ -78,6 +120,17 @@ class CLI implements Callable<Integer> {
                 }
                 return uri;
             }
+
+            @Override
+            public String getPageCount() {
+                return pagecount;
+            }
+
+            @Override
+            public FlareThreadPoolConfig getThreadPoolConfig() {
+                return new FlareThreadPoolConfig(4,16,10);
+            }
+
         });
     }
 
@@ -153,7 +206,7 @@ class CLI implements Callable<Integer> {
     }
 
     public static void main(String[] args) throws IOException {
-        int exitCode = new CommandLine(new CLI()).execute(args);
+        int exitCode = new CommandLine(new CLI(mapper())).execute(args);
         System.exit(exitCode);
     }
 }

@@ -36,7 +36,10 @@ public class ExpansionTreeNode {
 
         while(!encounteredNodes.isEmpty()){
             ExpansionTreeNode currentNode = encounteredNodes.poll();
-            encounteredNodes.addAll(currentNode.children);
+
+            if(currentNode.children != null) {
+                encounteredNodes.addAll(currentNode.children);
+            }
 
             if(abortSearchPredicate.test(currentNode)){
                 return currentNode;
