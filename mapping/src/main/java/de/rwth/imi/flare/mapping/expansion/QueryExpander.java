@@ -88,20 +88,18 @@ public class QueryExpander {
     public List<CriteriaGroup> expandCriteriaGroupsExcl(List<CriteriaGroup> criteriaGroups){
         List<CriteriaGroup> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
 
-        LinkedList<Set<Criterion>> tmpList  = new LinkedList<>();
+        Set<List<Criterion>> tmpList =  new HashSet<>();
         for(CriteriaGroup subgroup: criteriaGroups){
-            tmpList.addAll(expandCriteriaGroupExcl(subgroup));
+            LinkedList<Set<Criterion>> criteriaGroup = expandCriteriaGroupExcl(subgroup);
+            Set<List<Criterion>> set = Sets.cartesianProduct(criteriaGroup);
+                tmpList.addAll(set);
         }
-
-        Set<List<Criterion>> productList = Sets.cartesianProduct(tmpList);
-
-        for (List<Criterion> criterionList : productList) {
+        for (List<Criterion> criterionList : tmpList) {
 
             if(criterionList.size() > 0) {
                 expandedCriteriaGroups.add(new CriteriaGroup(criterionList));
             }
         }
-
         return expandedCriteriaGroups;
     }
 
