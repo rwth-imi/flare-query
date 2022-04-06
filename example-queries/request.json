@@ -3,7 +3,7 @@
   "inclusionCriteria": [
     [
       {
-        "termCode": [{
+        "termCodes": [{
           "code": "J45.9",
           "system": "http://fhir.de/CodeSystem/dimdi/icd-10-gm",
           "version": "v1",
