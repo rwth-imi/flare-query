@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.FhirResourceMapper;
-import de.rwth.imi.flare.api.model.CriteriaGroup;
-import de.rwth.imi.flare.api.model.Criterion;
-import de.rwth.imi.flare.api.model.Query;
-import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 
@@ -56,11 +53,13 @@ public class NaiveLookupMapping implements FhirResourceMapper {
     */
 
     @Override
-    public CompletableFuture<Query> mapResources(Query query) {
-        queryExpander.expandQuery(query);
-        this.mapCriterionGroup(query.getExclusionCriteria());
-        this.mapCriterionGroup(query.getInclusionCriteria());
-        return CompletableFuture.completedFuture(query);
+    public CompletableFuture<QueryExpanded> mapResources(Query query) {
+        QueryExpanded queryExpanded = queryExpander.expandQuery(query);
+        for (List<CriteriaGroup> criteriaGroups: queryExpanded.getExclusionCriteria()){
+            this.mapCriterionGroup(criteriaGroups);
+        }
+        this.mapCriterionGroup(queryExpanded.getInclusionCriteria());
+        return CompletableFuture.completedFuture(queryExpanded);
     }
 
     private void mapCriterionGroup(List<CriteriaGroup> criterionGroup) {

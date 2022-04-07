@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.api;
 
 import de.rwth.imi.flare.api.model.Query;
+import de.rwth.imi.flare.api.model.QueryExpanded;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import java.util.concurrent.CompletableFuture;
@@ -19,5 +20,5 @@ public interface FhirResourceMapper
      * @param query Freshly parsed {@link Query} still missing information required to actually execute it
      * @return {@link Query} that is ready to be executed by the {@link Executor}
      */
-    CompletableFuture<Query> mapResources(Query query);
+    CompletableFuture<QueryExpanded> mapResources(Query query);
 }

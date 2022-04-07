@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,12 +27,12 @@ public class ExecutorTest
 
     @Test
     public void testExecutor() throws ExecutionException, InterruptedException {
-        Query query = buildQuery();
+        QueryExpanded query = buildQuery();
         CompletableFuture<Integer> calc = executor.calculatePatientCount(query);
         System.out.printf("found %d values", calc.get());
     }
 
-    private Query buildQuery() {
+    private QueryExpanded buildQuery() {
         List<TerminologyCode> female_terminology = Arrays.asList(new TerminologyCode("76689-9", "http://loinc.org", "Sex assigned at birth"));
         ValueFilter female_filter = new ValueFilter(FilterType.CONCEPT, List.of(new TerminologyCode("female", "http://hl7.org/fhir/administrative-gender", "Female")), null, null , null, null, null);
         MappingEntry mapping = new MappingEntry(null, "Observation","code", "value-concept", new ArrayList<>(), "", new ArrayList<>());
@@ -41,6 +42,24 @@ public class ExecutorTest
         Query expectedResult = new Query();
         expectedResult.setInclusionCriteria(List.of(criteriaGroup1));
         expectedResult.setExclusionCriteria(new ArrayList<>());
-        return expectedResult;
+
+        QueryExpanded parsedQuery = new QueryExpanded();
+        // TODO: specific init needed?
+        parsedQuery.setInclusionCriteria(expectedResult.getInclusionCriteria());
+        List<List<CriteriaGroup>> exclusionCriteria = new LinkedList<>();
+        for(CriteriaGroup criteriaGroup: expectedResult.getExclusionCriteria()){
+            List<CriteriaGroup> subCriteria = new LinkedList<>();
+            for(Criterion criterion: criteriaGroup.getCriteria()){
+                CriteriaGroup newGroup = new CriteriaGroup();
+                List<Criterion> criteria = new LinkedList<>();
+                criteria.add(criterion);
+                newGroup.setCriteria(criteria);
+                subCriteria.add(newGroup);
+            }
+            exclusionCriteria.add(subCriteria);
+        }
+        parsedQuery.setExclusionCriteria(exclusionCriteria);
+
+        return parsedQuery;
     }
 }

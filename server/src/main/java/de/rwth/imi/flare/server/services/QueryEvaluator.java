@@ -4,6 +4,7 @@ import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.api.FlareParser;
 
+import de.rwth.imi.flare.api.model.QueryExpanded;
 import de.rwth.imi.flare.server.QueryFormat;
 import org.springframework.stereotype.Service;
 import de.rwth.imi.flare.api.model.Query;
@@ -47,7 +48,7 @@ public class QueryEvaluator {
      */
     public CompletableFuture<Integer> evaluate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
-        Query mappedQuery = mapQuery(parsedQuery);
+        QueryExpanded mappedQuery = mapQuery(parsedQuery);
         return executeQuery(mappedQuery);
     }
 
@@ -63,7 +64,7 @@ public class QueryEvaluator {
      */
     public List<List<List<String>>> translate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
         Query parsedQuery = parseQuery(query, format);
-        Query mappedQuery = mapQuery(parsedQuery);
+        QueryExpanded mappedQuery = mapQuery(parsedQuery);
         return translateQuery(mappedQuery);
     }
 
@@ -81,8 +82,8 @@ public class QueryEvaluator {
         return parser;
     }
 
-    private Query mapQuery(Query parsedQuery) {
-        Query mappedQuery = null;
+    private QueryExpanded mapQuery(Query parsedQuery) {
+        QueryExpanded mappedQuery = null;
         try {
             mappedQuery = this.mapper.mapResources(parsedQuery).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -91,7 +92,7 @@ public class QueryEvaluator {
         return mappedQuery;
     }
 
-    private CompletableFuture<Integer> executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
+    private CompletableFuture<Integer> executeQuery(QueryExpanded mappedQuery) throws ExecutionException, InterruptedException {
         return this.executor.calculatePatientCount(mappedQuery);
     }
 
@@ -100,7 +101,7 @@ public class QueryEvaluator {
      * @param mappedQuery
      * @return
      */
-    private List<List<List<String>>> translateQuery(Query mappedQuery) {
+    private List<List<List<String>>> translateQuery(QueryExpanded mappedQuery) {
         return this.executor.translateMappedQuery(mappedQuery);
     }
 }
