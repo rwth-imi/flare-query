@@ -173,30 +173,6 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
             }
         });
     }
-//        if(query.getExclusionCriteria() == null){
-//            return CompletableFuture.completedFuture(new HashSet<>());
-//        }
-//
-//        // Execute all group queries and wait for execution to finish
-//        List<CompletableFuture<Set<String>>> excludedIdsByGroup =
-//                query.getExclusionCriteria().stream().map(this::getIdsFittingExclusionGroup).toList();
-//        CompletableFuture<Void> allPatientIdsReceived = CompletableFuture
-//                .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
-//
-//        // Build union of all groups
-//        return allPatientIdsReceived.thenApply(unused -> {
-//            Iterator<CompletableFuture<Set<String>>> groupIdsIterator = excludedIdsByGroup.iterator();
-//            Set<String> ret = new HashSet<>();
-//            while (groupIdsIterator.hasNext()) {
-//                try {
-//                    ret.addAll(groupIdsIterator.next().get());
-//                } catch (InterruptedException | ExecutionException e) {
-//                    throw new CompletionException(e);
-//                }
-//            }
-//            return ret;
-//        });
-//    }
 
     /**
      * Intersect all criteria sets for a given group
@@ -231,6 +207,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * Get all ids fulfilling a given criterion
      */
     public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
+        //TODO bessere wart/testbarkeit, Interface zum mocking auslagern oder Lambda Function-Interface
         FhirRequestor requestor = new FhirRequestor(config);
         return CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
                 .map(FlareResource::getPatientId)

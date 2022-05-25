@@ -19,60 +19,185 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class TestQueryExpander {
     QueryExpander queryExpander;
-    List<CriteriaGroup> twoExclusionCriteria;
-    CriteriaGroup twoCriteriaGroup;
-    List<Criterion> twoCriteriaList;
-    Criterion criterionA;
-    Criterion criterionB;
-    List<TerminologyCode> terminologyCodesA;
-    List<TerminologyCode> terminologyCodesB;
+    TerminologyCode terminologyCodeA;
+    TerminologyCode terminologyCodeA1;
+    TerminologyCode terminologyCodeA2;
+    TerminologyCode terminologyCodeB;
+    TerminologyCode terminologyCodeC;
+    @Mock
+    ExpansionTreeNode expansionTree;
 
 
     @BeforeEach
-    void setUp(@Mock ExpansionTreeNode expansionTree) throws IOException {
-        // (A ^ B) v C
+    void setUp() throws IOException {
         queryExpander = new QueryExpander(expansionTree);
-        twoExclusionCriteria = new ArrayList<>();
-        twoCriteriaGroup = new CriteriaGroup();
-        twoCriteriaList = new ArrayList<>();
-        criterionA = new Criterion();
-        criterionB = new Criterion();
-        terminologyCodesA = new ArrayList<>();
-        terminologyCodesB = new ArrayList<>();
 
+        terminologyCodeA = new TerminologyCode("A", "A", "A");
+        terminologyCodeA1 = new TerminologyCode("A1", "A1", "A1");
+        terminologyCodeA2 = new TerminologyCode("A2", "A2", "A2");
+        terminologyCodeB = new TerminologyCode("B", "B", "B");
+        terminologyCodeC = new TerminologyCode("C", "C", "C");
 
+        mockFindTermCode();
     }
-    @Test
-    void testExpandCriteriaGroupsExcl(@Mock ExpansionTreeNode expansionTree){
-        terminologyCodesA.add(new TerminologyCode("A", "A", "A"));
-        criterionA.setTermCodes(terminologyCodesA);
-        twoCriteriaList.add(criterionA);
-        terminologyCodesB.add(new TerminologyCode("B", "B", "B"));
-        criterionB.setTermCodes(terminologyCodesA);
-        twoCriteriaList.add(criterionB);
-        twoCriteriaGroup.setCriteria(twoCriteriaList);
-        twoExclusionCriteria.add(twoCriteriaGroup);
 
+    @Test
+    void testExpandCriteriaGroupsExcl() {
+        // (A ^ B) v C
+        List<CriteriaGroup> exclusionCriteria = getExclusionCriteria(); // TODO aussagekräftiger benennen
+
+        // ((A v A1 v A2) ^ B) v C
+        List<List<CriteriaGroup>> expandedCriteriaGroups = queryExpander.expandCriteriaGroupsExcl(exclusionCriteria);
+        List<List<CriteriaGroup>> expectedExpandedCriteriaGroups = getExpectedExpandedCriteriaGroups();
+
+        assertTrue(compareExpandedCriteriaGroups(expandedCriteriaGroups, expectedExpandedCriteriaGroups));
+        System.out.println(expandedCriteriaGroups);
+    }
+
+    /**
+     * compare if the nested lists have the same Dimension and the same underlying value (TerminologyCode)
+     * @param expandedCriteriaGroups the nested lists to be tested
+     * @param expectedExpandedCriteriaGroups the expected format and values of the nested lists
+     * @return true if the nested lists are equal, else false
+     */
+    private boolean compareExpandedCriteriaGroups(List<List<CriteriaGroup>> expandedCriteriaGroups, List<List<CriteriaGroup>> expectedExpandedCriteriaGroups) {
+        if(expandedCriteriaGroups.size() != expectedExpandedCriteriaGroups.size()){
+            return false;
+        }
+        for(int i = 0; i < expectedExpandedCriteriaGroups.size(); i++) {
+            if(expandedCriteriaGroups.get(i).size() != expectedExpandedCriteriaGroups.get(i).size()){
+                return false;
+            }
+            for (int j = 0; j< expectedExpandedCriteriaGroups.get(i).size(); j++){
+                if(expandedCriteriaGroups.get(i).get(j).getCriteria().size()!=expectedExpandedCriteriaGroups.get(i).get(j).getCriteria().size()){
+                    return false;
+                }
+                for (int k = 0; k<expectedExpandedCriteriaGroups.get(i).get(j).getCriteria().size(); k++){
+                    Criterion testCriterion = expandedCriteriaGroups.get(i).get(j).getCriteria().get(k);
+                    Criterion expectedCriterion = expectedExpandedCriteriaGroups.get(i).get(j).getCriteria().get(k);
+                    if(testCriterion.getTermCodes().size() != expectedCriterion.getTermCodes().size()){
+                        return false;
+                    }
+                    if(!testCriterion.getTermCodes().get(0).equals(expectedCriterion.getTermCodes().get(0))){
+                        return false;
+                    }
+                }
+            }
+
+        }
+        return true;
+    }
+
+    private List<CriteriaGroup> getExclusionCriteria() {
+        //TODO ersetzen durch parser mit rescourcen
+        List<CriteriaGroup> exclusionCriteria = new ArrayList<>();
+        CriteriaGroup twoCriteriaGroup = new CriteriaGroup();
+        CriteriaGroup oneCriteriaGroup = new CriteriaGroup();
+        List<Criterion> twoCriteriaList = new ArrayList<>();
+        List<Criterion> oneCriteriaList = new ArrayList<>();
+        Criterion criterionA = new Criterion();
+        Criterion criterionB = new Criterion();
+        Criterion criterionC = new Criterion();
+        List<TerminologyCode> terminologyCodesA = new ArrayList<>();
+        List<TerminologyCode> terminologyCodesB = new ArrayList<>();
+        List<TerminologyCode> terminologyCodesC = new ArrayList<>();
+
+
+        terminologyCodesA.add(terminologyCodeA);
+        terminologyCodesB.add(terminologyCodeB);
+        terminologyCodesC.add(terminologyCodeC);
+
+        criterionA.setTermCodes(terminologyCodesA);
+        criterionB.setTermCodes(terminologyCodesB);
+        criterionC.setTermCodes(terminologyCodesC);
+
+        twoCriteriaList.add(criterionA);
+        twoCriteriaList.add(criterionB);
+        oneCriteriaList.add(criterionC);
+
+        twoCriteriaGroup.setCriteria(twoCriteriaList);
+        oneCriteriaGroup.setCriteria(oneCriteriaList);
+
+        exclusionCriteria.add(twoCriteriaGroup);
+        exclusionCriteria.add(oneCriteriaGroup);
+
+        return exclusionCriteria;
+    }
+
+    private List<List<CriteriaGroup>> getExpectedExpandedCriteriaGroups() {
+        List<List<CriteriaGroup>> expectedExpandedCriteriaGroups = new ArrayList<>();
+        List<CriteriaGroup> twoCriteriaGroups = new ArrayList<>();
+        List<CriteriaGroup> oneCriteriaGroups = new ArrayList<>();
+        CriteriaGroup criteriaGroupA = new CriteriaGroup();
+        CriteriaGroup criteriaGroupB = new CriteriaGroup();
+        CriteriaGroup criteriaGroupC = new CriteriaGroup();
+        List<Criterion> criteriaListA = new ArrayList<>();
+        List<Criterion> criteriaListB = new ArrayList<>();
+        List<Criterion> criteriaListC = new ArrayList<>();
+        Criterion criterionA = new Criterion();
+        Criterion criterionA1 = new Criterion();
+        Criterion criterionA2 = new Criterion();
+        Criterion criterionB = new Criterion();
+        Criterion criterionC = new Criterion();
+        List<TerminologyCode> terminologyCodesA = new ArrayList<>();
+        List<TerminologyCode> terminologyCodesA1 = new ArrayList<>();
+        List<TerminologyCode> terminologyCodesA2 = new ArrayList<>();
+        List<TerminologyCode> terminologyCodesB = new ArrayList<>();
+        List<TerminologyCode> terminologyCodesC = new ArrayList<>();
+
+
+        terminologyCodesA.add(terminologyCodeA);
+        terminologyCodesA1.add(terminologyCodeA1);
+        terminologyCodesA2.add(terminologyCodeA2);
+        terminologyCodesB.add(terminologyCodeB);
+        terminologyCodesC.add(terminologyCodeC);
+
+        criterionA.setTermCodes(terminologyCodesA);
+        criterionA1.setTermCodes(terminologyCodesA1);
+        criterionA2.setTermCodes(terminologyCodesA2);
+        criterionB.setTermCodes(terminologyCodesB);
+        criterionC.setTermCodes(terminologyCodesC);
+
+        criteriaListA.add(criterionA);
+        criteriaListA.add(criterionA1);
+        criteriaListA.add(criterionA2);
+        criteriaListB.add(criterionB);
+        criteriaListC.add(criterionC);
+
+        criteriaGroupA.setCriteria(criteriaListA);
+        criteriaGroupB.setCriteria(criteriaListB);
+        criteriaGroupC.setCriteria(criteriaListC);
+
+        twoCriteriaGroups.add(criteriaGroupA);
+        twoCriteriaGroups.add(criteriaGroupB);
+        oneCriteriaGroups.add(criteriaGroupC);
+
+        expectedExpandedCriteriaGroups.add(twoCriteriaGroups);
+        expectedExpandedCriteriaGroups.add(oneCriteriaGroups);
+
+
+
+        return expectedExpandedCriteriaGroups;
+    }
+
+    private void mockFindTermCode() {
         ExpansionTreeNode nodeA = new ExpansionTreeNode();
-        nodeA.setTermCode(new TerminologyCode("A", "A", "A"));
+        nodeA.setTermCode(terminologyCodeA);
         ExpansionTreeNode nodeA1 = new ExpansionTreeNode();
-        nodeA1.setTermCode(new TerminologyCode("A1", "A1", "A1"));
+        nodeA1.setTermCode(terminologyCodeA1);
         ExpansionTreeNode nodeA2 = new ExpansionTreeNode();
-        nodeA2.setTermCode(new TerminologyCode("A2", "A2", "A2"));
+        nodeA2.setTermCode(terminologyCodeA2);
         nodeA.setChildren(Arrays.asList(nodeA1, nodeA2));
 
         ExpansionTreeNode nodeB = new ExpansionTreeNode();
-        nodeB.setTermCode(new TerminologyCode("B", "B", "B"));
+        nodeB.setTermCode(terminologyCodeB);
 
-        Mockito.lenient().when(expansionTree.findTermCode(new TerminologyCode("A", "A", "A"))).thenReturn(nodeA);
-        Mockito.lenient().when(expansionTree.findTermCode(new TerminologyCode("B", "B", "B"))).thenReturn(nodeB);
-
-
-        List<List<CriteriaGroup>> expandedCriteriaGroups = queryExpander.expandCriteriaGroupsExcl(twoExclusionCriteria);
-        System.out.println(expandedCriteriaGroups);
+        when(expansionTree.findTermCode(terminologyCodeA)).thenReturn(nodeA);
+        when(expansionTree.findTermCode(terminologyCodeB)).thenReturn(nodeB);
     }
 }
