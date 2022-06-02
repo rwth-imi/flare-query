@@ -173,59 +173,6 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
             }
         });
     }
-//        if(query.getExclusionCriteria() == null){
-//            return CompletableFuture.completedFuture(new HashSet<>());
-//        }
-//
-//        // Execute all group queries and wait for execution to finish
-//        List<CompletableFuture<Set<String>>> excludedIdsByGroup =
-//                query.getExclusionCriteria().stream().map(this::getIdsFittingExclusionGroup).toList();
-//        CompletableFuture<Void> allPatientIdsReceived = CompletableFuture
-//                .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
-//
-//        // Build union of all groups
-//        return allPatientIdsReceived.thenApply(unused -> {
-//            Iterator<CompletableFuture<Set<String>>> groupIdsIterator = excludedIdsByGroup.iterator();
-//            Set<String> ret = new HashSet<>();
-//            while (groupIdsIterator.hasNext()) {
-//                try {
-//                    ret.addAll(groupIdsIterator.next().get());
-//                } catch (InterruptedException | ExecutionException e) {
-//                    throw new CompletionException(e);
-//                }
-//            }
-//            return ret;
-//        });
-//    }
-
-    /**
-     * Intersect all criteria sets for a given group
-     */
-    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(List<CriteriaGroup> groups) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
-        for (CriteriaGroup group: groups) {
-            for (Criterion criterion : group.getCriteria()) {
-                CompletableFuture<Set<String>> evaluableCriterion = getPatientIdsFittingCriterion(criterion);
-                idsPerCriterion.add(evaluableCriterion);
-            }
-        }
-        // Wait for all queries to finish execution
-        CompletableFuture<Void> allPatientIdsReceived = CompletableFuture.allOf(idsPerCriterion.toArray(new CompletableFuture[0]));
-
-        // Return intersection of found ids
-        return allPatientIdsReceived.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> iterator = idsPerCriterion.iterator();
-            try {
-                Set<String> ret = iterator.next().get();
-                while (iterator.hasNext()) {
-                    ret.retainAll(iterator.next().get());
-                }
-                return ret;
-            } catch (ExecutionException | InterruptedException e) {
-                throw new CompletionException(e);
-            }
-        });
-    }
 
     /**
      * Get all ids fulfilling a given criterion
