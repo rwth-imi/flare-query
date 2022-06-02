@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -22,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TestQueryExpander {
+public class QueryExpanderTests {
     QueryExpander queryExpander;
     TerminologyCode terminologyCodeA;
     TerminologyCode terminologyCodeA1;
@@ -47,16 +46,15 @@ public class TestQueryExpander {
     }
 
     @Test
-    void testExpandCriteriaGroupsExcl() {
+    void exclusionCriteriaExpansionFollowsLogic() {
         // (A ^ B) v C
-        List<CriteriaGroup> exclusionCriteria = getExclusionCriteria(); // TODO aussagekräftiger benennen
+        List<CriteriaGroup> inputExclusionCriteria = getInputExclusionCriteria();
 
         // ((A v A1 v A2) ^ B) v C
-        List<List<CriteriaGroup>> expandedCriteriaGroups = queryExpander.expandCriteriaGroupsExcl(exclusionCriteria);
         List<List<CriteriaGroup>> expectedExpandedCriteriaGroups = getExpectedExpandedCriteriaGroups();
 
+        List<List<CriteriaGroup>> expandedCriteriaGroups = queryExpander.expandCriteriaGroupsExcl(inputExclusionCriteria);
         assertTrue(compareExpandedCriteriaGroups(expandedCriteriaGroups, expectedExpandedCriteriaGroups));
-        System.out.println(expandedCriteriaGroups);
     }
 
     /**
@@ -93,8 +91,8 @@ public class TestQueryExpander {
         return true;
     }
 
-    private List<CriteriaGroup> getExclusionCriteria() {
-        //TODO ersetzen durch parser mit rescourcen
+    private List<CriteriaGroup> getInputExclusionCriteria() {
+        //TODO exchange with parser using resources
         List<CriteriaGroup> exclusionCriteria = new ArrayList<>();
         CriteriaGroup twoCriteriaGroup = new CriteriaGroup();
         CriteriaGroup oneCriteriaGroup = new CriteriaGroup();
@@ -197,7 +195,11 @@ public class TestQueryExpander {
         ExpansionTreeNode nodeB = new ExpansionTreeNode();
         nodeB.setTermCode(terminologyCodeB);
 
+        ExpansionTreeNode nodeC = new ExpansionTreeNode();
+        nodeC.setTermCode(terminologyCodeC);
+
         when(expansionTree.findTermCode(terminologyCodeA)).thenReturn(nodeA);
         when(expansionTree.findTermCode(terminologyCodeB)).thenReturn(nodeB);
+        when(expansionTree.findTermCode(terminologyCodeC)).thenReturn(nodeC);
     }
 }
