@@ -12,6 +12,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import de.rwth.imi.flare.executor.FhirIdRequestor;
+
 
 /**
  * Asynchronously executes a complete Query by querying the single criteria
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     private FhirRequestorConfig config;
     private Executor futureExecutor;
+    private FhirIdRequestor fhirIdRequestor;
 
     public void setConfig(FhirRequestorConfig config){
         this.config = config;
@@ -34,6 +37,15 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         FlareThreadPoolConfig poolConfig =  this.config.getThreadPoolConfig();
         this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
                 TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        fhirIdRequestor = new FhirIdRequestor(config,futureExecutor);
+    }
+
+    public FlareExecutor(FhirRequestorConfig config, FhirIdRequestor fhirIdRequestor){
+        this.config = config;
+        FlareThreadPoolConfig poolConfig =  this.config.getThreadPoolConfig();
+        this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
+                TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        this.fhirIdRequestor = fhirIdRequestor;
     }
 
     @Override
@@ -134,7 +146,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      */
     private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(CriteriaGroup group) {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = group.getCriteria().stream()
-                .map(this::getPatientIdsFittingCriterion).toList();
+                .map(fhirIdRequestor::getPatientIdsFittingCriterion).toList();
 
         // Wait for all queries to finish execution
         return getUnionOfIds(idsPerCriterion);
@@ -157,6 +169,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     }
 
     private CompletableFuture<Set<String>> getUnionOfIds(List<CompletableFuture<Set<String>>> idsByGroups) {
+        CompletableFuture[] s = idsByGroups.toArray(new CompletableFuture[0]);
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
                 .allOf(idsByGroups.toArray(new CompletableFuture[0]));
 
@@ -181,7 +194,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
         for (CriteriaGroup group: groups) {
             for (Criterion criterion : group.getCriteria()) {
-                CompletableFuture<Set<String>> evaluableCriterion = getPatientIdsFittingCriterion(criterion);
+                CompletableFuture<Set<String>> evaluableCriterion = fhirIdRequestor.getPatientIdsFittingCriterion(criterion);
                 idsPerCriterion.add(evaluableCriterion);
             }
         }
@@ -201,16 +214,5 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
                 throw new CompletionException(e);
             }
         });
-    }
-
-    /**
-     * Get all ids fulfilling a given criterion
-     */
-    public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
-        //TODO bessere wart/testbarkeit, Interface zum mocking auslagern oder Lambda Function-Interface
-        FhirRequestor requestor = new FhirRequestor(config);
-        return CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
-                .map(FlareResource::getPatientId)
-                .collect(Collectors.toSet()), this.futureExecutor);
     }
 }
