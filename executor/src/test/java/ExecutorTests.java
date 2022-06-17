@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -46,7 +45,7 @@ public class ExecutorTests {
     QueryExpanded queryExpanded;
 
     @BeforeEach
-    void setUp() throws IOException, URISyntaxException {
+    void setUp() throws URISyntaxException {
         terminologyCodeIncl = new TerminologyCode("Incl", "Incl", "Incl");
         terminologyCodeA = new TerminologyCode("A", "A", "A");
         terminologyCodeA1 = new TerminologyCode("A1", "A1", "A1");
