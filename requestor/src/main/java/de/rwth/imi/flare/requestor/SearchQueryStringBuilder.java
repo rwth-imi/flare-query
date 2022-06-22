@@ -199,12 +199,12 @@ public class SearchQueryStringBuilder {
         StringBuilder sbTmp = new StringBuilder();
 
         sb.append(valueSearchParameter).append("=");
-        sbTmp.append("ge ").append(valueFilter.getMinValue());
+        sbTmp.append("ge").append(valueFilter.getMinValue());
         appendFilterUnit(valueFilter.getUnit(), sbTmp);
         sb.append(urlEncodeAndReset(sbTmp)).append('&');
 
         sb.append(valueSearchParameter).append("=");
-        sbTmp.append("le ").append(valueFilter.getMaxValue());
+        sbTmp.append("le").append(valueFilter.getMaxValue());
         appendFilterUnit(valueFilter.getUnit(), sbTmp);
         sb.append(urlEncodeAndReset(sbTmp));
     }
@@ -218,17 +218,17 @@ public class SearchQueryStringBuilder {
         StringBuilder sbTmp = new StringBuilder();
 
         this.sb.append(valueSearchParameter).append('=');
-        sbTmp.append(valueFilter.getComparator()).append(valueFilter.getValue()).append("|");
+        sbTmp.append(valueFilter.getComparator()).append(valueFilter.getValue());
         appendFilterUnit(valueFilter.getUnit(), sbTmp);
         this.sb.append(urlEncodeAndReset(sbTmp));
     }
 
     private void appendFilterUnit(TerminologyCode filterUnit, StringBuilder sbTemp){
         String system = filterUnit.getSystem();
-        system = system==null?"":system;
+
+        system = system==null?"http://unitsofmeasure.org":system;
         String code = filterUnit.getCode();
-        //sbTemp.append(system).append("|").append(code);
-        sbTemp.append(system).append(code);
+        sbTemp.append("|").append(system).append("|").append(code);
     }
 
     /**
