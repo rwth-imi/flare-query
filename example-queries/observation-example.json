@@ -3,7 +3,7 @@
   "inclusionCriteria": [
     [
       {
-        "termCode": [
+        "termCodes": [
           {
             "code": "76689-9",
             "system": "http://loinc.org",

@@ -3,7 +3,7 @@
   "inclusionCriteria": [
     [
       {
-        "termCode": [
+        "termCodes": [
           {
             "code": "30525-0",
             "system": "http://loinc.org",
@@ -21,7 +21,7 @@
         }
       },
       {
-        "termCode": [
+        "termCodes": [
           {
             "code": "763264000",
             "system": "http://snomed.info/sct",
@@ -49,7 +49,7 @@
   "exclusionCriteria": [
     [
       {
-        "termCode": [
+        "termCodes": [
           {
             "code": "J44",
             "system": "http://fhir.de/CodeSystem/dimdi/icd-10-gm",
@@ -60,7 +60,7 @@
     ],
     [
       {
-        "termCode": [
+        "termCodes": [
           {
             "code": "72166-2",
             "system": "http://loinc.org",

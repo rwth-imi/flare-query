@@ -1,11 +1,7 @@
 package de.rwth.imi.flare.mapping.expansion;
 
 
-import com.google.common.collect.Sets;
-import de.rwth.imi.flare.api.model.CriteriaGroup;
-import de.rwth.imi.flare.api.model.Criterion;
-import de.rwth.imi.flare.api.model.Query;
-import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.api.model.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,13 +53,15 @@ public class QueryExpander {
     }
 
 
-    public void expandQuery(Query query){
-        List<CriteriaGroup> expandedExclusionCriteria = query.getExclusionCriteria();
-        List<CriteriaGroup> expandedInclusionCriteria = query.getInclusionCriteria();
-        expandedExclusionCriteria = expandedExclusionCriteria == null ? new ArrayList<>() : expandedExclusionCriteria;
-        expandedInclusionCriteria = expandedInclusionCriteria == null ? new ArrayList<>() : expandedInclusionCriteria;
-        query.setExclusionCriteria(expandCriteriaGroupsExcl(expandedExclusionCriteria));
-        query.setInclusionCriteria(expandCriteriaGroups(expandedInclusionCriteria));
+    public QueryExpanded expandQuery(Query query){
+        QueryExpanded queryExpanded = new QueryExpanded();
+        List<CriteriaGroup> exclusionCriteria = query.getExclusionCriteria();
+        List<CriteriaGroup> inclusionCriteria = query.getInclusionCriteria();
+        exclusionCriteria = exclusionCriteria == null ? new ArrayList<>() : exclusionCriteria;
+        inclusionCriteria = inclusionCriteria == null ? new ArrayList<>() : inclusionCriteria;
+        queryExpanded.setExclusionCriteria(expandCriteriaGroupsExcl(exclusionCriteria));
+        queryExpanded.setInclusionCriteria(expandCriteriaGroups(inclusionCriteria));
+        return queryExpanded;
     }
 
     public List<CriteriaGroup> expandCriteriaGroups(List<CriteriaGroup> criteriaGroups){
@@ -85,30 +83,23 @@ public class QueryExpander {
         return expandedCriteriaGroup;
     }
 
-    public List<CriteriaGroup> expandCriteriaGroupsExcl(List<CriteriaGroup> criteriaGroups){
-        List<CriteriaGroup> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
+    public List<List<CriteriaGroup>> expandCriteriaGroupsExcl(List<CriteriaGroup> criteriaGroups){
+        List<List<CriteriaGroup>> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
 
-        LinkedList<Set<Criterion>> tmpList  = new LinkedList<>();
         for(CriteriaGroup subgroup: criteriaGroups){
-            tmpList.addAll(expandCriteriaGroupExcl(subgroup));
+            List<CriteriaGroup> excl = expandCriteriaGroupExcl(subgroup);
+            expandedCriteriaGroups.add(excl);
         }
-
-        Set<List<Criterion>> productList = Sets.cartesianProduct(tmpList);
-
-        for (List<Criterion> criterionList : productList) {
-
-            if(criterionList.size() > 0) {
-                expandedCriteriaGroups.add(new CriteriaGroup(criterionList));
-            }
+        if(criteriaGroups.size()==0){
+            expandedCriteriaGroups.add(new ArrayList<>());
         }
-
         return expandedCriteriaGroups;
     }
 
-    private LinkedList<Set<Criterion>> expandCriteriaGroupExcl(CriteriaGroup originalCriteriaGroup) {
-        LinkedList<Set<Criterion>> tmpList = new LinkedList<>();
+    private List<CriteriaGroup> expandCriteriaGroupExcl(CriteriaGroup originalCriteriaGroup) {
+        LinkedList<CriteriaGroup> tmpList = new LinkedList<>();
         for(Criterion criterion : originalCriteriaGroup.getCriteria()) {
-            Set<Criterion> expandedCriterion = new HashSet<>(expandCriterion(criterion));
+            CriteriaGroup expandedCriterion = new CriteriaGroup(expandCriterion(criterion));
             tmpList.add(expandedCriterion);
         }
 

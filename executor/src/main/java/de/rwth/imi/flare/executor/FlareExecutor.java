@@ -3,7 +3,7 @@ package de.rwth.imi.flare.executor;
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
-import de.rwth.imi.flare.api.model.Query;
+import de.rwth.imi.flare.api.model.QueryExpanded;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
@@ -37,9 +37,9 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     }
 
     @Override
-    public CompletableFuture<Integer> calculatePatientCount(Query mappedQuery) {
-        CompletableFuture<Set<String>> includedIds = getIncludedIds(mappedQuery);
-        CompletableFuture<Set<String>> excludedIds = getExcludedIds(mappedQuery);
+    public CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery) {
+        CompletableFuture<Set<String>> includedIds = getIncludedIds(mappedQuery.getInclusionCriteria());
+        CompletableFuture<Set<String>> excludedIds = getExcludedIds(mappedQuery.getExclusionCriteria());
         CompletableFuture<Set<String>> resultingIds = includedIds.thenCombineAsync(excludedIds, (strings, strings2) ->
         {
             if(strings2 != null){
@@ -57,19 +57,22 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * @return StructuredQuery
      */
     @Override
-    public List<List<List<String>>> translateMappedQuery(Query mappedQuery) {
+    public List<List<List<String>>> translateMappedQuery(QueryExpanded mappedQuery) {
         //create new FhirRequestor by provided config
         FhirRequestor translator = new FhirRequestor(config);
         //split criterions into inculsion and exclusion
         List<CriteriaGroup> inclusionCriteria = mappedQuery.getInclusionCriteria();
-        List<CriteriaGroup> exclusionCriteria = mappedQuery.getExclusionCriteria();
+        List<List<CriteriaGroup>> exclusionCriteria = mappedQuery.getExclusionCriteria();
         //translate criterions
         List<List<String>> translatedInclusionCriteria = iterateCriterion(translator, inclusionCriteria);
-        List<List<String>> translatedExclusionCriteria = iterateCriterion(translator, exclusionCriteria);
+        List<List<List<String>>> translatedExclusionCriteria = new ArrayList<>();
+        for (List<CriteriaGroup> subCriteria: exclusionCriteria) {
+            translatedExclusionCriteria.add(iterateCriterion(translator, subCriteria));
+        }
         //create new ArrayList and recombine inclusion and exclusion criterions into StructuredQuery format
         List<List<List<String>>> combinedCriteria = new ArrayList<>();
         combinedCriteria.add(translatedInclusionCriteria);
-        combinedCriteria.add(translatedExclusionCriteria);
+        combinedCriteria.addAll(translatedExclusionCriteria);
 
         return combinedCriteria;
     }
@@ -97,13 +100,13 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Build intersection of all group sets
      */
-    private CompletableFuture<Set<String>> getIncludedIds(Query query) {
-        if(query.getInclusionCriteria() == null){
+    private CompletableFuture<Set<String>> getIncludedIds( List<CriteriaGroup> inclusionCriteria) {
+        if(inclusionCriteria == null){
             return CompletableFuture.completedFuture(new HashSet<>());
         }
         // Async fetch all ids per group
         List<CompletableFuture<Set<String>>> includedIdsByGroup =
-                query.getInclusionCriteria().stream().map(this::getIdsFittingInclusionGroup).toList();
+                inclusionCriteria.stream().map(this::getIdsFittingInclusionGroup).toList();
 
         // Wait for async exec to finish
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
@@ -134,71 +137,35 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
                 .map(this::getPatientIdsFittingCriterion).toList();
 
         // Wait for all queries to finish execution
-        CompletableFuture<Void> allPatientIdsReceived = CompletableFuture.allOf(idsPerCriterion.toArray(new CompletableFuture[0]));
-
-        //Return union of found ids
-        return allPatientIdsReceived.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> iterator = idsPerCriterion.iterator();
-            try {
-                Set<String> ret = iterator.next().get();
-                while (iterator.hasNext()) {
-                    ret.addAll(iterator.next().get());
-                }
-                return ret;
-            } catch (ExecutionException | InterruptedException e) {
-                throw new CompletionException(e);
-            }
-        });
+        return getUnionOfIds(idsPerCriterion);
     }
 
     /**
      * Build union of all group sets
      */
-    private CompletableFuture<Set<String>> getExcludedIds(Query query) {
-        if(query.getExclusionCriteria() == null){
+    private CompletableFuture<Set<String>> getExcludedIds(List<List<CriteriaGroup>> exclusionCriteria) {
+        if(exclusionCriteria == null){
             return CompletableFuture.completedFuture(new HashSet<>());
         }
-
-        // Execute all group queries and wait for execution to finish
-        List<CompletableFuture<Set<String>>> excludedIdsByGroup =
-                query.getExclusionCriteria().stream().map(this::getIdsFittingExclusionGroup).toList();
-        CompletableFuture<Void> allPatientIdsReceived = CompletableFuture
-                .allOf(excludedIdsByGroup.toArray(new CompletableFuture[0]));
-
-        // Build union of all groups
-        return allPatientIdsReceived.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> groupIdsIterator = excludedIdsByGroup.iterator();
-            Set<String> ret = new HashSet<>();
-            while (groupIdsIterator.hasNext()) {
-                try {
-                    ret.addAll(groupIdsIterator.next().get());
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new CompletionException(e);
-                }
-            }
-            return ret;
-        });
+        List<CompletableFuture<Set<String>>> excludedIdsByGroups = new ArrayList<>();
+        for (List<CriteriaGroup> group :exclusionCriteria) {
+            CompletableFuture<Set<String>> excludedIdsByGroup = getIncludedIds(group);
+            excludedIdsByGroups.add(excludedIdsByGroup);
+        }
+        // Wait for async exec to finish
+        return getUnionOfIds(excludedIdsByGroups);
     }
 
-    /**
-     * Intersect all criteria sets for a given group
-     */
-    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(CriteriaGroup group) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
-        for (Criterion criterion : group.getCriteria()) {
-            CompletableFuture<Set<String>> evaluableCriterion = getPatientIdsFittingCriterion(criterion);
-            idsPerCriterion.add(evaluableCriterion);
-        }
-        // Wait for all queries to finish execution
-        CompletableFuture<Void> allPatientIdsReceived = CompletableFuture.allOf(idsPerCriterion.toArray(new CompletableFuture[0]));
+    private CompletableFuture<Set<String>> getUnionOfIds(List<CompletableFuture<Set<String>>> idsByGroups) {
+        CompletableFuture<Void> groupExecutionFinished = CompletableFuture
+                .allOf(idsByGroups.toArray(new CompletableFuture[0]));
 
-        // Return intersection of found ids
-        return allPatientIdsReceived.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> iterator = idsPerCriterion.iterator();
+        return groupExecutionFinished.thenApply(unused -> {
+            Iterator<CompletableFuture<Set<String>>> includedGroupsIterator = idsByGroups.iterator();
             try {
-                Set<String> ret = iterator.next().get();
-                while (iterator.hasNext()) {
-                    ret.retainAll(iterator.next().get());
+                Set<String> ret = includedGroupsIterator.next().get();
+                while (includedGroupsIterator.hasNext()) {
+                    ret.addAll(includedGroupsIterator.next().get());
                 }
                 return ret;
             } catch (ExecutionException | InterruptedException e) {
