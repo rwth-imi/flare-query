@@ -1,13 +1,13 @@
 app:
-  mappingsFile: ${MAPPINGS_FILE:/opt/flare/ontology/codex-term-code-mapping.json}
-  conceptTreeFile: ${CONCEPT_TREE_FILE:/opt/flare/ontology/codex-code-tree.json}
+  mappingsFile: ${MAPPINGS_FILE:C:/Users/mhellmonds/IdeaProjects/flare-query/ontology/codex-term-code-mapping.json}
+  conceptTreeFile: ${CONCEPT_TREE_FILE:C:/Users/mhellmonds/IdeaProjects/flare-query/ontology/codex-code-tree.json}
 
 server:
-  port: ${FLARE_SERVER_PORT:8080}
+  port: ${FLARE_SERVER_PORT:8081}
 
 flare:
   fhir:
-    server: ${FLARE_FHIR_SERVER_URL:http://fhir-server:8080/fhir/}
+    server: ${FLARE_FHIR_SERVER_URL:http://localhost:8080/fhir/}
     user: ${FLARE_FHIR_USER:}
     password: ${FLARE_FHIR_PW:}
     pagecount: ${FLARE_FHIR_PAGE_COUNT:}
