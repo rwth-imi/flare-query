@@ -169,7 +169,6 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     }
 
     private CompletableFuture<Set<String>> getUnionOfIds(List<CompletableFuture<Set<String>>> idsByGroups) {
-        CompletableFuture[] s = idsByGroups.toArray(new CompletableFuture[0]);
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
                 .allOf(idsByGroups.toArray(new CompletableFuture[0]));
 
