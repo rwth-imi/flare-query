@@ -32,7 +32,7 @@ public class FhirIdRequestor {
         String key = sbTmp.toString();
         cache.cleanCache();
         if(cache.isCached(key)){
-            return cache.getCachedPatientIdsFittingCriterion(key);
+            return CompletableFuture.completedFuture(cache.getCachedPatientIdsFittingCriterion(key));
         }else{
             FhirRequestor requestor = new FhirRequestor(config);
             CompletableFuture<Set<String>> ret = CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
