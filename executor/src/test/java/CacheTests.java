@@ -75,14 +75,91 @@ public class CacheTests {
         assertEquals(cache.getCachedPatientIdsFittingCriterion("200"), IntStream.of(id_base).mapToObj(el->""+(el* 200)).collect(Collectors.toSet()));
     }
 
-//    @Test
-//    void correctCacheClean(){
-//        cache.setMaxCacheEntries(40);
-//        cache.setEntryLifetimeMS(0);
-//
-//
-//        cache.cleanCache();
-//
-//    }
+    @Test
+    void correctSizeReduction(){
+        assertEquals(cache.getCacheSize(), 200);
+        cache.setMaxCacheEntries(40);
+        cache.trimCacheToMaxCacheEntries();
+        assertEquals(cache.getCacheSize(), 40);
+    }
+
+    @Test
+    void correctCacheCleanSizeReduction(){
+        assertEquals(cache.getCacheSize(), 200);
+        cache.setMaxCacheEntries(40);
+        cache.cleanCache();
+        assertEquals(cache.getCacheSize(), 40);
+    }
+    @Test
+    void correctCacheCleanCycleWaitTime() throws InterruptedException {
+        assertEquals(cache.getCacheSize(), 200);
+        cache.setCleanCycleMS(1000);
+        cache.setMaxCacheEntries(100);
+        cache.cleanCache();
+        assertEquals(cache.getCacheSize(), 100);
+        cache.setMaxCacheEntries(50);
+        cache.cleanCache();
+        assertEquals(cache.getCacheSize(), 100);
+        Thread.sleep(1000);
+        cache.cleanCache();
+        assertEquals(cache.getCacheSize(), 50);
+    }
+
+    @Test
+    void correctCacheCleanLifetimeHandling() throws InterruptedException {
+        Thread.sleep(1);
+        cache.setCleanCycleMS(0);
+        assertEquals(cache.getCacheSize(), 200);
+        cache.setEntryLifetimeMS(10000);
+        cache.cleanCache();
+        Thread.sleep(1);
+        assertEquals(cache.getCacheSize(), 200);
+        cache.setEntryLifetimeMS(0);
+        cache.cleanCache();
+        assertEquals(cache.getCacheSize(), 0);
+    }
+
+    @Test
+    void correctCacheCleanDeleteAll(){
+        assertEquals(cache.getCacheSize(), 200);
+        cache.setDeleteAllEntriesOnCleanup(true);
+        cache.cleanCache();
+        assertEquals(cache.getCacheSize(), 0);
+    }
+
+    @Test
+    void singleDeleteCorrectly(){
+        assertEquals(cache.getCacheSize(), 200);
+        assertTrue(cache.isCached("1"));
+        cache.delete("1");
+        assertEquals(cache.getCacheSize(), 199);
+        assertFalse(cache.isCached("1"));
+    }
+
+    @Test
+    void multipleDeleteCorrectly(){
+        assertEquals(cache.getCacheSize(), 200);
+        assertTrue(cache.isCached("1"));
+        List<String> toDelete = new ArrayList<String>();
+        toDelete.add("1");
+        toDelete.add("4");
+        toDelete.add("78");
+        toDelete.add("187");
+        cache.deleteAll(toDelete);
+        assertEquals(cache.getCacheSize(), 196);
+        assertFalse(cache.isCached("1"));
+        assertFalse(cache.isCached("4"));
+        assertFalse(cache.isCached("78"));
+        assertFalse(cache.isCached("187"));
+    }
+
+    @Test
+    void AllDeleteCorrectly(){
+        assertEquals(cache.getCacheSize(), 200);
+        assertTrue(cache.isCached("1"));
+        cache.deleteAll();
+        assertEquals(cache.getCacheSize(), 0);
+        assertFalse(cache.isCached("1"));
+    }
 
 }

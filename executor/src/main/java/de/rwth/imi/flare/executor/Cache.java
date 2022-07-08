@@ -5,7 +5,7 @@ import java.util.*;
 public class Cache {
     private Map<String, Set<String>> cache;
     private Map<String, Date> datesForCache;
-    private Date lastCacheClean;
+    private long lastCacheClean;
     private int cleanCycleMS;
     private int entryLifetimeMS;
     private int maxCacheEntries;
@@ -42,7 +42,7 @@ public class Cache {
     public Cache(int cleanCycleMS, int entryLifetimeMS, int maxCacheEntries, boolean updateExpiryAtAccess, boolean deleteAllEntriesOnCleanup) {
         this.cache = new HashMap<>();
         this.datesForCache = new HashMap<>();
-        this.lastCacheClean = new Date();
+        this.lastCacheClean = 0;
         this.cleanCycleMS = cleanCycleMS;
         this.entryLifetimeMS = entryLifetimeMS;
         this.maxCacheEntries = maxCacheEntries;
@@ -65,14 +65,12 @@ public class Cache {
     }
 
     /**
-     * Remove the oldest entries until the Cache size equals maxCacheEntries-1
+     * Remove the oldest entries until the Cache size equals maxCacheEntries recursively
      */
     public void trimCacheToMaxCacheEntries() {
         if (cache.size() > maxCacheEntries) {
             removeOldestEntry();
             trimCacheToMaxCacheEntries();
-        } else if (cache.size() == maxCacheEntries) {
-            removeOldestEntry();
         }
     }
 
@@ -126,20 +124,21 @@ public class Cache {
      */
     public void cleanCache() {
         long currentDateInMS = new Date().getTime();
-        if (currentDateInMS - lastCacheClean.getTime() > cleanCycleMS) {
+        if (currentDateInMS - lastCacheClean > cleanCycleMS) {
             if (deleteAllEntriesOnCleanup) {
-                delete_all();
+                deleteAll();
                 return;
             }
-//            List<String> entriesToDelete = new ArrayList<>(); TODO: check if on the fly delete works
+            List<String> entriesToDelete = new ArrayList<>();
             for (Map.Entry<String, Date> pair : datesForCache.entrySet()) {
                 if (currentDateInMS - pair.getValue().getTime() > entryLifetimeMS) {
-                    delete(pair.getKey());
+                    entriesToDelete.add(pair.getKey());
                 }
             }
-            lastCacheClean = new Date();
+            deleteAll(entriesToDelete);
+            lastCacheClean = new Date().getTime();
+            trimCacheToMaxCacheEntries();
         }
-        trimCacheToMaxCacheEntries();
     }
 
     /**
@@ -159,7 +158,7 @@ public class Cache {
      *
      * @param termCodes the List of termCodes, to which the corresponding entries are deleted
      */
-    public void delete_all(List<String> termCodes) {
+    public void deleteAll(List<String> termCodes) {
         for (String key : termCodes) {
             if (isCached(key)) {
                 cache.remove(key);
@@ -171,9 +170,18 @@ public class Cache {
     /**
      * delete all entries
      */
-    public void delete_all() {
+    public void deleteAll() {
         cache = new HashMap<>();
         datesForCache = new HashMap<>();
+    }
+
+    /**
+     * get size of cache
+     *
+     * @return size of cache
+     */
+    public int getCacheSize() {
+        return cache.size();
     }
 
     /**
