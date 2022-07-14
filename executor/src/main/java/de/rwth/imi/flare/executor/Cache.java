@@ -3,8 +3,7 @@ package de.rwth.imi.flare.executor;
 import java.util.*;
 
 public class Cache {
-    private Map<String, Set<String>> cache;
-    private Map<String, Date> datesForCache;
+    private Map<String, CacheEntry> cache;
     private long lastCacheClean;
     private int cleanCycleMS;
     private int entryLifetimeMS;
@@ -41,7 +40,6 @@ public class Cache {
      */
     public Cache(int cleanCycleMS, int entryLifetimeMS, int maxCacheEntries, boolean updateExpiryAtAccess, boolean deleteAllEntriesOnCleanup) {
         this.cache = new HashMap<>();
-        this.datesForCache = new HashMap<>();
         this.lastCacheClean = 0;
         this.cleanCycleMS = cleanCycleMS;
         this.entryLifetimeMS = entryLifetimeMS;
@@ -58,8 +56,8 @@ public class Cache {
      * @return the Value, idSet
      */
     public Set<String> addCachedPatientIdsFittingTermCode(String termCode, Set<String> idSet) {
-        cache.put(termCode, idSet);
-        datesForCache.put(termCode, new Date());
+        CacheEntry cacheEntry = new CacheEntry(idSet, new Date());
+        cache.put(termCode, cacheEntry);
         trimCacheToMaxCacheEntries();
         return idSet;
     }
@@ -80,19 +78,17 @@ public class Cache {
     private void removeOldestEntry() {
         Date oldestDate = new Date();
         String keyToOldestDate = null;
-        for (Map.Entry<String, Date> pair : datesForCache.entrySet()) {
-            if (pair.getValue().compareTo(oldestDate) < 0) {
-                oldestDate = pair.getValue();
+        for (Map.Entry<String, CacheEntry> pair : cache.entrySet()) {
+            if (pair.getValue().getLastUpdated().compareTo(oldestDate) < 0) {
+                oldestDate = pair.getValue().getLastUpdated();
                 keyToOldestDate = pair.getKey();
             }
         }
         if (keyToOldestDate != null) {
             cache.remove(keyToOldestDate);
-            datesForCache.remove(keyToOldestDate);
         } else {
-//            remove the first element component wise if all dates are equal
+//            remove the first element component wise if all dates are equal to the current Date
             cache.remove((cache.keySet()).iterator().next());
-            datesForCache.remove(datesForCache.keySet().iterator().next());
         }
     }
 
@@ -114,7 +110,10 @@ public class Cache {
      * @return a set of Ids corresponding to the given termCode
      */
     public Set<String> getCachedPatientIdsFittingCriterion(String termCode) {
-        return new HashSet<>(cache.get(termCode));
+        if(updateExpiryAtAccess && cache.get(termCode)!= null){
+            cache.get(termCode).setLastUpdated(new Date());
+        }
+        return new HashSet<>(cache.get(termCode).getResultSet());
     }
 
     /**
@@ -129,13 +128,7 @@ public class Cache {
                 deleteAll();
                 return;
             }
-            List<String> entriesToDelete = new ArrayList<>();
-            for (Map.Entry<String, Date> pair : datesForCache.entrySet()) {
-                if (currentDateInMS - pair.getValue().getTime() > entryLifetimeMS) {
-                    entriesToDelete.add(pair.getKey());
-                }
-            }
-            deleteAll(entriesToDelete);
+            cache.values().removeIf(entry -> currentDateInMS - entry.getLastUpdated().getTime() > entryLifetimeMS);
             lastCacheClean = new Date().getTime();
             trimCacheToMaxCacheEntries();
         }
@@ -149,7 +142,6 @@ public class Cache {
     public void delete(String termCode) {
         if (isCached(termCode)) {
             cache.remove(termCode);
-            datesForCache.remove(termCode);
         }
     }
 
@@ -162,7 +154,6 @@ public class Cache {
         for (String key : termCodes) {
             if (isCached(key)) {
                 cache.remove(key);
-                datesForCache.remove(key);
             }
         }
     }
@@ -172,7 +163,6 @@ public class Cache {
      */
     public void deleteAll() {
         cache = new HashMap<>();
-        datesForCache = new HashMap<>();
     }
 
     /**
