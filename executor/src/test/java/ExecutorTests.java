@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.exceptions.misusing.PotentialStubbingProblem;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
@@ -21,6 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -142,17 +145,22 @@ public class ExecutorTests {
             throw new IllegalArgumentException("The number of Id-lists need to be 6, for A, A1, A2, B and C.");
         }
         CompletableFuture<Set<String>> includedIds = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("Inclusion")));
-        when(fhirIdRequestor.getPatientIdsFittingCriterion(inclCriterion)).thenReturn(includedIds);
+        when(fhirIdRequestor.getPatientIdsFittingCriterion(eq(inclCriterion), any())).thenReturn(includedIds);
+
         CompletableFuture<Set<String>> excludedIdsA = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("A")));
-        when(fhirIdRequestor.getPatientIdsFittingCriterion(criterionA)).thenReturn(excludedIdsA);
+        when(fhirIdRequestor.getPatientIdsFittingCriterion(eq(criterionA), any())).thenReturn(excludedIdsA);
+
         CompletableFuture<Set<String>> excludedIdsA1 = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("A1")));
-        when(fhirIdRequestor.getPatientIdsFittingCriterion(criterionA1)).thenReturn(excludedIdsA1);
+        when(fhirIdRequestor.getPatientIdsFittingCriterion(eq(criterionA1), any())).thenReturn(excludedIdsA1);
+
         CompletableFuture<Set<String>> excludedIdsA2 = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("A2")));
-        when(fhirIdRequestor.getPatientIdsFittingCriterion(criterionA2)).thenReturn(excludedIdsA2);
+        when(fhirIdRequestor.getPatientIdsFittingCriterion(eq(criterionA2), any())).thenReturn(excludedIdsA2);
+
         CompletableFuture<Set<String>> excludedIdsB = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("B")));
-        when(fhirIdRequestor.getPatientIdsFittingCriterion(criterionB)).thenReturn(excludedIdsB);
+        when(fhirIdRequestor.getPatientIdsFittingCriterion(eq(criterionB), any())).thenReturn(excludedIdsB);
+
         CompletableFuture<Set<String>> excludedIdsC = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("C")));
-        when(fhirIdRequestor.getPatientIdsFittingCriterion(criterionC)).thenReturn(excludedIdsC);
+        when(fhirIdRequestor.getPatientIdsFittingCriterion(eq(criterionC), any())).thenReturn(excludedIdsC);
     }
 
     @NotNull

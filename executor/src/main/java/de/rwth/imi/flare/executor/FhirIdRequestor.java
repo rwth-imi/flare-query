@@ -16,7 +16,7 @@ public class FhirIdRequestor {
     Executor futureExecutor;
     Cache cache;
 
-    public FhirIdRequestor(FhirRequestorConfig config, Executor futureExecutor){
+    public FhirIdRequestor(FhirRequestorConfig config, Executor futureExecutor) {
         this.config = config;
         this.futureExecutor = futureExecutor;
         this.cache = new Cache();
@@ -25,20 +25,22 @@ public class FhirIdRequestor {
     /**
      * Get all ids fulfilling a given criterion
      */
-    public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
+    public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion, Set<String> includedIds) {
         StringBuilder sbTmp = new StringBuilder();
         TerminologyCode termCode = criterion.getTermCodes().get(0);
         sbTmp.append(termCode.getSystem()).append("|").append(termCode.getCode());
         String key = sbTmp.toString();
         cache.cleanCache();
-        if(cache.isCached(key)){
+        if (cache.isCached(key) && includedIds == null) { // Todo: when cache, when heuristics?
             return CompletableFuture.completedFuture(cache.getCachedPatientIdsFittingCriterion(key));
-        }else{
+        } else {
             FhirRequestor requestor = new FhirRequestor(config);
-            CompletableFuture<Set<String>> ret = CompletableFuture.supplyAsync(() -> requestor.execute(criterion)
+            CompletableFuture<Set<String>> ret = CompletableFuture.supplyAsync(() -> requestor.execute(criterion, includedIds)
                     .map(FlareResource::getPatientId)
                     .collect(Collectors.toSet()), futureExecutor);
-            ret =  ret.thenApply(idSet -> cache.addCachedPatientIdsFittingTermCode(key, idSet));
+            if(includedIds == null) {
+                ret = ret.thenApply(idSet -> cache.addCachedPatientIdsFittingTermCode(key, idSet));
+            }
             return ret;
         }
     }
