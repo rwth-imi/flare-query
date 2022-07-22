@@ -21,6 +21,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     private FhirRequestorConfig config;
     private Executor futureExecutor;
     private FhirIdRequestor fhirIdRequestor;
+    private HeuristicSupplier heuristicSupplier;
 
     public void setConfig(FhirRequestorConfig config) {
         this.config = config;
@@ -35,7 +36,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         FlareThreadPoolConfig poolConfig = this.config.getThreadPoolConfig();
         this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
                 TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-        fhirIdRequestor = new FhirIdRequestor(config, futureExecutor);
+        this.fhirIdRequestor = new FhirIdRequestor(config, futureExecutor);
+        this.heuristicSupplier = new DummyHeuristicSupplier();
     }
 
     public FlareExecutor(FhirRequestorConfig config, FhirIdRequestor fhirIdRequestor) {
@@ -44,6 +46,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
                 TimeUnit.SECONDS, new LinkedBlockingQueue<>());
         this.fhirIdRequestor = fhirIdRequestor;
+        this.heuristicSupplier = new DummyHeuristicSupplier();
     }
 
     @Override
@@ -116,7 +119,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         if (inclusionCriteria == null) {
             return CompletableFuture.completedFuture(new LinkedHashSet<>());
         }
-        sortCriteriaByHeuristics(inclusionCriteria, new DummyHeuristicSupplier());
+        sortCriteriaByHeuristics(inclusionCriteria, heuristicSupplier);
         Set<String> includedIds = null;
         try {
             for (CriteriaGroup criteriaGroup : inclusionCriteria) {
