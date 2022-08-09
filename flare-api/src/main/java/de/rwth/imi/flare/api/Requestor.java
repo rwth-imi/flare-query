@@ -2,7 +2,8 @@ package de.rwth.imi.flare.api;
 
 import de.rwth.imi.flare.api.model.Criterion;
 
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The Requestors purpose is to fetch all patients described by a single criterion and parsing them into a {@link FlareResource}.
@@ -14,7 +15,7 @@ public interface Requestor
      * @param searchCriterion defines the search
      * @return A stream of Resources matching the {@code searchCriterion}
      */
-    Stream<FlareResource> execute(Criterion searchCriterion);
+    CompletableFuture<Set<String>> execute(Criterion searchCriterion);
 
     String translateCriterion(Criterion searchCriterion);
 }

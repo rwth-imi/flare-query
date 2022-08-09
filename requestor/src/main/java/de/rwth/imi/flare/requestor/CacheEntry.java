@@ -1,4 +1,4 @@
-package de.rwth.imi.flare.executor;
+package de.rwth.imi.flare.requestor;
 
 import java.util.Date;
 import java.util.Set;

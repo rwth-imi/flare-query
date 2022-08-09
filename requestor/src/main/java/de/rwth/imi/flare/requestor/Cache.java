@@ -1,4 +1,4 @@
-package de.rwth.imi.flare.executor;
+package de.rwth.imi.flare.requestor;
 
 import java.util.*;
 
@@ -51,13 +51,13 @@ public class Cache {
     /**
      * Add an entry to the Cache.
      *
-     * @param termCode the Key, consisting of the Termcode
+     * @param requestUrl the Key, consisting of the Request Url
      * @param idSet    the Value, consisting of the Ids which correspond to the key
      * @return the Value, idSet
      */
-    public Set<String> addCachedPatientIdsFittingTermCode(String termCode, Set<String> idSet) {
+    public Set<String> addCachedPatientIdsFittingRequestUrl(String requestUrl, Set<String> idSet) {
         CacheEntry cacheEntry = new CacheEntry(idSet, new Date());
-        cache.put(termCode, cacheEntry);
+        cache.put(requestUrl, cacheEntry);
         trimCacheToMaxCacheEntries();
         return idSet;
     }
@@ -93,27 +93,27 @@ public class Cache {
     }
 
     /**
-     * Returns true if this map contains a mapping for the specified termCode.
+     * Returns true if this map contains a mapping for the specified requestUrl.
      *
-     * @param termCode key whose presence in this map is to be tested
-     * @return true if this map contains a mapping for the specified termCode
+     * @param requestUrl key whose presence in this map is to be tested
+     * @return true if this map contains a mapping for the specified requestUrl
      * @see java.util.Map#containsKey(Object key)
      */
-    public boolean isCached(String termCode) {
-        return cache.containsKey(termCode);
+    public boolean isCached(String requestUrl) {
+        return cache.containsKey(requestUrl);
     }
 
     /**
-     * Get a set of Ids corresponding to the given termCode.
+     * Get a set of Ids corresponding to the given requestUrl.
      *
-     * @param termCode the given termCode to get a set of corresponding Ids to
-     * @return a set of Ids corresponding to the given termCode
+     * @param requestUrl the given requestUrl to get a set of corresponding Ids to
+     * @return a set of Ids corresponding to the given requestUrl
      */
-    public Set<String> getCachedPatientIdsFittingCriterion(String termCode) {
-        if(updateExpiryAtAccess && cache.get(termCode)!= null){
-            cache.get(termCode).setLastUpdated(new Date());
+    public Set<String> getCachedPatientIdsFittingRequestUrl(String requestUrl) {
+        if(updateExpiryAtAccess && cache.get(requestUrl)!= null){
+            cache.get(requestUrl).setLastUpdated(new Date());
         }
-        return new HashSet<>(cache.get(termCode).getResultSet());
+        return new HashSet<>(cache.get(requestUrl).getResultSet());
     }
 
     /**
@@ -135,23 +135,23 @@ public class Cache {
     }
 
     /**
-     * delete the entry corresponding to the given termCode
+     * delete the entry corresponding to the given requestUrl
      *
-     * @param termCode the termCode, to which the corresponding entry is deleted
+     * @param requestUrl the requestUrl, to which the corresponding entry is deleted
      */
-    public void delete(String termCode) {
-        if (isCached(termCode)) {
-            cache.remove(termCode);
+    public void delete(String requestUrl) {
+        if (isCached(requestUrl)) {
+            cache.remove(requestUrl);
         }
     }
 
     /**
-     * delete the entries corresponding to the termCodes in the given List
+     * delete the entries corresponding to the requestUrls in the given List
      *
-     * @param termCodes the List of termCodes, to which the corresponding entries are deleted
+     * @param requestUrls the List of requestUrls, to which the corresponding entries are deleted
      */
-    public void deleteAll(List<String> termCodes) {
-        for (String key : termCodes) {
+    public void deleteAll(List<String> requestUrls) {
+        for (String key : requestUrls) {
             if (isCached(key)) {
                 cache.remove(key);
             }

@@ -175,7 +175,7 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         return groupExecutionFinished.thenApply(unused -> {
             Iterator<CompletableFuture<Set<String>>> includedGroupsIterator = idsByGroups.iterator();
             try {
-                Set<String> ret = includedGroupsIterator.next().get();
+                Set<String> ret = new HashSet<String>();
                 while (includedGroupsIterator.hasNext()) {
                     ret.addAll(includedGroupsIterator.next().get());
                 }

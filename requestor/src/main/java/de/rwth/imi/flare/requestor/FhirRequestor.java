@@ -4,6 +4,9 @@ import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Criterion;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +19,14 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
 
   private final FhirRequestorConfig config;
 
+  Cache cache;
+
   /**
    * @param requestorConfig Configuration to be used when crafting requests
    */
   public FhirRequestor(FhirRequestorConfig requestorConfig) {
     this.config = requestorConfig;
+    this.cache = new Cache();
   }
 
   /**
@@ -31,20 +37,34 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    * @return Stream that contains the results for the given criterion
    */
   @Override
-  public Stream<FlareResource> execute(Criterion searchCriterion) {
+  public CompletableFuture<Set<String>> execute(Criterion searchCriterion) {
     URI requestUrl;
     try {
       requestUrl = buildRequestUrl(searchCriterion);
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
+    String urlString = requestUrl.toString();
+    cache.cleanCache();
 
-    String pagecount = this.config.getPageCount();
-    FhirSearchRequest fhirSearchRequest = this.config.getAuthentication()
-        .map((auth) -> new FhirSearchRequest(requestUrl, auth, pagecount))
-        .orElseGet(() -> new FhirSearchRequest(requestUrl, pagecount));
-    return createStream(fhirSearchRequest);
-  }
+    if(cache.isCached(urlString)){
+      return CompletableFuture.completedFuture(cache.getCachedPatientIdsFittingRequestUrl(urlString));
+    }
+    else {
+      CompletableFuture<Set<String>> ret = CompletableFuture.supplyAsync(() -> {
+        String pagecount = this.config.getPageCount();
+        FhirSearchRequest fhirSearchRequest = this.config.getAuthentication()
+                .map((auth) -> new FhirSearchRequest(requestUrl, auth, pagecount))
+                .orElseGet(() -> new FhirSearchRequest(requestUrl, pagecount));
+        Set<String> flareStream = createStream(fhirSearchRequest)
+                .map(FlareResource::getPatientId)
+                .collect(Collectors.toSet());
+        return flareStream;
+      });
+      ret =  ret.thenApply(idSet -> cache.addCachedPatientIdsFittingRequestUrl(urlString, idSet));
+      return ret;
+      }
+    }
 
   /**
    * Override of execute. Returns URI as String instead of FlareResource
