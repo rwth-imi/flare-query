@@ -42,7 +42,8 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     String pagecount = this.config.getPageCount();
     FhirSearchRequest fhirSearchRequest = this.config.getAuthentication()
         .map((auth) -> new FhirSearchRequest(requestUrl, auth, pagecount))
-        .orElseGet(() -> new FhirSearchRequest(requestUrl, pagecount));
+        .orElseGet(() -> this.config.getToken().map(token -> new FhirSearchRequest(requestUrl, token, pagecount))
+                .orElseGet(() -> new FhirSearchRequest(requestUrl, pagecount)));
     return createStream(fhirSearchRequest);
   }
 
