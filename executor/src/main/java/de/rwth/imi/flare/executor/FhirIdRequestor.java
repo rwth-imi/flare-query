@@ -1,6 +1,7 @@
 package de.rwth.imi.flare.executor;
 
 import de.rwth.imi.flare.api.model.Criterion;
+import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 
@@ -13,10 +14,10 @@ public class FhirIdRequestor {
     Executor futureExecutor;
     FhirRequestor requestor;
 
-    public FhirIdRequestor(FhirRequestorConfig config, Executor futureExecutor){
+    public FhirIdRequestor(FhirRequestorConfig config, CacheConfig cacheConfig, Executor futureExecutor) {
         this.config = config;
         this.futureExecutor = futureExecutor;
-        this.requestor = new FhirRequestor(config);
+        this.requestor = new FhirRequestor(config, cacheConfig);
     }
 
     /**

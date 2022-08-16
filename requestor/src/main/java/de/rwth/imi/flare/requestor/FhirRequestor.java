@@ -24,9 +24,15 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
   /**
    * @param requestorConfig Configuration to be used when crafting requests
    */
-  public FhirRequestor(FhirRequestorConfig requestorConfig) {
+  public FhirRequestor(FhirRequestorConfig requestorConfig, CacheConfig cacheConfig) {
     this.config = requestorConfig;
-    this.cache = new Cache();
+    this.cache = new Cache(
+            cacheConfig.getCleanCycleMS(),
+            cacheConfig.getEntryLifetimeMS(),
+            cacheConfig.getMaxCacheEntries(),
+            cacheConfig.getUpdateExpiryAtAccess(),
+            cacheConfig.getDeleteAllEntriesOnCleanup()
+    );
   }
 
   /**

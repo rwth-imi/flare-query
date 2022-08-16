@@ -26,7 +26,7 @@ public class Cache {
      */
     public Cache() {
         this(1 * 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000,
-                1000 * 1000, true, false);
+                8000, true, false);
     }
 
     /**

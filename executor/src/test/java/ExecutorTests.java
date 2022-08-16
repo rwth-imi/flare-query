@@ -6,6 +6,7 @@ import de.rwth.imi.flare.api.model.TerminologyCode;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FhirIdRequestor;
 import de.rwth.imi.flare.executor.FlareExecutor;
+import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +57,32 @@ public class ExecutorTests {
         flareExecutor = new FlareExecutor(
                 new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"),
                         "50", new FlareThreadPoolConfig(4, 16, 10)),
+                new CacheConfig() {
+                    @Override
+                    public int getCleanCycleMS() {
+                        return 1 * 24 * 60 * 60 * 1000;
+                    }
+
+                    @Override
+                    public int getEntryLifetimeMS() {
+                        return 7 * 24 * 60 * 60 * 1000;
+                    }
+
+                    @Override
+                    public int getMaxCacheEntries() {
+                        return 8000;
+                    }
+
+                    @Override
+                    public boolean getUpdateExpiryAtAccess() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean getDeleteAllEntriesOnCleanup() {
+                        return false;
+                    }
+                },
                 fhirIdRequestor);
 
         queryExpanded = getQueryExpanded();
@@ -66,12 +93,12 @@ public class ExecutorTests {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
-        ids.put("Inclusion", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("A", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("A1", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("A2", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("B", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("C", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("Inclusion", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("A", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("A1", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("A2", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("B", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("C", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
 
         mockGetIds(ids);
 
@@ -85,11 +112,11 @@ public class ExecutorTests {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
-        ids.put("Inclusion", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("A", Arrays.asList("0", "1", "2" , "3"));
-        ids.put("A1", Arrays.asList("0", "1", "2" , "3"));
-        ids.put("A2", Arrays.asList("0", "1", "2" , "3"));
-        ids.put("B", Arrays.asList("0", "1", "2" , "3"));
+        ids.put("Inclusion", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("A", Arrays.asList("0", "1", "2", "3"));
+        ids.put("A1", Arrays.asList("0", "1", "2", "3"));
+        ids.put("A2", Arrays.asList("0", "1", "2", "3"));
+        ids.put("B", Arrays.asList("0", "1", "2", "3"));
         ids.put("C", Arrays.asList("4", "5", "6", "7", "8", "9"));
 
         mockGetIds(ids);
@@ -104,10 +131,10 @@ public class ExecutorTests {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
-        ids.put("Inclusion", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
-        ids.put("A", Arrays.asList("0", "1", "2" , "3"));
-        ids.put("A1", Arrays.asList("0", "1", "2" , "3"));
-        ids.put("A2", Arrays.asList("0", "1", "2" , "3"));
+        ids.put("Inclusion", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("A", Arrays.asList("0", "1", "2", "3"));
+        ids.put("A1", Arrays.asList("0", "1", "2", "3"));
+        ids.put("A2", Arrays.asList("0", "1", "2", "3"));
         ids.put("B", Arrays.asList("0", "1"));
         ids.put("C", new ArrayList<>());
 
@@ -123,11 +150,11 @@ public class ExecutorTests {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
-        ids.put("Inclusion", Arrays.asList("0", "1", "2" , "3", "4", "5", "6", "7", "8", "9"));
+        ids.put("Inclusion", Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
         ids.put("A", Arrays.asList("0", "1"));
-        ids.put("A1", Arrays.asList("2" , "3"));
-        ids.put("A2", Arrays.asList("0", "2" , "4", "5"));
-        ids.put("B", Arrays.asList("0", "1", "2" , "3", "4", "5"));
+        ids.put("A1", Arrays.asList("2", "3"));
+        ids.put("A2", Arrays.asList("0", "2", "4", "5"));
+        ids.put("B", Arrays.asList("0", "1", "2", "3", "4", "5"));
         ids.put("C", new ArrayList<>());
 
         mockGetIds(ids);
@@ -138,7 +165,7 @@ public class ExecutorTests {
     }
 
     private void mockGetIds(Map<String, List<String>> ids) {
-        if (ids.size()!=6){
+        if (ids.size() != 6) {
             throw new IllegalArgumentException("The number of Id-lists need to be 6, for A, A1, A2, B and C.");
         }
         CompletableFuture<Set<String>> includedIds = CompletableFuture.supplyAsync(() -> new HashSet<>(ids.get("Inclusion")));

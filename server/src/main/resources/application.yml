@@ -15,6 +15,13 @@ flare:
     corePoolSize: ${FLARE_EXEC_CORE_POOL_SIZE:4}
     maxPoolSize: ${FLARE_EXEC_MAX_POOL_SIZE:16}
     keepAliveTimeSeconds: ${FLARE_EXEC_KEEP_ALIVE_TIME_SECONDS:10}
+  cache:
+    cleanCycleMinutes: ${FLARE_CACHE_CLEAN_CYCLE_MINUTES:1440}
+    cacheEntryLifetimeHours: ${FLARE_CACHE_ENTRY_LIFETIME_HOURS:168}
+    cacheSizeThousandsOfEntries: ${FLARE_CACHE_SIZE_THOUSANDS_ENTRIES:8}
+    cacheEntryExpirationUpdatedAtAccess: ${FLARE_CACHE_ENTRY_EXPIRATION_UPDATED_AT_ACCESS:true}
+    cacheCompleteDeleteOnClean: ${FLARE_CACHE_COMPLETE_DELETE_ON_CLEAN:false}
+
 
 springdoc:
   packagesToScan: de.rwth.imi.flare.server.controller
