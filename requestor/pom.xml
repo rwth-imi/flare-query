@@ -46,7 +46,6 @@
             <artifactId>hapi-fhir-structures-r4</artifactId>
             <version>5.4.2</version>
         </dependency>
-
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -11,6 +11,7 @@ import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
+import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 
@@ -134,9 +135,34 @@ class CLI implements Callable<Integer> {
 
             @Override
             public FlareThreadPoolConfig getThreadPoolConfig() {
-                return new FlareThreadPoolConfig(4,16,10);
+                return new FlareThreadPoolConfig(4, 16, 10);
             }
 
+        }, new CacheConfig() {
+            @Override
+            public int getCleanCycleMS() {
+                return 1 * 24 * 60 * 60 * 1000;
+            }
+
+            @Override
+            public int getEntryLifetimeMS() {
+                return 7 * 24 * 60 * 60 * 1000;
+            }
+
+            @Override
+            public int getMaxCacheEntries() {
+                return 8000;
+            }
+
+            @Override
+            public boolean getUpdateExpiryAtAccess() {
+                return false;
+            }
+
+            @Override
+            public boolean getDeleteAllEntriesOnCleanup() {
+                return false;
+            }
         });
     }
 

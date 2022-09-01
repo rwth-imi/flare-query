@@ -85,13 +85,9 @@ public class QueryExpander {
 
     public List<List<CriteriaGroup>> expandCriteriaGroupsExcl(List<CriteriaGroup> criteriaGroups){
         List<List<CriteriaGroup>> expandedCriteriaGroups = new ArrayList<>(criteriaGroups.size());
-
         for(CriteriaGroup subgroup: criteriaGroups){
             List<CriteriaGroup> excl = expandCriteriaGroupExcl(subgroup);
             expandedCriteriaGroups.add(excl);
-        }
-        if(criteriaGroups.size()==0){
-            expandedCriteriaGroups.add(new ArrayList<>());
         }
         return expandedCriteriaGroups;
     }
