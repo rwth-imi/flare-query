@@ -3,6 +3,7 @@ package de.rwth.imi.flare.requestor;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import de.rwth.imi.flare.api.FlareResource;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -21,6 +22,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 /**
  * Iterates over the paged results of a given FHIR search request
  */
+
+@Slf4j
 public class FhirSearchRequest implements Iterator<FlareResource> {
     private URI nextPageUri;
     //Stack of results returned by last request
@@ -75,6 +78,7 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
                 catch (InterruptedException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 } catch (IOException e) {
+                    log.error("Error Connecting to FHIR Server with URL " + nextPageUri);
                     throw new UncheckedIOException(e);
                 }
             }

@@ -9,12 +9,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Requestor implementation, takes a single criterion, builds a FHIR Query from
  * it, and executes it
  */
+@Slf4j
 public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
 
   private final FhirRequestorConfig config;
@@ -54,6 +56,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     cache.cleanCache();
 
     if(cache.isCached(urlString)){
+      log.debug("Get cached FHIR Search: " + urlString);
       return CompletableFuture.completedFuture(cache.getCachedPatientIdsFittingRequestUrl(urlString));
     }
     else {
