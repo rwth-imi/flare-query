@@ -25,6 +25,11 @@ public class AuthlessRequestorConfig implements FhirRequestorConfig{
     }
 
     @Override
+    public Optional<String> getToken() {
+        return Optional.empty();
+    }
+
+    @Override
     public URI getBaseURI() {
         return this.baseURI;
     }

@@ -10,6 +10,7 @@ flare:
     server: ${FLARE_FHIR_SERVER_URL:http://fhir-server:8080/fhir/}
     user: ${FLARE_FHIR_USER:}
     password: ${FLARE_FHIR_PW:}
+    token: ${FLARE_FHIR_TOKEN:}
     pagecount: ${FLARE_FHIR_PAGE_COUNT:}
   exec:
     corePoolSize: ${FLARE_EXEC_CORE_POOL_SIZE:4}

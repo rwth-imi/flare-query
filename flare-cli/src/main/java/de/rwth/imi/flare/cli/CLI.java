@@ -57,6 +57,9 @@ class CLI implements Callable<Integer> {
     @Option(names = {"-p", "--password"}, description = "FHIR-server password\n if either username or password are missing no authentication will be done")
     private String password = null;
 
+    @Option(names = {"-t", "--token"}, description = "FHIR-server token\n if token is missing no authentication will be done")
+    private String token;
+
     @Option(names = {"-f", "query-format"}, description = "Format of the query to be executed")
     private QueryFormat algorithm = QueryFormat.I2B2;
 
@@ -107,6 +110,11 @@ class CLI implements Callable<Integer> {
             @Override
             public Optional<Authenticator> getAuthentication() {
                 return auth;
+            }
+
+            @Override
+            public Optional<String> getToken() {
+                return Optional.ofNullable(token);
             }
 
             @Override

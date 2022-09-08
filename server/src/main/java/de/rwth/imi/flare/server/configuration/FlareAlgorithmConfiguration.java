@@ -88,6 +88,7 @@ public class FlareAlgorithmConfiguration {
 
     @Bean
     public Executor executor(@Nullable Authenticator auth,
+                             @Value("${flare.fhir.token}") String token,
                              @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
                              @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
                              @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
@@ -96,10 +97,16 @@ public class FlareAlgorithmConfiguration {
                              @Value("${flare.cache.cacheSizeThousandsOfEntries}") int cacheSizeThousandsOfEntries,
                              @Value("${flare.cache.cacheEntryExpirationUpdatedAtAccess}") boolean cacheEntryExpirationUpdatedAtAccess,
                              @Value("${flare.cache.cacheCompleteDeleteOnClean}") boolean cacheCompleteDeleteOnClean) {
+
         return new FlareExecutor(new FhirRequestorConfig() {
             @Override
             public Optional<Authenticator> getAuthentication() {
                 return Optional.ofNullable(auth);
+            }
+
+            @Override
+            public Optional<String> getToken() {
+                return Optional.ofNullable(token);
             }
 
             @Override

@@ -33,9 +33,12 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
     private final IParser fhirParser;
     private final String pagecount;
 
+    private final Optional<String> maybeToken;
+
     public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount){
         this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().authenticator(auth).build();
+        this.maybeToken = Optional.empty();
         this.pagecount = pagecount;
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
@@ -46,6 +49,18 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
     public FhirSearchRequest(URI fhirRequestUrl, String pagecount){
         this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().build();
+        this.maybeToken = Optional.empty();
+        this.pagecount = pagecount;
+        this.fhirParser = FhirContext.forR4().newJsonParser();
+        this.remainingPageResults = new LinkedBlockingDeque<>();
+        // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
+        this.ensureStackFullness(true);
+    }
+
+    public FhirSearchRequest(URI fhirRequestUrl, String token, String pagecount){
+        this.nextPageUri = fhirRequestUrl;
+        this.client = HttpClient.newBuilder().build();
+        this.maybeToken = Optional.ofNullable(token);
         this.pagecount = pagecount;
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
@@ -93,7 +108,7 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
     private void fetchNextPage(boolean sendPostRequest) throws IOException, InterruptedException, URISyntaxException {
-        HttpRequest req = sendPostRequest ? buildPostRequest() : HttpRequest.newBuilder().uri(nextPageUri).GET().build();
+        HttpRequest req = sendPostRequest ? buildPostRequest() : buildGetRequest();
         executeRequestAndProcessResponse(req);
     }
 
@@ -110,13 +125,26 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
             query = query + "&_count=" + this.pagecount;
         }
 
-        return HttpRequest.newBuilder(
+        HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder(
                         URI.create(uri))
                 .header("Prefer", "handling=strict")
                 .header("Accept-Encoding", "CSQ")
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(query))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(query));
+        this.maybeToken.ifPresent(token -> httpRequestBuilder.header("Authorization","Bearer " + token));
+        return httpRequestBuilder.build();
+    }
+
+    /**
+     * creates an GET request for a FHIR Search.
+     * mostly used to follow FHIR searchset next links
+     * @return get request
+     */
+    private HttpRequest buildGetRequest() {
+        HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder(nextPageUri).GET();
+        this.maybeToken.ifPresent(token -> httpRequestBuilder.header("Authorization","Bearer " + token));
+
+        return httpRequestBuilder.build();
     }
 
     /**
