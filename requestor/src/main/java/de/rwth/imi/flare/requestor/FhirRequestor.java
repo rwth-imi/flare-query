@@ -62,9 +62,10 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     else {
       CompletableFuture<Set<String>> ret = CompletableFuture.supplyAsync(() -> {
         String pagecount = this.config.getPageCount();
+        boolean postpaging = this.config.getPostPaging();
         FhirSearchRequest fhirSearchRequest = this.config.getAuthentication()
-                .map((auth) -> new FhirSearchRequest(requestUrl, auth, pagecount))
-                .orElseGet(() -> new FhirSearchRequest(requestUrl, pagecount));
+                .map((auth) -> new FhirSearchRequest(requestUrl, auth, pagecount, postpaging))
+                .orElseGet(() -> new FhirSearchRequest(requestUrl, pagecount, postpaging));
         Set<String> flareStream = createStream(fhirSearchRequest)
                 .map(FlareResource::getPatientId)
                 .collect(Collectors.toSet());

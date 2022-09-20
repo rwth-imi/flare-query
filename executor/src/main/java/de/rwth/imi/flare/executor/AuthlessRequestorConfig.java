@@ -10,11 +10,13 @@ import java.util.Optional;
 public class AuthlessRequestorConfig implements FhirRequestorConfig{
     private final URI baseURI;
     private final String pagecount;
+    private final boolean postpaging;
     private final FlareThreadPoolConfig threadPoolConfig;
 
-    public AuthlessRequestorConfig(URI baseUri, String pagecount, FlareThreadPoolConfig threadPoolConfig){
+    public AuthlessRequestorConfig(URI baseUri, String pagecount, boolean postpaging, FlareThreadPoolConfig threadPoolConfig){
         this.baseURI = baseUri;
         this.pagecount = pagecount;
+        this.postpaging = postpaging;
         this.threadPoolConfig = threadPoolConfig;
 
     }
@@ -32,6 +34,11 @@ public class AuthlessRequestorConfig implements FhirRequestorConfig{
     @Override
     public String getPageCount() {
         return this.pagecount;
+    }
+
+    @Override
+    public boolean getPostPaging() {
+        return this.postpaging;
     }
 
     @Override

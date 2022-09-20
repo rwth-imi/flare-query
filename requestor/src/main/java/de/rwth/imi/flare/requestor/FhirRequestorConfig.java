@@ -29,6 +29,13 @@ public interface FhirRequestorConfig {
      */
     String getPageCount();
 
+    /**
+     *
+     * @return String setting the number of resources per page
+     *
+     */
+    boolean getPostPaging();
+
 
     /**
      *

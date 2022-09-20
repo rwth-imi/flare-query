@@ -32,25 +32,29 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
     // Parses only JSON FHIR responses
     private final IParser fhirParser;
     private final String pagecount;
+    private final boolean postpaging;
 
-    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount){
+    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount, boolean postpaging){
         this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().authenticator(auth).build();
         this.pagecount = pagecount;
+        this.postpaging = postpaging;
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
-        this.ensureStackFullness(true);
+        this.ensureStackFullness(true, true);
+
     }
 
-    public FhirSearchRequest(URI fhirRequestUrl, String pagecount){
+    public FhirSearchRequest(URI fhirRequestUrl, String pagecount, boolean postpaging){
         this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().build();
         this.pagecount = pagecount;
+        this.postpaging = postpaging;
         this.fhirParser = FhirContext.forR4().newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
-        this.ensureStackFullness(true);
+        this.ensureStackFullness(true, true);
     }
 
     @Override
@@ -60,7 +64,7 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
 
     @Override
     public FlareResource next() {
-        ensureStackFullness(false);
+        ensureStackFullness(this.postpaging, false);
         return this.remainingPageResults.pop();
     }
 
@@ -68,11 +72,11 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * Fetches next page if stack isn't full, and turns checked exceptions that should not be thrown into unchecked ones
      * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
-    private void ensureStackFullness(boolean sendPostRequest) throws NoSuchElementException {
+    private void ensureStackFullness(boolean sendPostRequest, boolean initRequest) throws NoSuchElementException {
         if(this.remainingPageResults.isEmpty()){
             if(this.nextPageUri != null){
                 try {
-                    fetchNextPage(sendPostRequest);
+                    fetchNextPage(sendPostRequest, initRequest);
                 }
                 // If these Exceptions get thrown, execution can not continue.
                 catch (InterruptedException | URISyntaxException e) {
@@ -92,8 +96,8 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * Fetches the next page of search results and updates {@link #remainingPageResults} and {@link #nextPageUri}
      * @param sendPostRequest Determines whether the request is sent via POST or GET
      */
-    private void fetchNextPage(boolean sendPostRequest) throws IOException, InterruptedException, URISyntaxException {
-        HttpRequest req = sendPostRequest ? buildPostRequest() : HttpRequest.newBuilder().uri(nextPageUri).GET().build();
+    private void fetchNextPage(boolean sendPostRequest, boolean initRequest) throws IOException, InterruptedException, URISyntaxException {
+        HttpRequest req = sendPostRequest ? buildPostRequest(initRequest) : HttpRequest.newBuilder().uri(nextPageUri).GET().build();
         executeRequestAndProcessResponse(req);
     }
 
@@ -102,12 +106,22 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * This is done to bypass the 2.083 character limit for a URL in a GET request.
      * @return post request
      */
-    private HttpRequest buildPostRequest(){
-        String uri = this.nextPageUri.getScheme() + "://" + this.nextPageUri.getAuthority() + this.nextPageUri.getPath() + "/_search";
+    private HttpRequest buildPostRequest(boolean initRequest){
         String query = this.nextPageUri.getQuery();
 
-        if ( ! this.pagecount.isEmpty()){
-            query = query + "&_count=" + this.pagecount;
+        String uri = this.nextPageUri.getScheme() + "://"
+            + this.nextPageUri.getAuthority() + this.nextPageUri.getPath();
+
+        if(initRequest) {
+            uri = this.nextPageUri.getScheme() + "://"
+                + this.nextPageUri.getAuthority() + this.nextPageUri.getPath()
+                + "/_search";
+
+            if ( ! this.pagecount.isEmpty()){
+                query = query + "&_count=" + this.pagecount;
+            }
+        } else {
+
         }
 
         return HttpRequest.newBuilder(

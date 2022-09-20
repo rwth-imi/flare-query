@@ -88,7 +88,9 @@ public class FlareAlgorithmConfiguration {
 
     @Bean
     public Executor executor(@Nullable Authenticator auth,
-                             @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
+                             @Value("${flare.fhir.server}") String fhirBaseUri,
+                             @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
+                             @Value("${flare.fhir.postpaging}") boolean fhirSearchPostPaging,
                              @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
                              @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
                              @Value("${flare.cache.cleanCycleMinutes}") int cleanCycleMinutes,
@@ -116,6 +118,10 @@ public class FlareAlgorithmConfiguration {
             @Override
             public String getPageCount() {
                 return fhirSearchPageCount;
+
+            }@Override
+            public boolean getPostPaging() {
+                return fhirSearchPostPaging;
             }
 
             @Override

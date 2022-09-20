@@ -22,7 +22,7 @@ public class ExecutorTest
     FlareExecutor executor;
 
     public ExecutorTest() throws URISyntaxException {
-        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50", new FlareThreadPoolConfig(4,16,10));
+        config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50", false, new FlareThreadPoolConfig(4,16,10));
         executor = new FlareExecutor(config, new CacheConfig() {
             @Override
             public int getCleanCycleMS() {

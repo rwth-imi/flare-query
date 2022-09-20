@@ -56,7 +56,7 @@ public class ExecutorTests {
 
         flareExecutor = new FlareExecutor(
                 new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"),
-                        "50", new FlareThreadPoolConfig(4, 16, 10)),
+                        "50", false, new FlareThreadPoolConfig(4, 16, 10)),
                 new CacheConfig() {
                     @Override
                     public int getCleanCycleMS() {

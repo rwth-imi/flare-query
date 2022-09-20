@@ -55,6 +55,16 @@ public class BasicAuthRequestorConfig implements FhirRequestorConfig {
         return "500";
     }
 
+
+    /**
+     * Creates a basic Authenticator
+     * @return Authenticator containing credentials for the FHIR server
+     */
+    @NotNull
+    public boolean getPostPaging() {
+        return false;
+    }
+
     /**
      * Creates a basic Authenticator
      * @return Authenticator containing credentials for the FHIR server

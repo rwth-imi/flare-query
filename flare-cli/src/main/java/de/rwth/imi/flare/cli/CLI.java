@@ -63,6 +63,9 @@ class CLI implements Callable<Integer> {
     @Option(names = {"-c", "pagecount"}, description = "Number of resources per page as result from fhir server")
     private String pagecount = "";
 
+    @Option(names = {"-c", "postpaging"}, description = "Number of resources per page as result from fhir server")
+    private boolean postpaging = false;
+
     private Executor executor;
 
     private final FhirResourceMapper mapping;
@@ -123,6 +126,11 @@ class CLI implements Callable<Integer> {
             @Override
             public String getPageCount() {
                 return pagecount;
+            }
+
+            @Override
+            public boolean getPostPaging() {
+                return postpaging;
             }
 
             @Override
