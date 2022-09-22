@@ -47,20 +47,6 @@ public class QueryExpanderTests {
     }
 
 
-
-    @Test
-    void testExpandOr() {
-        // (A ^ B) v C
-        List<CriteriaGroup> inputExclusionCriteria = getInputExclusionCriteria();
-
-        // ((A v A1 v A2) ^ B) v C
-        List<List<CriteriaGroup>> expectedExpandedCriteriaGroups = getExpectedExpandedCriteriaGroups();
-
-        List<List<CriteriaGroup>> expandedCriteriaGroups = queryExpander.expandCriteriaGroupsExcl(inputExclusionCriteria);
-        assertTrue(compareExpandedCriteriaGroups(expandedCriteriaGroups, expectedExpandedCriteriaGroups));
-    }
-
-
     @Test
     void exclusionCriteriaExpansionFollowsLogic() {
         // (A ^ B) v C
