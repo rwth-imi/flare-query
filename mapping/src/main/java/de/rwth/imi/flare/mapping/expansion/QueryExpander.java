@@ -6,11 +6,10 @@ import de.rwth.imi.flare.api.model.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class QueryExpander {
     private ExpansionTreeNode expansionTree;
@@ -20,10 +19,11 @@ public class QueryExpander {
         this.expansionTree = expansionTree;
     }
 
-    private List<Criterion> expandCriterion(Criterion criterion){
+    private List<Criterion> expandTermCodes(Criterion criterion){
 
         List<TerminologyCode> termCodes = criterion.getTermCodes();
         List<Criterion> expandedCriteria = new ArrayList<>();
+
         for(TerminologyCode singleTermCode: termCodes){
             // Find the given criterion in the tree
             ExpansionTreeNode searchRoot = expansionTree.findTermCode(singleTermCode);
@@ -73,12 +73,102 @@ public class QueryExpander {
         return expandedCriteriaGroups;
     }
 
+
+    private List<Criterion> getCritsForAtt(Criterion attFilterInputCrit, int attFilterIndex) {
+
+        List<AttributeFilter> inputAttFilterList = new LinkedList<>();
+        inputAttFilterList.addAll(attFilterInputCrit.getAttributeFilters());
+        AttributeFilter attFilterInput = attFilterInputCrit.getAttributeFilters()
+            .get(attFilterIndex);
+        inputAttFilterList.remove(attFilterIndex);
+
+        if (attFilterInput.getSelectedConcepts().isEmpty()) {
+            return List.of(attFilterInputCrit);
+        } else {
+            return attFilterInputCrit.getAttributeFilters().get(attFilterIndex)
+                .getSelectedConcepts().stream().map(
+                    concept -> {
+                        Criterion crit = new Criterion();
+                        AttributeFilter attFilter = new AttributeFilter();
+                        attFilter.setSelectedConcepts(List.of(concept));
+                        attFilter.setType(attFilterInput.getType());
+                        attFilter.setAttributeCode(attFilterInput.getAttributeCode());
+                        List<AttributeFilter>critAttFilterList = new LinkedList<>();
+                        critAttFilterList.addAll(inputAttFilterList);
+                        critAttFilterList.add(attFilter);
+                        crit.setAttributeFilters(critAttFilterList);
+                        crit.setMapping(attFilterInputCrit.getMapping());
+                        crit.setTermCodes(attFilterInputCrit.getTermCodes());
+                        crit.setTimeRestriction(
+                            attFilterInputCrit.getTimeRestriction());
+                        return crit;
+                    }
+                ).toList();
+
+        }
+    }
+
+    private Stream<Criterion> expandSelectedConcepts(Criterion criterion){
+
+        List<Criterion> expandedCriterion = new LinkedList<>();
+        expandedCriterion.add(criterion);
+
+        if (criterion.getValueFilter() != null &&  ! criterion.getValueFilter().getSelectedConcepts().isEmpty()){
+            expandedCriterion = expandedCriterion.stream().flatMap(
+                valFilterInputCrit ->  valFilterInputCrit.getValueFilter().getSelectedConcepts().stream().map(
+                    valFilterConcept -> {
+                        Criterion crit = new Criterion();
+                        ValueFilter valueFilter = new ValueFilter();
+                        valueFilter.setSelectedConcepts(List.of(valFilterConcept));
+                        valueFilter.setType(FilterType.CONCEPT);
+                        crit.setValueFilter(valueFilter);
+                        crit.setMapping(valFilterInputCrit.getMapping());
+                        crit.setTermCodes(valFilterInputCrit.getTermCodes());
+                        crit.setTimeRestriction(valFilterInputCrit.getTimeRestriction());
+                        crit.setAttributeFilters(valFilterInputCrit.getAttributeFilters());
+                        return crit;
+                    }
+                )
+            ).toList();
+        }
+
+        if(criterion.getAttributeFilters() == null){
+            return expandedCriterion.stream();
+        }
+
+        List<Criterion> finalCritList = new LinkedList<>();
+        int attFilterIndex = 0;
+
+        while(! expandedCriterion.isEmpty()){
+
+            Criterion firstCrit = expandedCriterion.get(0);
+            expandedCriterion.remove(0);
+
+            List<Criterion> tempCrits = getCritsForAtt(firstCrit, attFilterIndex);
+
+            if(tempCrits.size() > 1){
+                expandedCriterion.addAll(tempCrits);
+
+                if(attFilterIndex < tempCrits.get(0).getAttributeFilters().size() - 1){
+                    attFilterIndex++;
+                }
+            } else {
+                finalCritList.addAll(tempCrits);
+            }
+
+
+        }
+
+        return finalCritList.stream();
+
+    }
+
     private CriteriaGroup expandCriteriaGroup(CriteriaGroup originalCriteriaGroup) {
         LinkedList<Criterion> expandedCriteria = new LinkedList<>();
         CriteriaGroup expandedCriteriaGroup = new CriteriaGroup(expandedCriteria);
         for(Criterion criterion : originalCriteriaGroup.getCriteria()){
-            List<Criterion> expandedCriterion = expandCriterion(criterion);
-            expandedCriteria.addAll(expandedCriterion);
+            Stream<Criterion> expandedCriterion = expandTermCodes(criterion).stream();
+            expandedCriteria.addAll(expandedCriterion.flatMap(this::expandSelectedConcepts).toList());
         }
         return expandedCriteriaGroup;
     }
@@ -95,7 +185,8 @@ public class QueryExpander {
     private List<CriteriaGroup> expandCriteriaGroupExcl(CriteriaGroup originalCriteriaGroup) {
         LinkedList<CriteriaGroup> tmpList = new LinkedList<>();
         for(Criterion criterion : originalCriteriaGroup.getCriteria()) {
-            CriteriaGroup expandedCriterion = new CriteriaGroup(expandCriterion(criterion));
+            Stream<Criterion> expandedCriterions = expandTermCodes(criterion).stream();
+            CriteriaGroup expandedCriterion = new CriteriaGroup(expandedCriterions.flatMap(this::expandSelectedConcepts).toList());
             tmpList.add(expandedCriterion);
         }
 

@@ -3,6 +3,7 @@ package de.rwth.imi.flare.mapping;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.api.model.ValueFilter;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,21 @@ public class QueryExpanderTests {
 
         mockFindTermCode();
     }
+
+
+
+    @Test
+    void testExpandOr() {
+        // (A ^ B) v C
+        List<CriteriaGroup> inputExclusionCriteria = getInputExclusionCriteria();
+
+        // ((A v A1 v A2) ^ B) v C
+        List<List<CriteriaGroup>> expectedExpandedCriteriaGroups = getExpectedExpandedCriteriaGroups();
+
+        List<List<CriteriaGroup>> expandedCriteriaGroups = queryExpander.expandCriteriaGroupsExcl(inputExclusionCriteria);
+        assertTrue(compareExpandedCriteriaGroups(expandedCriteriaGroups, expectedExpandedCriteriaGroups));
+    }
+
 
     @Test
     void exclusionCriteriaExpansionFollowsLogic() {
