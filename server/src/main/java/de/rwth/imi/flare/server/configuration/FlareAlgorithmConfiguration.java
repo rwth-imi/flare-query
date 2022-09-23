@@ -12,6 +12,7 @@ import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.requestor.CacheConfig;
+import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -96,7 +98,8 @@ public class FlareAlgorithmConfiguration {
                              @Value("${flare.cache.cacheSizeThousandsOfEntries}") int cacheSizeThousandsOfEntries,
                              @Value("${flare.cache.cacheEntryExpirationUpdatedAtAccess}") boolean cacheEntryExpirationUpdatedAtAccess,
                              @Value("${flare.cache.cacheCompleteDeleteOnClean}") boolean cacheCompleteDeleteOnClean) {
-        return new FlareExecutor(new FhirRequestorConfig() {
+
+        FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
             public Optional<Authenticator> getAuthentication() {
                 return Optional.ofNullable(auth);
@@ -120,9 +123,11 @@ public class FlareAlgorithmConfiguration {
 
             @Override
             public FlareThreadPoolConfig getThreadPoolConfig() {
-                return new FlareThreadPoolConfig(corePoolSize, maxPoolSize, keepAliveTimeSeconds);
+                return new FlareThreadPoolConfig(corePoolSize, maxPoolSize,
+                    keepAliveTimeSeconds);
             }
-        }, new CacheConfig() {
+        };
+        CacheConfig cacheConfig = new CacheConfig() {
             @Override
             public int getCleanCycleMS() {
                 return cleanCycleMinutes * 60 * 1000;
@@ -147,7 +152,9 @@ public class FlareAlgorithmConfiguration {
             public boolean getDeleteAllEntriesOnCleanup() {
                 return cacheCompleteDeleteOnClean;
             }
-        });
+        };
+
+        return new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(maxPoolSize)));
     }
 
 

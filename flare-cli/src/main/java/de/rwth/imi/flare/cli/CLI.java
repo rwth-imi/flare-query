@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
+import de.rwth.imi.flare.api.Requestor;
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
@@ -12,11 +13,13 @@ import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
 import de.rwth.imi.flare.requestor.CacheConfig;
+import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 
 import java.util.*;
 
+import java.util.concurrent.Executors;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -103,7 +106,8 @@ class CLI implements Callable<Integer> {
 
     private void createExecutor() {
         Optional<Authenticator> auth = Optional.ofNullable(createAuthenticator());
-        executor = new FlareExecutor(new FhirRequestorConfig() {
+
+        FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
             public Optional<Authenticator> getAuthentication() {
                 return auth;
@@ -130,7 +134,9 @@ class CLI implements Callable<Integer> {
                 return new FlareThreadPoolConfig(4, 16, 10);
             }
 
-        }, new CacheConfig() {
+        };
+
+        CacheConfig cacheConfig = new CacheConfig() {
             @Override
             public int getCleanCycleMS() {
                 return 1 * 24 * 60 * 60 * 1000;
@@ -155,7 +161,9 @@ class CLI implements Callable<Integer> {
             public boolean getDeleteAllEntriesOnCleanup() {
                 return false;
             }
-        });
+        };
+
+        executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
     }
 
     @Nullable

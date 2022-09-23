@@ -3,8 +3,10 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.CacheConfig;
+import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -23,7 +25,8 @@ public class ExecutorTest
 
     public ExecutorTest() throws URISyntaxException {
         config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50", new FlareThreadPoolConfig(4,16,10));
-        executor = new FlareExecutor(config, new CacheConfig() {
+
+        CacheConfig cacheConfig = new CacheConfig() {
             @Override
             public int getCleanCycleMS() {
                 return 1 * 24 * 60 * 60 * 1000;
@@ -48,7 +51,8 @@ public class ExecutorTest
             public boolean getDeleteAllEntriesOnCleanup() {
                 return false;
             }
-        });
+        };
+        executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
     }
 
     @Test
