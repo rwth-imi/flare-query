@@ -137,27 +137,33 @@ public class QueryExpander {
         }
 
         List<Criterion> finalCritList = new LinkedList<>();
-        int attFilterIndex = 0;
 
-        while(! expandedCriterion.isEmpty()){
+        expandedCriterion.stream().forEach(
+            valCriterion -> {
+                List<Criterion> expandedCrit = new LinkedList<>();
+                expandedCrit.add(valCriterion);
+                int attFilterIndex = 0;
 
-            Criterion firstCrit = expandedCriterion.get(0);
-            expandedCriterion.remove(0);
+                while(! expandedCrit.isEmpty()){
 
-            List<Criterion> tempCrits = getCritsForAtt(firstCrit, attFilterIndex);
+                    Criterion firstCrit = expandedCrit.get(0);
+                    expandedCrit.remove(0);
 
-            if(tempCrits.size() > 1){
-                expandedCriterion.addAll(tempCrits);
+                    List<Criterion> tempCrits = getCritsForAtt(firstCrit, attFilterIndex);
 
-                if(attFilterIndex < tempCrits.get(0).getAttributeFilters().size() - 1){
-                    attFilterIndex++;
+                    if(tempCrits.size() > 1){
+                        expandedCrit.addAll(tempCrits);
+
+                        if(attFilterIndex < tempCrits.get(0).getAttributeFilters().size() - 1){
+                            attFilterIndex++;
+                        }
+                    } else {
+                        finalCritList.addAll(tempCrits);
+                    }
                 }
-            } else {
-                finalCritList.addAll(tempCrits);
             }
+        );
 
-
-        }
 
         return finalCritList.stream();
 
