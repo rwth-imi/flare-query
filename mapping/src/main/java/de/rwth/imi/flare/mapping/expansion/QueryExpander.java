@@ -174,8 +174,7 @@ public class QueryExpander {
         CriteriaGroup expandedCriteriaGroup = new CriteriaGroup(expandedCriteria);
         for(Criterion criterion : originalCriteriaGroup.getCriteria()){
             Stream<Criterion> expandedCriterion = expandTermCodes(criterion).stream();
-            expandedCriteria.addAll(expandedCriterion.toList());
-            //expandedCriteria.addAll(expandedCriterion.flatMap(this::expandSelectedConcepts).toList());
+            expandedCriteria.addAll(expandedCriterion.flatMap(this::expandSelectedConcepts).toList());
         }
         return expandedCriteriaGroup;
     }
