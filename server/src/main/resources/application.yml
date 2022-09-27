@@ -17,7 +17,7 @@ flare:
     keepAliveTimeSeconds: ${FLARE_EXEC_KEEP_ALIVE_TIME_SECONDS:10}
   cache:
     cacheSizeMb: ${FLARE_CACHE_SIZE_MB:1440}
-    entryRefreshTimeHours: ${FLARE_ENTRY_REFRESH_TIME_HOURS:24}
+    entryRefreshTimeHours: ${FLARE_CACHE_ENTRY_REFRESH_TIME_HOURS:24}
 
 springdoc:
   packagesToScan: de.rwth.imi.flare.server.controller
