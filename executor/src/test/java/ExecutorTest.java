@@ -28,28 +28,13 @@ public class ExecutorTest
 
         CacheConfig cacheConfig = new CacheConfig() {
             @Override
-            public int getCleanCycleMS() {
-                return 1 * 24 * 60 * 60 * 1000;
+            public int getCacheSizeInMb() {
+                return 100;
             }
 
             @Override
-            public int getEntryLifetimeMS() {
-                return 7 * 24 * 60 * 60 * 1000;
-            }
-
-            @Override
-            public int getMaxCacheEntries() {
-                return 8000;
-            }
-
-            @Override
-            public boolean getUpdateExpiryAtAccess() {
-                return false;
-            }
-
-            @Override
-            public boolean getDeleteAllEntriesOnCleanup() {
-                return false;
+            public int getEntryRefreshTimeHours() {
+                return 1;
             }
         };
         executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));

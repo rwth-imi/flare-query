@@ -93,11 +93,8 @@ public class FlareAlgorithmConfiguration {
                              @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
                              @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
                              @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
-                             @Value("${flare.cache.cleanCycleMinutes}") int cleanCycleMinutes,
-                             @Value("${flare.cache.cacheEntryLifetimeHours}") int cacheEntryLifetimeHours,
-                             @Value("${flare.cache.cacheSizeThousandsOfEntries}") int cacheSizeThousandsOfEntries,
-                             @Value("${flare.cache.cacheEntryExpirationUpdatedAtAccess}") boolean cacheEntryExpirationUpdatedAtAccess,
-                             @Value("${flare.cache.cacheCompleteDeleteOnClean}") boolean cacheCompleteDeleteOnClean) {
+                             @Value("${flare.cache.cacheSizeMb}") int cacheSizeMb,
+                             @Value("${flare.cache.entryRefreshTimeHours}") int entryRefreshTimeHours) {
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -128,30 +125,17 @@ public class FlareAlgorithmConfiguration {
             }
         };
         CacheConfig cacheConfig = new CacheConfig() {
+
             @Override
-            public int getCleanCycleMS() {
-                return cleanCycleMinutes * 60 * 1000;
+            public int getCacheSizeInMb() {
+                return cacheSizeMb;
             }
 
             @Override
-            public int getEntryLifetimeMS() {
-                return cacheEntryLifetimeHours * 60 * 60 * 1000;
+            public int getEntryRefreshTimeHours() {
+                return entryRefreshTimeHours;
             }
 
-            @Override
-            public int getMaxCacheEntries() {
-                return cacheSizeThousandsOfEntries * 1000;
-            }
-
-            @Override
-            public boolean getUpdateExpiryAtAccess() {
-                return cacheEntryExpirationUpdatedAtAccess;
-            }
-
-            @Override
-            public boolean getDeleteAllEntriesOnCleanup() {
-                return cacheCompleteDeleteOnClean;
-            }
         };
 
         return new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(maxPoolSize)));
