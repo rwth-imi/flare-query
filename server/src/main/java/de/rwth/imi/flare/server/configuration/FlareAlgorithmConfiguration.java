@@ -42,7 +42,7 @@ public class FlareAlgorithmConfiguration {
     public Map<TerminologyCode, SourceMappingEntry> loadMappingFile(@Value("${app.mappingsFile}") String mappingsFile)
             throws IOException {
 
-        var lookupTable = new HashMap<TerminologyCode, SourceMappingEntry>();
+        HashMap lookupTable = new HashMap<TerminologyCode, SourceMappingEntry>();
         ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         List<SourceMappingEntry> sourceMappingEntries = objectMapper.readValue(new File(mappingsFile), new TypeReference<>() {
         });
