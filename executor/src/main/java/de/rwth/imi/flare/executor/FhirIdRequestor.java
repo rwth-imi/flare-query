@@ -10,14 +10,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class FhirIdRequestor {
-    FhirRequestorConfig config;
-    Executor futureExecutor;
     FhirRequestor requestor;
 
-    public FhirIdRequestor(FhirRequestorConfig config, CacheConfig cacheConfig, Executor futureExecutor) {
-        this.config = config;
-        this.futureExecutor = futureExecutor;
-        this.requestor = new FhirRequestor(config, cacheConfig);
+    public FhirIdRequestor(FhirRequestor requestor) {
+        this.requestor = requestor;
     }
 
     /**

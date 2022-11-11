@@ -7,7 +7,9 @@ import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FhirIdRequestor;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.CacheConfig;
+import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
+import java.util.concurrent.Executors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,37 +56,21 @@ public class ExecutorTests {
         terminologyCodeB = new TerminologyCode("B", "B", "B");
         terminologyCodeC = new TerminologyCode("C", "C", "C");
 
-        flareExecutor = new FlareExecutor(
-                new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"),
-                        "50", new FlareThreadPoolConfig(4, 16, 10)),
-                new CacheConfig() {
-                    @Override
-                    public int getCleanCycleMS() {
-                        return 1 * 24 * 60 * 60 * 1000;
-                    }
+        AuthlessRequestorConfig config = new AuthlessRequestorConfig(
+            new URI("http://localhost:8080/fhir/"),
+            "50", new FlareThreadPoolConfig(4, 16, 10));
+        CacheConfig cacheConfig = new CacheConfig() {
+            @Override
+            public int getCacheSizeInMb() {
+                return 100;
+            }
 
-                    @Override
-                    public int getEntryLifetimeMS() {
-                        return 7 * 24 * 60 * 60 * 1000;
-                    }
-
-                    @Override
-                    public int getMaxCacheEntries() {
-                        return 8000;
-                    }
-
-                    @Override
-                    public boolean getUpdateExpiryAtAccess() {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean getDeleteAllEntriesOnCleanup() {
-                        return false;
-                    }
-                },
-                fhirIdRequestor);
-
+            @Override
+            public int getEntryRefreshTimeHours() {
+                return 1;
+            }
+        };
+        flareExecutor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
         queryExpanded = getQueryExpanded();
     }
 

@@ -33,21 +33,21 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
     private final IParser fhirParser;
     private final String pagecount;
 
-    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount){
+    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount, FhirContext r4Context){
         this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().authenticator(auth).build();
         this.pagecount = pagecount;
-        this.fhirParser = FhirContext.forR4().newJsonParser();
+        this.fhirParser = r4Context.newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
         this.ensureStackFullness(true);
     }
 
-    public FhirSearchRequest(URI fhirRequestUrl, String pagecount){
+    public FhirSearchRequest(URI fhirRequestUrl, String pagecount, FhirContext r4Context){
         this.nextPageUri = fhirRequestUrl;
         this.client = HttpClient.newBuilder().build();
         this.pagecount = pagecount;
-        this.fhirParser = FhirContext.forR4().newJsonParser();
+        this.fhirParser = r4Context.newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
         this.ensureStackFullness(true);

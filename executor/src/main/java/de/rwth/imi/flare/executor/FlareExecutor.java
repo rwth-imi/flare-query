@@ -1,20 +1,13 @@
 package de.rwth.imi.flare.executor;
 
-import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.QueryExpanded;
-import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
-import de.rwth.imi.flare.requestor.FhirRequestorConfig;
-
-import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import de.rwth.imi.flare.executor.FhirIdRequestor;
 
 
 /**
@@ -22,48 +15,26 @@ import de.rwth.imi.flare.executor.FhirIdRequestor;
  * and then executing a recombination of the different result sets according to the cnf
  */
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
-    private FhirRequestorConfig config;
-    private CacheConfig cacheConfig;
-    private Executor futureExecutor;
-    private FhirIdRequestor fhirIdRequestor;
+    private final FhirRequestor requestor;
+    private final FhirIdRequestor fhirIdRequestor;
 
-    public void setConfig(FhirRequestorConfig config) {
-        this.config = config;
-    }
+    public FlareExecutor(FhirRequestor requestor) {
+        this.requestor = requestor;
+        this.fhirIdRequestor = new FhirIdRequestor(requestor);
 
-    public void setFutureExecutor(Executor futureExecutor) {
-        this.futureExecutor = futureExecutor;
-    }
-
-    public FlareExecutor(FhirRequestorConfig config, CacheConfig cacheConfig) {
-        this.config = config;
-        this.cacheConfig = cacheConfig;
-        FlareThreadPoolConfig poolConfig = this.config.getThreadPoolConfig();
-        this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
-                TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-        fhirIdRequestor = new FhirIdRequestor(config, cacheConfig, futureExecutor);
-    }
-
-    public FlareExecutor(FhirRequestorConfig config, CacheConfig cacheConfig, FhirIdRequestor fhirIdRequestor) {
-        this.config = config;
-        this.cacheConfig = cacheConfig;
-        FlareThreadPoolConfig poolConfig = this.config.getThreadPoolConfig();
-        this.futureExecutor = new ThreadPoolExecutor(poolConfig.getCorePoolSize(), poolConfig.getMaxPoolSize(), poolConfig.getKeepAliveTimeSeconds(),
-                TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-        this.fhirIdRequestor = fhirIdRequestor;
     }
 
     @Override
     public CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery) {
         CompletableFuture<Set<String>> includedIds = getIncludedIds(mappedQuery.getInclusionCriteria());
         CompletableFuture<Set<String>> excludedIds = getExcludedIds(mappedQuery.getExclusionCriteria());
-        CompletableFuture<Set<String>> resultingIds = includedIds.thenCombineAsync(excludedIds, (strings, strings2) ->
+        CompletableFuture<Set<String>> resultingIds = includedIds.thenCombine(excludedIds, (strings, strings2) ->
         {
             if (strings2 != null) {
                 strings.removeAll(strings2);
             }
             return strings;
-        }, this.futureExecutor);
+        });
 
         return resultingIds.thenApply(Set::size);
     }
@@ -77,15 +48,16 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     @Override
     public List<List<List<String>>> translateMappedQuery(QueryExpanded mappedQuery) {
         //create new FhirRequestor by provided config
-        FhirRequestor translator = new FhirRequestor(config, cacheConfig);
+
         //split criterions into inculsion and exclusion
         List<CriteriaGroup> inclusionCriteria = mappedQuery.getInclusionCriteria();
         List<List<CriteriaGroup>> exclusionCriteria = mappedQuery.getExclusionCriteria();
         //translate criterions
-        List<List<String>> translatedInclusionCriteria = iterateCriterion(translator, inclusionCriteria);
+        List<List<String>> translatedInclusionCriteria = iterateCriterion(
+            requestor, inclusionCriteria);
         List<List<List<String>>> translatedExclusionCriteria = new ArrayList<>();
         for (List<CriteriaGroup> subCriteria : exclusionCriteria) {
-            translatedExclusionCriteria.add(iterateCriterion(translator, subCriteria));
+            translatedExclusionCriteria.add(iterateCriterion(requestor, subCriteria));
         }
         //create new ArrayList and recombine inclusion and exclusion criterions into StructuredQuery format
         List<List<List<String>>> combinedCriteria = new ArrayList<>();
