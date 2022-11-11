@@ -5,19 +5,18 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
-import de.rwth.imi.flare.api.model.Query;
-import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
+import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
+
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -128,9 +127,34 @@ class CLI implements Callable<Integer> {
 
             @Override
             public FlareThreadPoolConfig getThreadPoolConfig() {
-                return new FlareThreadPoolConfig(4,16,10);
+                return new FlareThreadPoolConfig(4, 16, 10);
             }
 
+        }, new CacheConfig() {
+            @Override
+            public int getCleanCycleMS() {
+                return 1 * 24 * 60 * 60 * 1000;
+            }
+
+            @Override
+            public int getEntryLifetimeMS() {
+                return 7 * 24 * 60 * 60 * 1000;
+            }
+
+            @Override
+            public int getMaxCacheEntries() {
+                return 8000;
+            }
+
+            @Override
+            public boolean getUpdateExpiryAtAccess() {
+                return false;
+            }
+
+            @Override
+            public boolean getDeleteAllEntriesOnCleanup() {
+                return false;
+            }
         });
     }
 
@@ -165,7 +189,7 @@ class CLI implements Callable<Integer> {
         try {
 
             Query parsedQuery = parseQuery();
-            Query mappedQuery = mapQuery(parsedQuery);
+            QueryExpanded mappedQuery = mapQuery(parsedQuery);
             int queryResult = executeQuery(mappedQuery);
             System.out.println(queryResult);
         } catch (IOException e) {
@@ -184,15 +208,31 @@ class CLI implements Callable<Integer> {
         return 0;
     }
 
-    private int executeQuery(Query mappedQuery) throws ExecutionException, InterruptedException {
+    private int executeQuery(QueryExpanded mappedQuery) throws ExecutionException, InterruptedException {
         CompletableFuture<Integer> integerCompletableFuture = this.executor.calculatePatientCount(mappedQuery);
         return integerCompletableFuture.get();
     }
 
 
-    private Query mapQuery(Query parsedQuery) {
+    private QueryExpanded mapQuery(Query query) {
+        QueryExpanded parsedQuery = new QueryExpanded();
+        // TODO: specific init needed?
+        parsedQuery.setInclusionCriteria(query.getInclusionCriteria());
+        List<List<CriteriaGroup>> exclusionCriteria = new LinkedList<>();
+        for(CriteriaGroup criteriaGroup: query.getExclusionCriteria()){
+            List<CriteriaGroup> subCriteria = new LinkedList<>();
+            for(Criterion criterion: criteriaGroup.getCriteria()){
+                CriteriaGroup newGroup = new CriteriaGroup();
+                List<Criterion> criteria = new LinkedList<>();
+                criteria.add(criterion);
+                newGroup.setCriteria(criteria);
+                subCriteria.add(newGroup);
+            }
+            exclusionCriteria.add(subCriteria);
+        }
+        parsedQuery.setExclusionCriteria(exclusionCriteria);
         try {
-            parsedQuery = mapping.mapResources(parsedQuery).get();
+            parsedQuery = mapping.mapResources(query).get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }

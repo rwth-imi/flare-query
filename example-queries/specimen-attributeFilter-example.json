@@ -4,7 +4,7 @@
   "inclusionCriteria": [
     [
       {
-        "termCode": [
+        "termCodes": [
           {
             "code": "119373006",
             "system": "http://snomed.info/sct",
