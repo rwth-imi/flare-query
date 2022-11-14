@@ -7,6 +7,9 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,6 +58,20 @@ public class SearchQueryStringBuilder {
             this.sb.append(urlEncodeAndReset(sbTmp));
         }
 
+        TerminologyCode currentTermCode = this.criterion.getTermCodes().get(0);
+        if(currentTermCode.getCode().equals("age") && currentTermCode.getSystem().equals("mii.abide")){
+
+            FilterType filter = this.criterion.getValueFilter().getType();
+            if(filter ==  FilterType.QUANTITY_COMPARATOR){
+                appendSingleAgeComparison(this.criterion.getValueFilter().getValue(), this.criterion.getValueFilter().getComparator());
+            }else if(filter == FilterType.QUANTITY_RANGE) {
+                appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
+                this.sb.append("&");
+                appendSingleAgeComparison(this.criterion.getValueFilter().getMaxValue(), Comparator.lt);
+            }
+            return;
+        }
+
         if(this.criterion.getMapping().getFhirResourceType().equals("Consent")){
             ValueFilter valueFilter = this.criterion.getValueFilter();
             this.sb.append('$').append(concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
@@ -77,6 +94,35 @@ public class SearchQueryStringBuilder {
         }
 
         appendTimeConstraints();
+    }
+
+    private void appendSingleAgeComparison(Double age, Comparator comparator){
+        this.sb.append("birthdate=");
+        switch (comparator.toString()) {
+            case "gt" -> this.sb.append("lt");
+            case "lt" -> this.sb.append("gt");
+            case "ge" -> this.sb.append("le");
+            case "le" -> this.sb.append("ge");
+            case "eq" -> this.sb.append("eq");
+            case "ne" -> this.sb.append("ne");
+        }
+
+        LocalDate dateToCompare = this.timeValueToDate(age);
+        this.sb.append(dateToCompare.toString());
+    }
+
+    private LocalDate timeValueToDate(Double age){
+        int filterValue = age.intValue();
+        LocalDate date = LocalDate.now();
+        switch (this.criterion.getValueFilter().getUnit().getCode()) {
+            case "a" -> date = date.minusYears(filterValue);
+            case "mo" -> date = date.minusMonths(filterValue);
+            case "wk" -> date = date.minusWeeks(filterValue);
+            case "d" -> date = date.minusDays(filterValue);
+            case "h" -> date = date.minusDays(filterValue / 24);
+            case "min" -> date = date.minusDays((filterValue / 60) / 24);
+        };
+        return date;
     }
 
     /**
