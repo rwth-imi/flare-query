@@ -7,8 +7,6 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
@@ -63,6 +61,15 @@ public class SearchQueryStringBuilder {
 
             FilterType filter = this.criterion.getValueFilter().getType();
             if(filter ==  FilterType.QUANTITY_COMPARATOR){
+                try{
+                    if(checkAppendEqOrNeComparison()){
+                        return;
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return;
+                }
+
                 appendSingleAgeComparison(this.criterion.getValueFilter().getValue(), this.criterion.getValueFilter().getComparator());
             }else if(filter == FilterType.QUANTITY_RANGE) {
                 appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
@@ -96,31 +103,51 @@ public class SearchQueryStringBuilder {
         appendTimeConstraints();
     }
 
-    private void appendSingleAgeComparison(Double age, Comparator comparator){
+    private boolean checkAppendEqOrNeComparison() throws Exception{
+        String comparator = this.criterion.getValueFilter().getComparator().toString();
+        if(comparator.equals("eq")){
+            Double age = this.criterion.getValueFilter().getValue();
+            LocalDate minDate = timeValueToDate(age+1);
+            LocalDate maxDate = timeValueToDate(age);
+            minDate = minDate.plusDays(1);
+
+            this.sb.append("birthdate=gt").append(minDate.toString());
+            this.sb.append("&birthdate=lt").append(maxDate.toString());
+            return true;
+
+        }else if (comparator.equals("ne")){
+            throw new Exception("comparator not implemented");
+        }
+        return false;
+    }
+
+
+    private void appendSingleAgeComparison(Double age, Comparator comparator) {
         this.sb.append("birthdate=");
         switch (comparator.toString()) {
             case "gt" -> this.sb.append("lt");
             case "lt" -> this.sb.append("gt");
             case "ge" -> this.sb.append("le");
             case "le" -> this.sb.append("ge");
-            case "eq" -> this.sb.append("eq");
-            case "ne" -> this.sb.append("ne");
         }
 
-        LocalDate dateToCompare = this.timeValueToDate(age);
-        this.sb.append(dateToCompare.toString());
+        try{
+            LocalDate dateToCompare = this.timeValueToDate(age);
+            this.sb.append(dateToCompare.toString());
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
     }
 
-    private LocalDate timeValueToDate(Double age){
-        int filterValue = age.intValue();
+    private LocalDate timeValueToDate(Double timeValue) throws Exception {
+        int filterValue = timeValue.intValue();
         LocalDate date = LocalDate.now();
         switch (this.criterion.getValueFilter().getUnit().getCode()) {
             case "a" -> date = date.minusYears(filterValue);
             case "mo" -> date = date.minusMonths(filterValue);
             case "wk" -> date = date.minusWeeks(filterValue);
-            case "d" -> date = date.minusDays(filterValue);
-            case "h" -> date = date.minusDays(filterValue / 24);
-            case "min" -> date = date.minusDays((filterValue / 60) / 24);
+            case "d", "h", "min"  -> throw new Exception("Unknown unit");
         };
         return date;
     }
