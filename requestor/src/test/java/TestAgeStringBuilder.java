@@ -1,5 +1,6 @@
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
+import de.rwth.imi.flare.requestor.IncorrectQueryInputException;
 import de.rwth.imi.flare.requestor.SearchQueryStringBuilder;
 import org.junit.jupiter.api.Test;
 import java.net.URISyntaxException;
@@ -11,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestAgeStringBuilder {
     @Test
-    public void mainAgeTests() throws URISyntaxException {
+    public void mainAgeTests()
+        throws URISyntaxException, IncorrectQueryInputException {
 
         assertEquals("Patient?birthdate=lt" + getUpdatedDate("1987-11-16"), ageSingleComparisonRequest(35.0, "a", Comparator.gt));
         assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingleComparisonRequest(32.0, "a", Comparator.lt));
@@ -25,13 +27,13 @@ public class TestAgeStringBuilder {
         assertEquals("Patient?birthdate=lt" + getUpdatedDate("2021-11-16") + "&birthdate=gt" + getUpdatedDate("2019-11-16")
                 , ageRangeRequest(1.0, 3.0, "a" ));
 
-
-        assertThrows(IllegalArgumentException.class, () -> ageSingleComparisonRequest(32.0, "a", Comparator.ne));
-        assertThrows(IllegalArgumentException.class, () -> ageSingleComparisonRequest(2.0, "d", Comparator.gt));
+        assertThrows(IncorrectQueryInputException.class, () -> ageSingleComparisonRequest(32.0, "a", Comparator.ne));
+        assertThrows(IncorrectQueryInputException.class, () -> ageSingleComparisonRequest(2.0, "d", Comparator.gt));
     }
 
 
-    public String ageSingleComparisonRequest(Double age, String timeUnit, Comparator comparator) throws URISyntaxException{
+    public String ageSingleComparisonRequest(Double age, String timeUnit, Comparator comparator)
+        throws URISyntaxException, IncorrectQueryInputException {
         Criterion ageTestCrit = new Criterion();
         ValueFilter valueFilter = new ValueFilter();
         valueFilter.setValue(age);
@@ -50,8 +52,8 @@ public class TestAgeStringBuilder {
         return searchString;
     }
 
-
-    public String ageRangeRequest(Double minAge, Double maxAge, String timeUnit) throws URISyntaxException {
+    public String ageRangeRequest(Double minAge, Double maxAge, String timeUnit)
+        throws URISyntaxException, IncorrectQueryInputException {
         Criterion ageTestCrit = new Criterion();
         ValueFilter valueFilter = new ValueFilter();
         valueFilter.setMinValue(minAge);

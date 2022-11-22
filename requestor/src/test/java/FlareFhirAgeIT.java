@@ -3,6 +3,7 @@ import ca.uhn.fhir.context.FhirContext;
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Comparator;
 import de.rwth.imi.flare.requestor.FhirSearchRequest;
+import de.rwth.imi.flare.requestor.IncorrectQueryInputException;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,7 +31,7 @@ public class FlareFhirAgeIT {
 
 
     @Test
-    public void mainIntegrationTest() throws URISyntaxException, InterruptedException  {
+    public void mainIntegrationTest() throws URISyntaxException, InterruptedException, IncorrectQueryInputException {
         String baseUri = "http://localhost:" + fhirContainer.getMappedPort(8080) + "/fhir" ;
 
         try{
@@ -47,16 +48,17 @@ public class FlareFhirAgeIT {
          *   id 5: 2022-11-01
          * */
         TestAgeStringBuilder sb = new TestAgeStringBuilder();
-        assertEquals(1, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1983-05-17", "a"), "a", Comparator.gt)));
-        assertEquals(2, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1990-01-01", "a"), "a", Comparator.lt)));
-        assertEquals(3, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1990-11-01", "mo"), "mo", Comparator.gt)));
-        assertEquals(5, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("2022-10-01", "mp"), "mo", Comparator.gt)));
-        assertEquals(1, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("2022-11-01", "wk"), "wk", Comparator.lt)));
 
-        assertEquals(2, listResultPatIds (baseUri + "/" + sb.ageRangeRequest(getPatientAge("2022-10-01", "mo"), getPatientAge("1990-01-01", "mo"), "mo")));
+        assertEquals(1, getNumberResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1983-05-17", "a"), "a", Comparator.gt)));
+        assertEquals(2, getNumberResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1990-01-01", "a"), "a", Comparator.lt)));
+        assertEquals(3, getNumberResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1990-11-01", "mo"), "mo", Comparator.gt)));
+        assertEquals(5, getNumberResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("2022-10-01", "mp"), "mo", Comparator.gt)));
+        assertEquals(1, getNumberResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("2022-11-01", "wk"), "wk", Comparator.lt)));
+
+        assertEquals(2, getNumberResultPatIds (baseUri + "/" + sb.ageRangeRequest(getPatientAge("2022-10-01", "mo"), getPatientAge("1990-01-01", "mo"), "mo")));
     }
 
-        private Double getPatientAge(String birthdateString, String unit){
+        private double getPatientAge(String birthdateString, String unit){
             LocalDate birthdate = LocalDate.parse(birthdateString);
             double patientAge = 0;
             switch(unit){
@@ -87,7 +89,7 @@ public class FlareFhirAgeIT {
         bufferedReader.close();
     }
 
-    private int listResultPatIds (String uri) throws URISyntaxException {
+    private int getNumberResultPatIds (String uri) throws URISyntaxException {
         FhirSearchRequest fhirSearchRequest = new FhirSearchRequest(new URI(uri), "50", FhirContext.forR4());
 
         System.out.println("URI: " + uri + " \nfound patients: ");

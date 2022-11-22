@@ -64,7 +64,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     URI requestUrl;
     try {
       requestUrl = buildRequestUrl(searchCriterion);
-    } catch (URISyntaxException e) {
+    } catch (URISyntaxException | IncorrectQueryInputException e) {
       throw new RuntimeException(e);
     }
     String urlString = requestUrl.toString();
@@ -101,7 +101,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     URI requestUrl;
     try {
       requestUrl = buildRequestUrl(searchCriterion);
-    } catch (URISyntaxException e) {
+    } catch (URISyntaxException | IncorrectQueryInputException e) {
       throw new RuntimeException(e);
     }
     return requestUrl.toString();
@@ -115,7 +115,8 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
   }
 
 
-  private URI buildRequestUrl(Criterion search) throws URISyntaxException {
+  private URI buildRequestUrl(Criterion search)
+      throws URISyntaxException, IncorrectQueryInputException {
     // TODO: Find a way to properly concat URLs in Java
     String searchQuery = SearchQueryStringBuilder.constructQueryString(search);
     String searchUrl = config.getBaseURI().toString() + searchQuery;
