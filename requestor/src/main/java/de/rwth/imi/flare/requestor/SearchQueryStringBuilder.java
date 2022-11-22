@@ -41,7 +41,7 @@ public class SearchQueryStringBuilder {
     /**
      * Constructs the query string into {@link #sb}
      */
-    private void constructQueryString(){
+    private void constructQueryString() throws IllegalArgumentException{
         MappingEntry mappings = this.criterion.getMapping();
         TerminologyCode termCode = this.criterion.getTermCodes().get(0);
 
@@ -61,12 +61,7 @@ public class SearchQueryStringBuilder {
 
             FilterType filter = this.criterion.getValueFilter().getType();
             if(filter ==  FilterType.QUANTITY_COMPARATOR){
-                try{
-                    if(checkAppendEqOrNeComparison()){
-                        return;
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
+                if(checkAppendEqOrNeComparison()){
                     return;
                 }
 
@@ -103,7 +98,7 @@ public class SearchQueryStringBuilder {
         appendTimeConstraints();
     }
 
-    private boolean checkAppendEqOrNeComparison() throws Exception{
+    private boolean checkAppendEqOrNeComparison() throws IllegalArgumentException{
         String comparator = this.criterion.getValueFilter().getComparator().toString();
         if(comparator.equals("eq")){
             Double age = this.criterion.getValueFilter().getValue();
@@ -116,13 +111,13 @@ public class SearchQueryStringBuilder {
             return true;
 
         }else if (comparator.equals("ne")){
-            throw new Exception("comparator not implemented");
+            throw new IllegalArgumentException("ne as comparator not implemented");
         }
         return false;
     }
 
 
-    private void appendSingleAgeComparison(Double age, Comparator comparator) {
+    private void appendSingleAgeComparison(Double age, Comparator comparator) throws IllegalArgumentException{
         this.sb.append("birthdate=");
         switch (comparator.toString()) {
             case "gt" -> this.sb.append("lt");
@@ -131,23 +126,19 @@ public class SearchQueryStringBuilder {
             case "le" -> this.sb.append("ge");
         }
 
-        try{
-            LocalDate dateToCompare = this.timeValueToDate(age);
-            this.sb.append(dateToCompare.toString());
-        }catch(Exception e){
-            e.printStackTrace();
-        }
 
+        LocalDate dateToCompare = this.timeValueToDate(age);
+        this.sb.append(dateToCompare.toString());
     }
 
-    private LocalDate timeValueToDate(Double timeValue) throws Exception {
+    private LocalDate timeValueToDate(Double timeValue) throws IllegalArgumentException {
         int filterValue = timeValue.intValue();
         LocalDate date = LocalDate.now();
         switch (this.criterion.getValueFilter().getUnit().getCode()) {
             case "a" -> date = date.minusYears(filterValue);
             case "mo" -> date = date.minusMonths(filterValue);
             case "wk" -> date = date.minusWeeks(filterValue);
-            case "d", "h", "min"  -> throw new Exception("Unknown unit");
+            case "d", "h", "min"  -> throw new IllegalArgumentException("d, h, and min as unit of time not implemented");
         };
         return date;
     }

@@ -5,7 +5,6 @@ import de.rwth.imi.flare.api.model.Comparator;
 import de.rwth.imi.flare.requestor.FhirSearchRequest;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -16,6 +15,10 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Testcontainers
 public class FlareFhirAgeIT {
@@ -44,13 +47,24 @@ public class FlareFhirAgeIT {
          *   id 5: 2022-11-01
          * */
         TestAgeStringBuilder sb = new TestAgeStringBuilder();
-        fhirRequest(baseUri + "/" + sb.ageSingeComparisonRequest(35.0, "a", Comparator.gt));
-        fhirRequest(baseUri + "/" + sb.ageSingeComparisonRequest(32.0, "a", Comparator.lt));
-        fhirRequest(baseUri + "/" + sb.ageSingeComparisonRequest(32.53456, "a", Comparator.gt));
-        fhirRequest(baseUri + "/" + sb.ageSingeComparisonRequest(32.0 * 12.0, "mo", Comparator.gt));
-        fhirRequest(baseUri + "/" + sb.ageSingeComparisonRequest(2.0, "mo", Comparator.lt));
+        assertEquals(1, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1983-05-17", "a"), "a", Comparator.gt)));
+        assertEquals(2, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1990-01-01", "a"), "a", Comparator.lt)));
+        assertEquals(3, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("1990-11-01", "mo"), "mo", Comparator.gt)));
+        assertEquals(5, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("2022-10-01", "mp"), "mo", Comparator.gt)));
+        assertEquals(1, listResultPatIds (baseUri + "/" + sb.ageSingleComparisonRequest(getPatientAge("2022-11-01", "wk"), "wk", Comparator.lt)));
 
-        fhirRequest(baseUri + "/" + sb.ageRangeRequest(32.0*12, 32.0*12+1, "mo"));
+        assertEquals(2, listResultPatIds (baseUri + "/" + sb.ageRangeRequest(getPatientAge("2022-10-01", "mo"), getPatientAge("1990-01-01", "mo"), "mo")));
+    }
+
+        private Double getPatientAge(String birthdateString, String unit){
+            LocalDate birthdate = LocalDate.parse(birthdateString);
+            double patientAge = 0;
+            switch(unit){
+                case "a" -> patientAge = ChronoUnit.YEARS.between(birthdate, LocalDate.now());
+                case "mo" -> patientAge = ChronoUnit.MONTHS.between(birthdate, LocalDate.now());
+                case "wk" -> patientAge = ChronoUnit.WEEKS.between(birthdate, LocalDate.now());
+            }
+            return patientAge;
     }
 
     private void uploadTestData(String baseUri) throws IOException, InterruptedException {
@@ -73,14 +87,17 @@ public class FlareFhirAgeIT {
         bufferedReader.close();
     }
 
-    private void fhirRequest(String uri) throws URISyntaxException {
+    private int listResultPatIds (String uri) throws URISyntaxException {
         FhirSearchRequest fhirSearchRequest = new FhirSearchRequest(new URI(uri), "50", FhirContext.forR4());
 
         System.out.println("URI: " + uri + " \nfound patients: ");
+        int patientCount = 0;
         while (fhirSearchRequest.hasNext()) {
             FlareResource res = fhirSearchRequest.next();
             System.out.println(res.getPatientId());
+            patientCount++;
         }
         System.out.println("---");
+        return patientCount;
     }
 }

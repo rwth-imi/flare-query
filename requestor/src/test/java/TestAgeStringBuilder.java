@@ -7,29 +7,31 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestAgeStringBuilder {
     @Test
     public void mainAgeTests() throws URISyntaxException {
 
-        assertEquals("Patient?birthdate=lt" + getUpdatedDate("1987-11-16"), ageSingeComparisonRequest(35.0, "a", Comparator.gt));
-        assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingeComparisonRequest(32.0, "a", Comparator.lt));
-        assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingeComparisonRequest(32.634,  "a", Comparator.lt));
-        assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingeComparisonRequest(32.0 * 12.0, "mo", Comparator.lt));
-        assertEquals("Patient?birthdate=lt" + getUpdatedDate("2022-11-02"), ageSingeComparisonRequest(2.0,  "wk", Comparator.gt));
+        assertEquals("Patient?birthdate=lt" + getUpdatedDate("1987-11-16"), ageSingleComparisonRequest(35.0, "a", Comparator.gt));
+        assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingleComparisonRequest(32.0, "a", Comparator.lt));
+        assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingleComparisonRequest(32.634,  "a", Comparator.lt));
+        assertEquals("Patient?birthdate=gt" + getUpdatedDate("1990-11-16"), ageSingleComparisonRequest(32.0 * 12.0, "mo", Comparator.lt));
+        assertEquals("Patient?birthdate=lt" + getUpdatedDate("2022-11-02"), ageSingleComparisonRequest(2.0,  "wk", Comparator.gt));
 
         assertEquals("Patient?birthdate=gt" + getUpdatedDate("1989-11-17")
-                          + "&birthdate=lt" + getUpdatedDate("1990-11-16"), ageSingeComparisonRequest(32.0,  "a", Comparator.eq));
+                          + "&birthdate=lt" + getUpdatedDate("1990-11-16"), ageSingleComparisonRequest(32.0,  "a", Comparator.eq));
 
         assertEquals("Patient?birthdate=lt" + getUpdatedDate("2021-11-16") + "&birthdate=gt" + getUpdatedDate("2019-11-16")
                 , ageRangeRequest(1.0, 3.0, "a" ));
 
-        ageSingeComparisonRequest(32.0,  "a", Comparator.ne); // should produce a "comparator not implemented" exception
-        ageSingeComparisonRequest(2.0, "d", Comparator.gt); // should produce a unit exception
+
+        assertThrows(IllegalArgumentException.class, () -> ageSingleComparisonRequest(32.0, "a", Comparator.ne));
+        assertThrows(IllegalArgumentException.class, () -> ageSingleComparisonRequest(2.0, "d", Comparator.gt));
     }
 
 
-    public String ageSingeComparisonRequest(Double age, String timeUnit, Comparator comparator) throws URISyntaxException{
+    public String ageSingleComparisonRequest(Double age, String timeUnit, Comparator comparator) throws URISyntaxException{
         Criterion ageTestCrit = new Criterion();
         ValueFilter valueFilter = new ValueFilter();
         valueFilter.setValue(age);
