@@ -7,6 +7,7 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,7 +24,8 @@ public class SearchQueryStringBuilder {
      * @param searchCriterion criterion to be built into a String
      * @return query String that can be appended onto a FHIR Server URI, starts with the resource (e.g. Patient?...)
      */
-    public static String constructQueryString(Criterion searchCriterion){
+    public static String constructQueryString(Criterion searchCriterion)
+        throws IncorrectQueryInputException {
         SearchQueryStringBuilder builder = new SearchQueryStringBuilder(searchCriterion);
         builder.constructQueryString();
         return builder.sb.toString();
@@ -40,7 +42,7 @@ public class SearchQueryStringBuilder {
     /**
      * Constructs the query string into {@link #sb}
      */
-    private void constructQueryString(){
+    private void constructQueryString() throws IncorrectQueryInputException{
         MappingEntry mappings = this.criterion.getMapping();
         TerminologyCode termCode = this.criterion.getTermCodes().get(0);
 
@@ -53,6 +55,24 @@ public class SearchQueryStringBuilder {
                     .append("|")
                     .append(termCode.getCode());
             this.sb.append(urlEncodeAndReset(sbTmp));
+        }
+
+        TerminologyCode currentTermCode = this.criterion.getTermCodes().get(0);
+        if(currentTermCode.getCode().equals("age") && currentTermCode.getSystem().equals("mii.abide")){
+
+            FilterType filter = this.criterion.getValueFilter().getType();
+            if(filter ==  FilterType.QUANTITY_COMPARATOR){
+                if(checkAppendEqOrNeComparison()){
+                    return;
+                }
+
+                appendSingleAgeComparison(this.criterion.getValueFilter().getValue(), this.criterion.getValueFilter().getComparator());
+            }else if(filter == FilterType.QUANTITY_RANGE) {
+                appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
+                this.sb.append("&");
+                appendSingleAgeComparison(this.criterion.getValueFilter().getMaxValue(), Comparator.lt);
+            }
+            return;
         }
 
         if(this.criterion.getMapping().getFhirResourceType().equals("Consent")){
@@ -77,6 +97,51 @@ public class SearchQueryStringBuilder {
         }
 
         appendTimeConstraints();
+    }
+
+    private boolean checkAppendEqOrNeComparison() throws IncorrectQueryInputException{
+        String comparator = this.criterion.getValueFilter().getComparator().toString();
+        if(comparator.equals("eq")){
+            Double age = this.criterion.getValueFilter().getValue();
+            LocalDate minDate = timeValueToDate(age+1);
+            LocalDate maxDate = timeValueToDate(age);
+            minDate = minDate.plusDays(1);
+
+            this.sb.append("birthdate=gt").append(minDate.toString());
+            this.sb.append("&birthdate=lt").append(maxDate.toString());
+            return true;
+
+        }else if (comparator.equals("ne")){
+            throw new IncorrectQueryInputException("comparator 'ne' is not implemented");
+        }
+        return false;
+    }
+
+
+    private void appendSingleAgeComparison(Double age, Comparator comparator) throws IncorrectQueryInputException{
+        this.sb.append("birthdate=");
+        switch (comparator.toString()) {
+            case "gt" -> this.sb.append("lt");
+            case "lt" -> this.sb.append("gt");
+            case "ge" -> this.sb.append("le");
+            case "le" -> this.sb.append("ge");
+        }
+
+
+        LocalDate dateToCompare = this.timeValueToDate(age);
+        this.sb.append(dateToCompare.toString());
+    }
+
+    private LocalDate timeValueToDate(Double timeValue) throws IncorrectQueryInputException {
+        int filterValue = timeValue.intValue();
+        LocalDate date = LocalDate.now();
+        switch (this.criterion.getValueFilter().getUnit().getCode()) {
+            case "a" -> date = date.minusYears(filterValue);
+            case "mo" -> date = date.minusMonths(filterValue);
+            case "wk" -> date = date.minusWeeks(filterValue);
+            case "d", "h", "min"  -> throw new IncorrectQueryInputException("d, h, and min as unit of time not implemented");
+        };
+        return date;
     }
 
     /**
