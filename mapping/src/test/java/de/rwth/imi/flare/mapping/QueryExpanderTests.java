@@ -3,6 +3,7 @@ package de.rwth.imi.flare.mapping;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.TerminologyCode;
+import de.rwth.imi.flare.api.model.ValueFilter;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,7 @@ public class QueryExpanderTests {
 
         mockFindTermCode();
     }
+
 
     @Test
     void exclusionCriteriaExpansionFollowsLogic() {
