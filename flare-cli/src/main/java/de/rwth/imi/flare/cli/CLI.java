@@ -12,7 +12,6 @@ import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
 import de.rwth.imi.flare.parser.i2b2.ParserI2B2;
-import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
@@ -136,19 +135,7 @@ class CLI implements Callable<Integer> {
 
         };
 
-        CacheConfig cacheConfig = new CacheConfig() {
-            @Override
-            public int getCacheSizeInMb() {
-                return 100;
-            }
-
-            @Override
-            public int getEntryRefreshTimeHours() {
-                return 1;
-            }
-        };
-
-        executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
+        executor = new FlareExecutor(new FhirRequestor(config, Executors.newFixedThreadPool(16)));
     }
 
     @Nullable
