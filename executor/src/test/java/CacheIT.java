@@ -1,26 +1,18 @@
-import ca.uhn.fhir.context.FhirContext;
-import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.AttributeSearchParameter;
-import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.*;
-import org.hl7.fhir.r4.model.IntegerType;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.annotation.JsonAppend;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 
 import java.net.URI;
@@ -30,9 +22,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -45,9 +35,8 @@ public class CacheIT {
     FlareExecutor executor;
     FhirRequestorConfig config;
     private final int malesToGenerate =15;
-    private final int femalesToGenerate = 10;
+    private final int femalesToGenerate = 1000;
     private String baseFhirUri;
-    private String baseFlareUri;
     private int idCounter = 0;
     private String singlePatientTemplate;
 
@@ -59,6 +48,7 @@ public class CacheIT {
     @Test
     public void mainCacheIntegrationTest() throws URISyntaxException, ExecutionException, InterruptedException, IOException {
         baseFhirUri = "http://localhost:" + fhirContainer.getMappedPort(8080) + "/fhir" ;
+        //baseFhirUri = "http://localhost:8082/fhir"; //overwrite baseFhirUri like this if you want to use your own fhir server
         singlePatientTemplate = loadSinglePatientTemplate();
         createExecutor();
 
@@ -86,7 +76,7 @@ public class CacheIT {
         System.out.println("time cached: " + duration2 + "ms");
 
 
-        //TODO upload lots of patients to test how long it takes to retreive lots of patient ids from disk
+        //TODO upload lots of patients to test how long it takes to retrieve lots of patient ids from disk
     }
 
 
