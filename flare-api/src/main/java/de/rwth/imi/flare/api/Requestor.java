@@ -15,7 +15,7 @@ public interface Requestor
      * @param searchCriterion defines the search
      * @return A stream of Resources matching the {@code searchCriterion}
      */
-    CompletableFuture<Set<String>> execute(Criterion searchCriterion);
+    CompletableFuture<Set<FlareIdDateWrap>> execute(Criterion searchCriterion);
 
     String translateCriterion(Criterion searchCriterion);
 }

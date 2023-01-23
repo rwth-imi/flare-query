@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.executor;
 
+import de.rwth.imi.flare.api.FlareIdDateWrap;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
@@ -19,7 +20,7 @@ public class FhirIdRequestor {
     /**
      * Get all ids fulfilling a given criterion
      */
-    public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
+    public CompletableFuture<Set<FlareIdDateWrap>> getPatientIdsFittingCriterion(Criterion criterion) {
         return requestor.execute(criterion);
     }
 

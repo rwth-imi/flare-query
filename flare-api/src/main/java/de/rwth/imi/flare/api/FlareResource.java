@@ -14,4 +14,7 @@ public interface FlareResource
 
     // TODO: Determine proper return type
     // public Object getRelevantValue();
+
+    public FlareIdDateWrap getIdDateWrap();
+
 }

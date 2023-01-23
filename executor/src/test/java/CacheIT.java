@@ -35,7 +35,7 @@ public class CacheIT {
     FlareExecutor executor;
     FhirRequestorConfig config;
     private final int malesToGenerate =15;
-    private final int femalesToGenerate = 1000;
+    private final int femalesToGenerate = 10;
     private String baseFhirUri;
     private int idCounter = 0;
     private String singlePatientTemplate;

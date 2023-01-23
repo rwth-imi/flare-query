@@ -1,6 +1,8 @@
 package de.rwth.imi.flare.requestor;
 
 import ca.uhn.fhir.context.FhirContext;
+import de.rwth.imi.flare.api.FlareCacheEntry;
+import de.rwth.imi.flare.api.FlareIdDateWrap;
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Criterion;
 import java.net.URI;
@@ -29,9 +31,9 @@ import org.apache.commons.jcs3.access.CacheAccess;
 @Slf4j
 public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
 
-  private CacheAccess<String, HashMap<String,Set<String>>> cache = null;
+  private CacheAccess<String, FlareCacheEntry> cache = null;
   private final int cacheRefreshTimeInDays = 7;
-  private HashMap<String, CompletableFuture<Set<String>>> currentlyRequestingQueries = new HashMap<String, CompletableFuture<Set<String>>>();
+  private HashMap<String, CompletableFuture<Set<FlareIdDateWrap>>> currentlyRequestingQueries = new HashMap<String, CompletableFuture<Set<FlareIdDateWrap>>>();
   private final FhirRequestorConfig config;
   private final FhirContext fhirR4Context = FhirContext.forR4();
   private final Executor executor;
@@ -60,7 +62,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    * @return Stream that contains the results for the given criterion
    */
   @Override
-  public CompletableFuture<Set<String>> execute(Criterion searchCriterion) {
+  public CompletableFuture<Set<FlareIdDateWrap>> execute(Criterion searchCriterion) {
     URI requestUrl;
     try {
       requestUrl = buildRequestUrl(searchCriterion);
@@ -69,19 +71,20 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     }
 
     String urlString = requestUrl.toString();
-    CompletableFuture<Set<String>> ongoingRequest = currentlyRequestingQueries.get(urlString);
+    CompletableFuture<Set<FlareIdDateWrap>> ongoingRequest = currentlyRequestingQueries.get(urlString);
     if (ongoingRequest != null) {
       log.debug("Same request ongoing. Not starting new request");
       return ongoingRequest;
     }
 
-    HashMap<String, Set<String>> cacheEntry = cache.get(urlString); //this won't work if the base url changed in the meantime (e.g. different port because of testcontainers)
+    //HashMap<String, Set<String>> cacheEntry = cache.get(urlString); //this won't work if the base url changed in the meantime (e.g. different port because of testcontainers)
+    FlareCacheEntry cacheEntry = cache.get(urlString);
     if(cacheEntry != null){
       if(mustRefreshEntry(cacheEntry)) {
         log.debug("Url " + urlString + " cached, but too long ago. Requesting again...");
         return getSetFlareStream(urlString,this.executor);
       }
-      return CompletableFuture.supplyAsync(() -> cacheEntry.get("ids"));
+      return CompletableFuture.supplyAsync(() -> cacheEntry.idDateWraps);
     }else{
       return getSetFlareStream(urlString, this.executor);
     }
@@ -90,18 +93,17 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
 
 
   @NotNull
-  private CompletableFuture<Set<String>> getSetFlareStream(String requestUrl, Executor executor) {
+  private CompletableFuture<Set<FlareIdDateWrap>> getSetFlareStream(String requestUrl, Executor executor) {
     log.debug("FHIR Search: " + requestUrl + " not cached or refreshing...");
-    CompletableFuture<Set<String>> compFuture =  CompletableFuture.supplyAsync(() -> {
+    CompletableFuture<Set<FlareIdDateWrap>> compFuture =  CompletableFuture.supplyAsync(() -> {
       String pagecount = this.config.getPageCount();
       FhirSearchRequest fhirSearchRequest = this.config.getAuthentication()
               .map((auth) -> new FhirSearchRequest(URI.create(requestUrl), auth, pagecount, fhirR4Context))
               .orElseGet(() -> new FhirSearchRequest(URI.create(requestUrl), pagecount, fhirR4Context));
-      Set<String> flareStream = createStream(fhirSearchRequest)
-              .map(FlareResource::getPatientId)
+      Set<FlareIdDateWrap> flareStream = createStream(fhirSearchRequest)
+              .map(FlareResource::getIdDateWrap)
               .collect(Collectors.toSet());
       log.debug("FHIR Search: " + requestUrl + " finished execution, writing to cache...");
-
       putIdsInCache(requestUrl, flareStream);
       return flareStream;
     }, executor);
@@ -116,15 +118,18 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     return compFuture;
   }
 
-  private void putIdsInCache(String requestUrl, Set<String> flareStream){
-    HashMap<String, Set<String>> hashMap = new HashMap<String, Set<String>>();
-    hashMap.put("ids", flareStream);
-    hashMap.put("lastRefreshTime", new HashSet<String>(List.of(LocalDateTime.now().toString())));
-    cache.put(requestUrl, hashMap);
+  private void putIdsInCache(String requestUrl, Set<FlareIdDateWrap> flareStream){
+    //HashMap<String, Set<String>> hashMap = new HashMap<String, Set<String>>();
+    //hashMap.put("ids", flareStream);
+    //hashMap.put("lastRefreshTime", new HashSet<String>(List.of(LocalDateTime.now().toString())));
+    FlareCacheEntry cacheEntry = new FlareCacheEntry();
+    cacheEntry.idDateWraps = flareStream;
+    cacheEntry.cacheEntryTime = LocalDateTime.now().toString();
+    cache.put(requestUrl, cacheEntry);
   }
 
-  private boolean mustRefreshEntry(HashMap<String, Set<String>> cacheEntry){
-    LocalDateTime lastRequestTime = LocalDateTime.parse(cacheEntry.get("lastRefreshTime").toArray()[0].toString());
+  private boolean mustRefreshEntry(FlareCacheEntry cacheEntry){
+    LocalDateTime lastRequestTime = LocalDateTime.parse(cacheEntry.cacheEntryTime);
     long timeSinceLastRequest = Duration.between(lastRequestTime, LocalDateTime.now()).toDays();
     if(timeSinceLastRequest > cacheRefreshTimeInDays){
         return true;

@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.executor;
 
+import de.rwth.imi.flare.api.FlareIdDateWrap;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.QueryExpanded;
@@ -8,6 +9,7 @@ import de.rwth.imi.flare.requestor.FhirRequestor;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     private final FhirRequestor requestor;
     private final FhirIdRequestor fhirIdRequestor;
+    private List<CompletableFuture<Set<FlareIdDateWrap>>> consentResourceIds = new LinkedList<>();
 
     public FlareExecutor(FhirRequestor requestor) {
         this.requestor = requestor;
@@ -26,14 +29,18 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
 
     @Override
     public CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery) {
-        CompletableFuture<Set<String>> includedIds = getIncludedIds(mappedQuery.getInclusionCriteria());
-        CompletableFuture<Set<String>> excludedIds = getExcludedIds(mappedQuery.getExclusionCriteria());
-        CompletableFuture<Set<String>> resultingIds = includedIds.thenCombine(excludedIds, (strings, strings2) ->
+        CompletableFuture<Set<FlareIdDateWrap>> includedIdDateWraps = getIncludedIds(mappedQuery.getInclusionCriteria());
+        CompletableFuture<Set<FlareIdDateWrap>> excludedIdDateWraps = getExcludedIds(mappedQuery.getExclusionCriteria());
+
+
+        CompletableFuture<Set<String>> resultingIds = includedIdDateWraps.thenCombine(excludedIdDateWraps, (idDateWrapSet0, idDateWrapSet1) ->
         {
-            if (strings2 != null) {
-                strings.removeAll(strings2);
+            Set<String> includedIds = idDateWrapSet0.stream().map(flareIdDateWrap -> flareIdDateWrap.patId).collect(Collectors.toSet());
+            Set<String> excludedIds = idDateWrapSet1.stream().map(flareIdDateWrap -> flareIdDateWrap.patId).collect(Collectors.toSet());
+            if (includedIds != null) {
+                includedIds.removeAll(excludedIds);
             }
-            return strings;
+            return includedIds;
         });
 
         return resultingIds.thenApply(Set::size);
@@ -91,70 +98,177 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Build intersection of all group sets
      */
-    private CompletableFuture<Set<String>> getIncludedIds(List<CriteriaGroup> inclusionCriteria) {
+    private CompletableFuture<Set<FlareIdDateWrap>> getIncludedIds(List<CriteriaGroup> inclusionCriteria) {
+        this.consentResourceIds = new LinkedList<>(); //needs to be reset because this method is used for exlucion after it has been used for inclusion
         if (inclusionCriteria == null) {
             return CompletableFuture.completedFuture(new HashSet<>());
         }
-        // Async fetch all ids per group
-        List<CompletableFuture<Set<String>>> includedIdsByGroup =
-                inclusionCriteria.stream().map(this::getIdsFittingInclusionGroup).toList();
+
+        List<CompletableFuture<Set<FlareIdDateWrap>>> includedIdsByGroup = new LinkedList<>();
+        Iterator<CriteriaGroup> includedResourcedIterator = inclusionCriteria.iterator();
+        while(includedResourcedIterator.hasNext()){
+            addIdsAndConsentFittingInclusionGroup(includedResourcedIterator.next(), includedIdsByGroup);
+        }
 
         // Wait for async exec to finish
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
                 .allOf(includedIdsByGroup.toArray(new CompletableFuture[0]));
+        CompletableFuture<Void> consentRequestExecution = CompletableFuture
+                .allOf(this.consentResourceIds.toArray(new CompletableFuture[0]));
 
+
+
+        Set<FlareIdDateWrap> allConsentIds;
+        try{
+            allConsentIds = this.getUnionOfIds(this.consentResourceIds).get();
+        }catch (ExecutionException | InterruptedException e) {
+            throw new CompletionException(e);
+        }
+
+        if(includedIdsByGroup.size() == 0){
+            return consentRequestExecution.thenApply(unused -> allConsentIds);
+        }
         return groupExecutionFinished.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> includedGroupsIterator = includedIdsByGroup.iterator();
-            try {
-                Set<String> evaluableCriterion = null;
-                if (includedGroupsIterator.hasNext()) {
-                    evaluableCriterion = includedGroupsIterator.next().get();
-                }
-                while (includedGroupsIterator.hasNext()) {
-                    evaluableCriterion.retainAll(includedGroupsIterator.next().get());
-                }
-                return evaluableCriterion;
-            } catch (InterruptedException | ExecutionException e) {
-                throw new CompletionException(e);
+            Set<FlareIdDateWrap> intersectionOfIds = this.getSimpleIntersectionOfCriterionGroups(includedIdsByGroup);
+            if(intersectionOfIds == null){
+                return new HashSet<FlareIdDateWrap>();
             }
+            if(allConsentIds.size() > 0){
+                return this.getCriterionIdsFittingToConsent(allConsentIds, intersectionOfIds);
+            }
+            return intersectionOfIds;
         });
+    }
+
+    Set<FlareIdDateWrap> getSimpleIntersectionOfCriterionGroups(List<CompletableFuture<Set<FlareIdDateWrap>>> includedIdsByGroup){
+        Iterator<CompletableFuture<Set<FlareIdDateWrap>>> includedGroupsIterator = includedIdsByGroup.iterator();
+        try {
+            Set<FlareIdDateWrap> evaluableCriterion = null;
+            if (includedGroupsIterator.hasNext()) {
+                evaluableCriterion = includedGroupsIterator.next().get();
+            }
+            while (includedGroupsIterator.hasNext()) {
+                evaluableCriterion.retainAll(includedGroupsIterator.next().get());
+            }
+            return evaluableCriterion;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new CompletionException(e);
+        }
+    }
+    Set<FlareIdDateWrap> getCriterionIdsFittingToConsent(Set<FlareIdDateWrap>consentIds, Set<FlareIdDateWrap>includedIdsByGroup){
+        FlareIdDateWrap[] includedConsentIds = consentIds.toArray(new FlareIdDateWrap[consentIds.size()]);
+        FlareIdDateWrap[] includedResourceIds = includedIdsByGroup.toArray(new FlareIdDateWrap[includedIdsByGroup.size()]);
+
+        Set<FlareIdDateWrap> idsInConsentRange = new HashSet<FlareIdDateWrap>();
+        for(int i = 0; i < includedResourceIds.length; i++){
+            FlareIdDateWrap currentResource = includedResourceIds[i];
+            for(int j = 0; j < includedConsentIds.length; j++){
+                FlareIdDateWrap currentConsentId = includedConsentIds[j];
+                if(currentConsentId.patId.equals(currentResource.patId)){
+                    if(criterionIsInConsentRange(currentConsentId, currentResource)){
+                        idsInConsentRange.add(currentResource);
+                    }
+                    break;//assumption: a resource can only belong to one consent
+                }
+            }
+        }
+    return idsInConsentRange;
+    }
+
+    private boolean criterionIsInConsentRange(FlareIdDateWrap consentWrap, FlareIdDateWrap criterionWrap){
+        if(criterionWrap.startDate == null || criterionWrap.endDate == null){
+            return false;
+        }
+        boolean startDateInRange = criterionWrap.startDate.after(consentWrap.startDate) && criterionWrap.startDate.before(consentWrap.endDate);
+        boolean endDateInRange = criterionWrap.endDate.before(consentWrap.endDate) && criterionWrap.endDate.after(consentWrap.startDate);
+        return  startDateInRange || endDateInRange;
+    }
+
+    private List<Criterion>  getAndRemoveConsent(List<Criterion> criteriaOfGroup){
+        List<Criterion> consentCriteria = new LinkedList<Criterion>();
+        int i = 0;
+        while(i < criteriaOfGroup.size()){
+            Criterion criterion = criteriaOfGroup.get(i);
+            if(criterion.getMapping().getFhirResourceType().toString().equals("Consent") ){
+                criteriaOfGroup.remove(i);
+                consentCriteria.add(criterion);
+            }else{
+                i++;
+            }
+        }
+        return consentCriteria;
     }
 
     /**
      * Union all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(CriteriaGroup group) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = group.getCriteria().stream()
+    private CompletableFuture<Set<FlareIdDateWrap>> getIdsFittingInclusionGroup(CriteriaGroup group) {
+        List<Criterion> criterionList = new LinkedList<Criterion>(group.getCriteria());
+        List<Criterion> consentCriterionList = getAndRemoveConsent(criterionList);
+
+        CompletableFuture<Set<FlareIdDateWrap>> consentIdsOfThisGroup = getUnionOfIds(consentCriterionList.stream()
+                .map(fhirIdRequestor::getPatientIdsFittingCriterion).toList());
+        try{
+            if(consentIdsOfThisGroup.get().size() > 0){
+                this.consentResourceIds.add(consentIdsOfThisGroup);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+
+        final List<CompletableFuture<Set<FlareIdDateWrap>>> idsPerCriterion = criterionList.stream()
                 .map(fhirIdRequestor::getPatientIdsFittingCriterion).toList();
 
         // Wait for all queries to finish execution
         return getUnionOfIds(idsPerCriterion);
     }
 
+    private void addIdsAndConsentFittingInclusionGroup(CriteriaGroup group, List<CompletableFuture<Set<FlareIdDateWrap>>> includedIdsByGroup) {
+        List<Criterion> otherResourceCriterionList = new LinkedList<Criterion>(group.getCriteria());
+        List<Criterion> consentCriterionList = getAndRemoveConsent(otherResourceCriterionList);
+
+        CompletableFuture<Set<FlareIdDateWrap>> consentIdsOfThisGroup = getUnionOfIds(consentCriterionList.stream()
+                .map(fhirIdRequestor::getPatientIdsFittingCriterion).toList());
+        try{
+            if(consentIdsOfThisGroup.get().size() > 0){
+                this.consentResourceIds.add(consentIdsOfThisGroup);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        if(otherResourceCriterionList.size() > 0){
+            final List<CompletableFuture<Set<FlareIdDateWrap>>> idsPerCriterion = otherResourceCriterionList.stream()
+                    .map(fhirIdRequestor::getPatientIdsFittingCriterion).toList();
+            includedIdsByGroup.add(getUnionOfIds(idsPerCriterion));
+        }
+    }
+
     /**
      * Build union of all group sets
      */
-    private CompletableFuture<Set<String>> getExcludedIds(List<List<CriteriaGroup>> exclusionCriteria) {
+    private CompletableFuture<Set<FlareIdDateWrap>> getExcludedIds(List<List<CriteriaGroup>> exclusionCriteria) {
         if (exclusionCriteria == null) {
             return CompletableFuture.completedFuture(new HashSet<>());
         }
-        List<CompletableFuture<Set<String>>> excludedIdsByGroups = new ArrayList<>();
+        List<CompletableFuture<Set<FlareIdDateWrap>>> excludedIdsByGroups = new ArrayList<>();
         for (List<CriteriaGroup> group : exclusionCriteria) {
-            CompletableFuture<Set<String>> excludedIdsByGroup = getIncludedIds(group);
+            CompletableFuture<Set<FlareIdDateWrap>> excludedIdsByGroup = getIncludedIds(group);
             excludedIdsByGroups.add(excludedIdsByGroup);
         }
         // Wait for async exec to finish
         return getUnionOfIds(excludedIdsByGroups);
     }
 
-    private CompletableFuture<Set<String>> getUnionOfIds(List<CompletableFuture<Set<String>>> idsByGroups) {
+    private CompletableFuture<Set<FlareIdDateWrap>> getUnionOfIds(List<CompletableFuture<Set<FlareIdDateWrap>>> idsByGroups) {
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
                 .allOf(idsByGroups.toArray(new CompletableFuture[0]));
 
         return groupExecutionFinished.thenApply(unused -> {
-            Iterator<CompletableFuture<Set<String>>> includedGroupsIterator = idsByGroups.iterator();
+            Iterator<CompletableFuture<Set<FlareIdDateWrap>>> includedGroupsIterator = idsByGroups.iterator();
             try {
-                Set<String> ret = new HashSet<String>();
+                Set<FlareIdDateWrap> ret = new HashSet<FlareIdDateWrap>();
                 while (includedGroupsIterator.hasNext()) {
                     ret.addAll(includedGroupsIterator.next().get());
                 }
@@ -168,11 +282,12 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Intersect all criteria sets for a given group
      */
+    //TODO i think this function might be deleted as it is not used and was not used before
     private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(List<CriteriaGroup> groups) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
+        final List<CompletableFuture<Set<FlareIdDateWrap>>> idsPerCriterion = new ArrayList<>();
         for (CriteriaGroup group : groups) {
             for (Criterion criterion : group.getCriteria()) {
-                CompletableFuture<Set<String>> evaluableCriterion = fhirIdRequestor.getPatientIdsFittingCriterion(criterion);
+                CompletableFuture<Set<FlareIdDateWrap>> evaluableCriterion = fhirIdRequestor.getPatientIdsFittingCriterion(criterion);
                 idsPerCriterion.add(evaluableCriterion);
             }
         }
@@ -180,6 +295,11 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
         CompletableFuture<Void> allPatientIdsReceived = CompletableFuture.allOf(idsPerCriterion.toArray(new CompletableFuture[0]));
 
         // Return intersection of found ids
+        //TODO this is a place holder so i dont have to adapt the old code that is not used anyway
+        return allPatientIdsReceived.thenApply(unused -> {
+            HashSet<String> testSet = new HashSet<String>();
+            return testSet;});
+        /*
         return allPatientIdsReceived.thenApply(unused -> {
             Iterator<CompletableFuture<Set<String>>> iterator = idsPerCriterion.iterator();
             try {
@@ -191,6 +311,6 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
             } catch (ExecutionException | InterruptedException e) {
                 throw new CompletionException(e);
             }
-        });
+        });*/
     }
 }
