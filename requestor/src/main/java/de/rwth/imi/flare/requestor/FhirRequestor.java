@@ -81,7 +81,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
         log.debug("Url " + urlString + " cached, but too long ago. Requesting again...");
         return getSetFlareStream(urlString,this.executor);
       }
-      return CompletableFuture.supplyAsync(() -> cacheEntry.get("ids"));
+      return  CompletableFuture.completedFuture(cacheEntry.get("ids"));
     }else{
       return getSetFlareStream(urlString, this.executor);
     }

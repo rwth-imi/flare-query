@@ -4,13 +4,16 @@ import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.requestor.*;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.PullPolicy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +28,10 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 
+@Slf4j
 @Testcontainers
 public class CacheIT {
 
@@ -41,12 +44,16 @@ public class CacheIT {
     private String singlePatientTemplate;
 
     @Container
-    private final GenericContainer<?> fhirContainer = new GenericContainer<>(DockerImageName.parse("ghcr.io/medizininformatik-initiative/blaze:0.17"))
-            .withExposedPorts(8080)
+    private final FixedHostPortGenericContainer<?> fhirContainer = new FixedHostPortGenericContainer<>("samply/blaze:0.18")
+            .withImagePullPolicy(PullPolicy.alwaysPull())
+            .withFixedExposedPort(8080, 8080)
+            .waitingFor(Wait.forHttp("/health").forStatusCode(200))
+            .withLogConsumer(new Slf4jLogConsumer(log))
+            .withEnv("LOG_LEVEL", "debug")
             .withStartupAttempts(5);
 
     @Test
-    public void mainCacheIntegrationTest() throws URISyntaxException, ExecutionException, InterruptedException, IOException {
+    public void mainCacheIntegrationTest() throws Exception {
         baseFhirUri = "http://localhost:" + fhirContainer.getMappedPort(8080) + "/fhir" ;
         //baseFhirUri = "http://localhost:8082/fhir"; //overwrite baseFhirUri like this if you want to use your own fhir server
         singlePatientTemplate = loadSinglePatientTemplate();
