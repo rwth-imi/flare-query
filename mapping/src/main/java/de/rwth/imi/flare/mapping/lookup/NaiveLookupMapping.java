@@ -1,20 +1,14 @@
 package de.rwth.imi.flare.mapping.lookup;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+
 
 /**
  * Implements a naive lookup strategy, that parses a JSON file following
@@ -32,25 +26,10 @@ public class NaiveLookupMapping implements FhirResourceMapper {
     public NaiveLookupMapping(Map<TerminologyCode, SourceMappingEntry> lookupTable, QueryExpander queryExpander) throws IOException {
         this.lookupTable = lookupTable;
         this.queryExpander = queryExpander;
-        //queryExpander = new QueryExpander(conceptTreeFile);
     }
 
 
 
-    /*public NaiveLookupMapping(InputStream lookupTable) throws IOException {
-        initLookupTable(lookupTable);
-    }*/
-
-    /*
-    private void initLookupTable(InputStream lookupTable) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        List<SourceMappingEntry> sourceMappingEntries = objectMapper.readValue(lookupTable, new TypeReference<>() {});
-
-
-        this.lookupTable = new HashMap<>();
-        sourceMappingEntries.forEach(sourceMappingEntry -> this.lookupTable.put(sourceMappingEntry.getKey(), sourceMappingEntry));
-    }
-    */
 
     @Override
     public CompletableFuture<QueryExpanded> mapResources(Query query) {
