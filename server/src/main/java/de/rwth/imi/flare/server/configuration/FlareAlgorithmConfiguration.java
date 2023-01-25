@@ -11,7 +11,6 @@ import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
 import de.rwth.imi.flare.mapping.lookup.NaiveLookupMapping;
 import de.rwth.imi.flare.mapping.lookup.SourceMappingEntry;
-import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
@@ -92,9 +91,7 @@ public class FlareAlgorithmConfiguration {
     public Executor executor(@Nullable Authenticator auth,
                              @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
                              @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
-                             @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
-                             @Value("${flare.cache.cacheSizeMb}") int cacheSizeMb,
-                             @Value("${flare.cache.entryRefreshTimeHours}") int entryRefreshTimeHours) {
+                             @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds) {
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -124,21 +121,9 @@ public class FlareAlgorithmConfiguration {
                     keepAliveTimeSeconds);
             }
         };
-        CacheConfig cacheConfig = new CacheConfig() {
 
-            @Override
-            public int getCacheSizeInMb() {
-                return cacheSizeMb;
-            }
 
-            @Override
-            public int getEntryRefreshTimeHours() {
-                return entryRefreshTimeHours;
-            }
-
-        };
-
-        return new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(maxPoolSize)));
+        return new FlareExecutor(new FhirRequestor(config, Executors.newFixedThreadPool(maxPoolSize)));
     }
 
 

@@ -2,7 +2,6 @@ import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 import de.rwth.imi.flare.executor.AuthlessRequestorConfig;
 import de.rwth.imi.flare.executor.FlareExecutor;
-import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
@@ -26,18 +25,7 @@ public class ExecutorTest
     public ExecutorTest() throws URISyntaxException {
         config = new AuthlessRequestorConfig(new URI("http://localhost:8080/fhir/"), "50", new FlareThreadPoolConfig(4,16,10));
 
-        CacheConfig cacheConfig = new CacheConfig() {
-            @Override
-            public int getCacheSizeInMb() {
-                return 100;
-            }
-
-            @Override
-            public int getEntryRefreshTimeHours() {
-                return 1;
-            }
-        };
-        executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
+        executor = new FlareExecutor(new FhirRequestor(config, Executors.newFixedThreadPool(16)));
     }
 
     @Test
