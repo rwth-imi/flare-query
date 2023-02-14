@@ -1,12 +1,11 @@
 package de.rwth.imi.flare.requestor;
 
 import ca.uhn.fhir.context.FhirContext;
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.Weigher;
+
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.model.Criterion;
+
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
@@ -18,6 +17,13 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.index.qual.NonNegative;
+import org.ehcache.Cache;
+import org.ehcache.CacheManager;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.EntryUnit;
+import org.ehcache.config.units.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,12 +33,11 @@ import org.jetbrains.annotations.NotNull;
 @Slf4j
 public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
 
-  private static final StringSetWeigher WEIGHER = new StringSetWeigher();
-  private static final long N_BYTES_IN_MB = 1024*1024;
+  private static final long N_BYTES_IN_MB = 1024*1024;//TODO declare max entries and disk usage like this for ehcache here
 
   private final FhirRequestorConfig config;
   private final FhirContext fhirR4Context = FhirContext.forR4();
-  private final AsyncLoadingCache<String, Set<String>> cache;
+  private final Cache<String, Set> cache;
 
   /**
    * @param executor
@@ -41,14 +46,16 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
   public FhirRequestor(FhirRequestorConfig requestorConfig,
       CacheConfig cacheConfig, Executor executor) {
     this.config = requestorConfig;
-    this.cache = Caffeine.newBuilder()
-        .maximumWeight(cacheConfig.getCacheSizeInMb() * N_BYTES_IN_MB)
-        .weigher(WEIGHER)
-        .refreshAfterWrite(cacheConfig.getEntryRefreshTimeHours(), TimeUnit.HOURS)
-        .executor(executor)
-        .evictionListener((String key, Set<String> idSet, RemovalCause cause) ->
-            log.debug("Key " + key + " was evicted, cause: " + cause))
-        .buildAsync(this::getSetCompletableFuture);
+    CacheManager cacheConfigurationManager = CacheManagerBuilder.newCacheManagerBuilder()
+            .with(CacheManagerBuilder.persistence(new File("target/", "EhCacheData")))
+            .withCache("SomeCacheAlias", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
+                    ResourcePoolsBuilder.newResourcePoolsBuilder()
+                            .heap(2000, EntryUnit.ENTRIES)
+                            .disk(2, MemoryUnit.GB)))
+            .withSerializer(Set.class, ValueSetSerializer.class)
+            .build(true);
+
+    cache = cacheConfigurationManager.getCache("SomeCacheAlias", String.class, Set.class);
   }
 
 
@@ -68,7 +75,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
       throw new RuntimeException(e);
     }
     String urlString = requestUrl.toString();
-    return cache.get(urlString);
+    return CompletableFuture.supplyAsync(() -> cache.get(urlString));
 
     }
 
@@ -85,6 +92,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
               .map(FlareResource::getPatientId)
               .collect(Collectors.toSet());
       log.debug("FHIR Search: " + requestUrl + " finished execution, writing to cache...");
+      cache.put(requestUrl, flareStream);
       return flareStream;
     }, executor);
   }
@@ -123,26 +131,6 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     return new URI(searchUrl);
   }
 
-  private static class StringSetWeigher implements
-      Weigher<String, Set<String>> {
 
-    @Override
-    public @NonNegative int weigh(String key, Set<String> idSet) {
 
-      return calcStringMemUsage(key) + (idSet.isEmpty() ? 88:
-          calSetItemMemUsage(calcStringMemUsage(idSet.iterator().next())) * idSet.size());
-
-    }
-
-    private int calSetItemMemUsage(int elemMemUsage){
-        // 44 = HashMapNode, 16 = table array allocation
-        return 44 + 16 + elemMemUsage;
-    }
-
-    private int calcStringMemUsage(String s){
-      //30 = StringHeader, 24 = ByteArrayHeader
-      return 30 + 24 + s.length();
-
-    }
-  }
 }

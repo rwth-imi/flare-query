@@ -1,6 +1,8 @@
 
 import de.rwth.imi.flare.requestor.ValueSetSerializer;
+import org.ehcache.Cache;
 import org.ehcache.CacheManager;
+import org.ehcache.PersistentCacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
@@ -28,30 +30,7 @@ public class EHCacheTest {
         String myCacheAlias = "myCache";
         StatisticsService statService = new DefaultStatisticsService();
 
-
-        /*PersistentCacheManager diskCacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-                .with(CacheManagerBuilder.persistence(new File("src/test/resources/", "EhCacheData")))
-                .withCache(myCacheAlias,
-                        CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, FlareCacheEntry.class,
-                        ResourcePoolsBuilder.newResourcePoolsBuilder()
-                                .heap(500, MemoryUnit.MB)
-                                .disk(1, MemoryUnit.GB)
-                        )
-                )
-                .withSerializer(FlareCacheEntry.class, FlareCacheEntrySerializer.class)
-                .using(statService)
-                .build(true);*/
-
-        /*CacheConfiguration<String, FlareCacheEntry> cacheConfig = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, FlareCacheEntry.class,
-                        ResourcePoolsBuilder.newResourcePoolsBuilder()
-                                .heap(500, MemoryUnit.MB)
-                                .disk(2, MemoryUnit.GB))
-                .build();*/
-
-
-
-
-        CacheManager mixedCacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+        PersistentCacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
                 .with(CacheManagerBuilder.persistence(new File("src/test/resources/", "EhCacheData2")))
                 .withCache("mixedCache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
                         ResourcePoolsBuilder.newResourcePoolsBuilder()
@@ -61,24 +40,14 @@ public class EHCacheTest {
                 .using(statService)
                 .build(true);
 
-        /*CacheManager normalManager = CacheManagerBuilder.newCacheManagerBuilder()
-                .withCache("mixedCache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, FlareCacheEntry.class,
-                        ResourcePoolsBuilder.newResourcePoolsBuilder()
-                                .heap(2000, EntryUnit.ENTRIES)
-                                .disk(2, MemoryUnit.GB)))
-                .build(true);*/
-        //CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
-        //.disk(2, MemoryUnit.GB)
-        //.disk(2, MemoryUnit.GB, true)
+        Cache<String, Set> diskCache = cacheManager.getCache("mixedCache", String.class, Set.class);
 
-        //Cache<String, FlareCacheEntry> diskCache = normalManager.getCache("mixedCache", String.class, FlareCacheEntry.class);
-        Cache<String, FlareCacheEntry> diskCache = mixedCacheManager.getCache("mixedCache", String.class, FlareCacheEntry.class);
-        //Cache<String, FlareCacheEntry> diskCache = diskCacheManager.getCache(myCacheAlias, String.class, FlareCacheEntry.class);
+
 
         int keyCount = 2000;
         int valueCount = 10000;
 
-        FlareCacheEntry dummyValues = new FlareCacheEntry(LocalDate.now().toString(), generateValueSet(valueCount));
+        Set<String> dummyValues =  generateValueSet(valueCount);
 
         long startPutTime = System.nanoTime();
         int foundCount = 0;
@@ -93,14 +62,14 @@ public class EHCacheTest {
             Thread.sleep(1000);
         }catch (Exception e){e.printStackTrace();}
 
-        for(int i = 0; i < 1; i++){
-            for(int j = 0; j < keyCount; j++){
-                FlareCacheEntry foundItem = diskCache.get(keys[j]);
+        for(int i = 0; i < 1; i++){ //reading all values once so values are put into memory, to test memory read time
+        for(int j = 0; j < keyCount; j++){
+                //Set<String> foundItem = diskCache.get(keys[j]);
             }
         }
         long startReadTime = System.nanoTime();
         for(int i = 0; i < keyCount; i++){
-            FlareCacheEntry foundItem = diskCache.get(keys[i]);
+            Set<String> foundItem = diskCache.get(keys[i]);
             if(foundItem != null){
                 foundCount++;
             }
@@ -134,11 +103,7 @@ public class EHCacheTest {
             System.out.println("allocated bytes on heap: " +allocatedMB );
         }
 
-
-        //cacheManager.close();
-        //normalManager.close();
-        mixedCacheManager.close();
-        //diskCacheManager.close();
+        cacheManager.close();
     }
 
 
@@ -152,12 +117,12 @@ public class EHCacheTest {
     }
 
 
-    Set<FlareIdDateWrap> generateValueSet(int valueCount){
-        Set<FlareIdDateWrap> newSet = new HashSet<>();
+    Set<String> generateValueSet(int valueCount){
+        Set<String> newSet = new HashSet<>();
 
         for(int i = 0; i < valueCount; i++){
-            FlareIdDateWrap dummyIdDateWrap = new FlareIdDateWrap(generatePseudoUUID(), LocalDate.now());
-            newSet.add(dummyIdDateWrap);
+            String dummyId = generatePseudoUUID();
+            newSet.add(dummyId);
         }
         return newSet;
     }
