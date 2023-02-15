@@ -61,13 +61,12 @@ public class ExecutorTests {
             "50", new FlareThreadPoolConfig(4, 16, 10));
         CacheConfig cacheConfig = new CacheConfig() {
             @Override
-            public int getCacheSizeInMb() {
-                return 100;
+            public int getHeapEntryCount() {
+                return 2;
             }
-
             @Override
-            public int getEntryRefreshTimeHours() {
-                return 1;
+            public int getDiskSizeGB() {
+                return 2;
             }
         };
         flareExecutor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));

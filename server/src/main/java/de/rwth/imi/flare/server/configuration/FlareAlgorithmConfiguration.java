@@ -93,8 +93,8 @@ public class FlareAlgorithmConfiguration {
                              @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
                              @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
                              @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
-                             @Value("${flare.cache.cacheSizeMb}") int cacheSizeMb,
-                             @Value("${flare.cache.entryRefreshTimeHours}") int entryRefreshTimeHours) {
+                             @Value("${flare.cache.cacheHeapEntryCount}") int cacheHeapEntryCount,
+                             @Value("${flare.cache.cacheDiskSizeGB}") int cacheDiskSizeGB) {
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -125,15 +125,13 @@ public class FlareAlgorithmConfiguration {
             }
         };
         CacheConfig cacheConfig = new CacheConfig() {
-
             @Override
-            public int getCacheSizeInMb() {
-                return cacheSizeMb;
+            public int getHeapEntryCount() {
+                return cacheHeapEntryCount;
             }
-
             @Override
-            public int getEntryRefreshTimeHours() {
-                return entryRefreshTimeHours;
+            public int getDiskSizeGB() {
+                return cacheDiskSizeGB;
             }
 
         };

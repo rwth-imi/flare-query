@@ -150,14 +150,14 @@ public class EhCacheIntegrationTest {
         config = new AuthlessRequestorConfig(new URI(baseFhirUri + "/"), "50", new FlareThreadPoolConfig(4,16,10));
         CacheConfig cacheConfig = new CacheConfig() {
             @Override
-            public int getCacheSizeInMb() {
-                return 0;
+            public int getHeapEntryCount() {
+                return 2;
+            }
+            @Override
+            public int getDiskSizeGB() {
+                return 2;
             }
 
-            @Override
-            public int getEntryRefreshTimeHours() {
-                return 0;
-            }
         };
         executor = new FlareExecutor(new FhirRequestor(config,cacheConfig, Executors.newFixedThreadPool(16)));
     }

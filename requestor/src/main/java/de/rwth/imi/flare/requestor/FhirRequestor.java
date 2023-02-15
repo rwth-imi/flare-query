@@ -29,14 +29,14 @@ import org.jetbrains.annotations.NotNull;
  * it, and executes it
  */
 @Slf4j
-public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
+public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoCloseable{
 
-  private static final long N_BYTES_IN_MB = 1024*1024;//TODO declare max entries and disk usage like this for ehcache here
-
+  public static final String CACHE_ALIAS = "FlareCache";
   private final FhirRequestorConfig config;
   private final FhirContext fhirR4Context = FhirContext.forR4();
   private final Cache<String, Set> cache;
   private final Executor executor;
+  private final CacheManager cacheConfigurationManager;
 
   /**
    * @param executor
@@ -44,21 +44,28 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    */
   public FhirRequestor(FhirRequestorConfig requestorConfig,
       CacheConfig cacheConfig, Executor executor) {
-    //TODO use cacheconfig here
     this.executor = executor;
     this.config = requestorConfig;
+    this.cacheConfigurationManager = createCacheManager(cacheConfig);
+
+    cache = this.cacheConfigurationManager.getCache(CACHE_ALIAS, String.class, Set.class);
+  }
+
+  @Override
+  public void close() throws Exception {
+    this.cacheConfigurationManager.close();
+  }
+
+  private static CacheManager createCacheManager(CacheConfig cacheConfig) {
     CacheManager cacheConfigurationManager = CacheManagerBuilder.newCacheManagerBuilder()
             .with(CacheManagerBuilder.persistence(new File("target/", "EhCacheData")))
-            .withCache("SomeCacheAlias", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
+            .withCache(CACHE_ALIAS, CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
-                            .heap(2000, EntryUnit.ENTRIES)
-                            .disk(2, MemoryUnit.GB, true)))
+                            .heap(cacheConfig.getHeapEntryCount(), EntryUnit.ENTRIES)
+                            .disk(cacheConfig.getDiskSizeGB(), MemoryUnit.GB, true)))
             .withSerializer(Set.class, ValueSetSerializer.class)
             .build(true);
-
-    cache = cacheConfigurationManager.getCache("SomeCacheAlias", String.class, Set.class);
-    Thread printingHook = new Thread(() -> cacheConfigurationManager.close());
-    Runtime.getRuntime().addShutdownHook(printingHook);
+    return cacheConfigurationManager;
   }
 
 
@@ -79,21 +86,13 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
     }
     String urlString = requestUrl.toString();
 
-    return CompletableFuture.supplyAsync(() -> {
-      Set<String> foundCacheEntry = cache.get(urlString);
-
-      if(foundCacheEntry == null){
-        try {
-          return getSetCompletableFuture(urlString, this.executor).get();
-        } catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-      }else{
-        return foundCacheEntry;
-      }
-    });
-
+    Set<String> foundCacheEntry = cache.get(urlString);
+    if (foundCacheEntry == null) {
+      return getSetCompletableFuture(urlString, this.executor);
+    } else {
+      return CompletableFuture.completedFuture(foundCacheEntry);
     }
+  }
 
 
   @NotNull
