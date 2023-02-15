@@ -31,11 +31,11 @@ public class EHCacheTest {
         StatisticsService statService = new DefaultStatisticsService();
 
         PersistentCacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-                .with(CacheManagerBuilder.persistence(new File("src/test/resources/", "EhCacheData2")))
+                .with(CacheManagerBuilder.persistence(new File("target/", "TestCacheData")))
                 .withCache("mixedCache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
                         ResourcePoolsBuilder.newResourcePoolsBuilder()
                                 .heap(2000, EntryUnit.ENTRIES)
-                                .disk(2, MemoryUnit.GB)))
+                                .disk(2, MemoryUnit.GB, true)))
                 .withSerializer(Set.class, ValueSetSerializer.class)
                 .using(statService)
                 .build(true);
@@ -44,8 +44,9 @@ public class EHCacheTest {
 
 
 
-        int keyCount = 2000;
-        int valueCount = 10000;
+        //
+        int keyCount = 200;
+        int valueCount = 1000;
 
         Set<String> dummyValues =  generateValueSet(valueCount);
 
@@ -53,7 +54,7 @@ public class EHCacheTest {
         int foundCount = 0;
         String[] keys = generateKeys( keyCount);
         for(int i = 0; i < keyCount; i++){
-            diskCache.put(keys[i], dummyValues);
+            //diskCache.put(keys[i], dummyValues);
         }
         float putDurationMS = (System.nanoTime() - startPutTime) / 1000000.f;
         System.out.println("It took " + putDurationMS + " ms to put " + keyCount + "*" + valueCount + " ids into the cache");
@@ -64,7 +65,7 @@ public class EHCacheTest {
 
         for(int i = 0; i < 1; i++){ //reading all values once so values are put into memory, to test memory read time
         for(int j = 0; j < keyCount; j++){
-                //Set<String> foundItem = diskCache.get(keys[j]);
+                Set<String> foundItem = diskCache.get(keys[j]);
             }
         }
         long startReadTime = System.nanoTime();
@@ -102,8 +103,7 @@ public class EHCacheTest {
             System.out.println("currently occupied bytes on heap : " + occupiedMB);
             System.out.println("allocated bytes on heap: " +allocatedMB );
         }
-
-        cacheManager.close();
+        //cacheManager.close();//TODO ---------------- this is only temporarily commented
     }
 
 

@@ -9,9 +9,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -38,6 +36,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
   private final FhirRequestorConfig config;
   private final FhirContext fhirR4Context = FhirContext.forR4();
   private final Cache<String, Set> cache;
+  private final Executor executor;
 
   /**
    * @param executor
@@ -45,17 +44,20 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    */
   public FhirRequestor(FhirRequestorConfig requestorConfig,
       CacheConfig cacheConfig, Executor executor) {
+    this.executor = executor;
     this.config = requestorConfig;
     CacheManager cacheConfigurationManager = CacheManagerBuilder.newCacheManagerBuilder()
             .with(CacheManagerBuilder.persistence(new File("target/", "EhCacheData")))
             .withCache("SomeCacheAlias", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(2000, EntryUnit.ENTRIES)
-                            .disk(2, MemoryUnit.GB)))
+                            .disk(2, MemoryUnit.GB, true)))
             .withSerializer(Set.class, ValueSetSerializer.class)
             .build(true);
 
     cache = cacheConfigurationManager.getCache("SomeCacheAlias", String.class, Set.class);
+    Thread printingHook = new Thread(() -> cacheConfigurationManager.close());
+    Runtime.getRuntime().addShutdownHook(printingHook);
   }
 
 
@@ -75,7 +77,20 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
       throw new RuntimeException(e);
     }
     String urlString = requestUrl.toString();
-    return CompletableFuture.supplyAsync(() -> cache.get(urlString));
+
+    return CompletableFuture.supplyAsync(() -> {
+      Set<String> foundCacheEntry = cache.get(urlString);
+
+      if(foundCacheEntry == null){
+        try {
+          return getSetCompletableFuture(urlString, this.executor).get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }else{
+        return foundCacheEntry;
+      }
+    });
 
     }
 
