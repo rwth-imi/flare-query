@@ -44,6 +44,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    */
   public FhirRequestor(FhirRequestorConfig requestorConfig,
       CacheConfig cacheConfig, Executor executor) {
+    //TODO use cacheconfig here
     this.executor = executor;
     this.config = requestorConfig;
     CacheManager cacheConfigurationManager = CacheManagerBuilder.newCacheManagerBuilder()
