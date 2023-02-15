@@ -18,6 +18,7 @@ flare:
   cache:
     cacheHeapEntryCount: ${FLARE_CACHE_HEAP_ENTRY_COUNT:100}
     cacheDiskSizeGB: ${FLARE_CACHE_DISK_SIZE_GB:2}
+    cacheDir: ${FLARE_CACHE_DIR:cache}
 
 springdoc:
   packagesToScan: de.rwth.imi.flare.server.controller

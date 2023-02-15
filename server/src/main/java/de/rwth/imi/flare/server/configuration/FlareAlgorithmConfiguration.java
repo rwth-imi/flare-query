@@ -94,7 +94,8 @@ public class FlareAlgorithmConfiguration {
                              @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
                              @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
                              @Value("${flare.cache.cacheHeapEntryCount}") int cacheHeapEntryCount,
-                             @Value("${flare.cache.cacheDiskSizeGB}") int cacheDiskSizeGB) {
+                             @Value("${flare.cache.cacheDiskSizeGB}") int cacheDiskSizeGB,
+                             @Value("${flare.cache.cacheDir}") String cacheDir) {
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -133,6 +134,11 @@ public class FlareAlgorithmConfiguration {
             public int getDiskSizeGB() {
                 return cacheDiskSizeGB;
             }
+            @Override
+            public File getCacheDir() {
+                return new File( cacheDir);
+            }
+
 
         };
 

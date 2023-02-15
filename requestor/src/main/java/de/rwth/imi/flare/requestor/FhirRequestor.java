@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.index.qual.NonNegative;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
@@ -39,15 +38,16 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoClose
   private final CacheManager cacheConfigurationManager;
 
   /**
-   * @param executor
+   * @param cacheDir1
    * @param requestorConfig Configuration to be used when crafting requests
+   * @param executor
    */
   public FhirRequestor(FhirRequestorConfig requestorConfig,
-      CacheConfig cacheConfig, Executor executor) {
+                       CacheConfig cacheConfig, Executor executor) {
     this.executor = executor;
     this.config = requestorConfig;
     this.cacheConfigurationManager = createCacheManager(cacheConfig);
-
+    //TODO refresh research
     cache = this.cacheConfigurationManager.getCache(CACHE_ALIAS, String.class, Set.class);
   }
 
@@ -58,7 +58,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoClose
 
   private static CacheManager createCacheManager(CacheConfig cacheConfig) {
     CacheManager cacheConfigurationManager = CacheManagerBuilder.newCacheManagerBuilder()
-            .with(CacheManagerBuilder.persistence(new File("target/", "EhCacheData")))
+            .with(CacheManagerBuilder.persistence(cacheConfig.getCacheDir()))
             .withCache(CACHE_ALIAS, CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(cacheConfig.getHeapEntryCount(), EntryUnit.ENTRIES)
@@ -88,7 +88,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoClose
 
     Set<String> foundCacheEntry = cache.get(urlString);
     if (foundCacheEntry == null) {
-      return getSetCompletableFuture(urlString, this.executor);
+      return executeFhirQuery(urlString, this.executor);
     } else {
       return CompletableFuture.completedFuture(foundCacheEntry);
     }
@@ -96,7 +96,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoClose
 
 
   @NotNull
-  private CompletableFuture<Set<String>> getSetCompletableFuture(String requestUrl, Executor executor) {
+  private CompletableFuture<Set<String>> executeFhirQuery(String requestUrl, Executor executor) {
     log.debug("FHIR Search: " + requestUrl + " not cached or refreshing...");
     return CompletableFuture.supplyAsync(() -> {
       String pagecount = this.config.getPageCount();

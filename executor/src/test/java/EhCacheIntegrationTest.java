@@ -158,6 +158,12 @@ public class EhCacheIntegrationTest {
                 return 2;
             }
 
+            @Override
+            public File getCacheDir() {
+                return new File( "target", "EhCacheData");
+            }
+
+
         };
         executor = new FlareExecutor(new FhirRequestor(config,cacheConfig, Executors.newFixedThreadPool(16)));
     }

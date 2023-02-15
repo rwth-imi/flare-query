@@ -6,6 +6,8 @@ import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
 import de.rwth.imi.flare.requestor.FhirRequestorConfig;
 import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
+
+import java.io.File;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +37,11 @@ public class ExecutorTest
             public int getDiskSizeGB() {
                 return 2;
             }
+            @Override
+            public File getCacheDir() {
+                return new File( "target", "EhCacheData");
+            }
+
         };
         executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
     }

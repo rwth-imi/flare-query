@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
-import de.rwth.imi.flare.api.Requestor;
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
@@ -145,6 +144,11 @@ class CLI implements Callable<Integer> {
             public int getDiskSizeGB() {
                 return 2;
             }
+            @Override
+            public File getCacheDir() {
+                return new File( "target", "EhCacheData");
+            }
+
         };
 
         executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
