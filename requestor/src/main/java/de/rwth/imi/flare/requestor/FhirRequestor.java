@@ -8,6 +8,7 @@ import de.rwth.imi.flare.api.model.Criterion;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
@@ -62,7 +64,8 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoClose
             .withCache(CACHE_ALIAS, CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Set.class,
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(cacheConfig.getHeapEntryCount(), EntryUnit.ENTRIES)
-                            .disk(cacheConfig.getDiskSizeGB(), MemoryUnit.GB, true)))
+                            .disk(cacheConfig.getDiskSizeGB(), MemoryUnit.GB, true))
+                    .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60))))
             .withSerializer(Set.class, ValueSetSerializer.class)
             .build(true);
     return cacheConfigurationManager;

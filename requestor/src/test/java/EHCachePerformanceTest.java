@@ -1,7 +1,6 @@
 
 import de.rwth.imi.flare.requestor.ValueSetSerializer;
 import org.ehcache.Cache;
-import org.ehcache.CacheManager;
 import org.ehcache.PersistentCacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
@@ -15,13 +14,12 @@ import org.ehcache.core.statistics.TierStatistics;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-public class EHCacheTest {
+public class EHCachePerformanceTest {
 
     int idCounter = 0;
 

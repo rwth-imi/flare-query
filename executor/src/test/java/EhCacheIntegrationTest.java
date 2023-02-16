@@ -63,14 +63,7 @@ public class EhCacheIntegrationTest {
 
         try{
             uploadTestData();
-            return;
-           /* long memoryUsageAfterUploadingData = getMemoryUsageInKB();
 
-            System.out.println("memory usage before uploading: " + memoryUsageBeforeUploadingData);
-            System.out.println("memory usage after uploading: " + memoryUsageAfterUploadingData);
-            long dif = memoryUsageAfterUploadingData - memoryUsageBeforeUploadingData;
-            System.out.println("memory usage difference: " + dif);*/
-            //return;
         }catch(IOException e){
             e.printStackTrace();
         }
