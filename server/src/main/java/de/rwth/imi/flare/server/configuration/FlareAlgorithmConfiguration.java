@@ -95,7 +95,8 @@ public class FlareAlgorithmConfiguration {
                              @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
                              @Value("${flare.cache.cacheHeapEntryCount}") int cacheHeapEntryCount,
                              @Value("${flare.cache.cacheDiskSizeGB}") int cacheDiskSizeGB,
-                             @Value("${flare.cache.cacheDir}") String cacheDir) {
+                             @Value("${flare.cache.cacheDir}") String cacheDir,
+                             @Value("${flare.cache.cacheExpiryHours}") int cacheExpiryHours) {
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -137,6 +138,10 @@ public class FlareAlgorithmConfiguration {
             @Override
             public File getCacheDir() {
                 return new File( cacheDir);
+            }
+            @Override
+            public int getExpiryHours() {
+                return cacheExpiryHours;
             }
 
 

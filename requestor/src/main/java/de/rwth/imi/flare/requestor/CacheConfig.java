@@ -5,6 +5,7 @@ import java.io.File;
 public interface CacheConfig {
     int getHeapEntryCount();
     int getDiskSizeGB();
+    int getExpiryHours();
     File getCacheDir();
 
 }

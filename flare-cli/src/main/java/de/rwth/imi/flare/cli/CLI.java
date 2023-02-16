@@ -148,6 +148,10 @@ class CLI implements Callable<Integer> {
             public File getCacheDir() {
                 return new File( "target", "EhCacheData");
             }
+            @Override
+            public int getExpiryHours() {
+                return 24;
+            }
 
         };
 

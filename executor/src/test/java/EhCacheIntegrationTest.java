@@ -152,6 +152,11 @@ public class EhCacheIntegrationTest {
             }
 
             @Override
+            public int getExpiryHours() {
+                return 24;
+            }
+
+            @Override
             public File getCacheDir() {
                 return new File( "target", "EhCacheData");
             }

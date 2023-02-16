@@ -75,6 +75,10 @@ public class ExecutorTests {
             public File getCacheDir() {
                 return null;
             }
+            @Override
+            public int getExpiryHours() {
+                return 24;
+            }
         };
         flareExecutor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
         queryExpanded = getQueryExpanded();

@@ -41,7 +41,10 @@ public class ExecutorTest
             public File getCacheDir() {
                 return new File( "target", "EhCacheData");
             }
-
+            @Override
+            public int getExpiryHours() {
+                return 24;
+            }
         };
         executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
     }
