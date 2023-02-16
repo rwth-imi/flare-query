@@ -65,7 +65,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor, AutoClose
                     ResourcePoolsBuilder.newResourcePoolsBuilder()
                             .heap(cacheConfig.getHeapEntryCount(), EntryUnit.ENTRIES)
                             .disk(cacheConfig.getDiskSizeGB(), MemoryUnit.GB, true))
-                    .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60))))
+                    .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofDays(7))))
             .withSerializer(Set.class, ValueSetSerializer.class)
             .build(true);
     return cacheConfigurationManager;
