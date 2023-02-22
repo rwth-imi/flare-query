@@ -16,7 +16,7 @@ public interface Executor
      * @param mappedQuery Query with all mapping information
      * @return A CompletableFuture that when executed yields the number of patients matching the given query
      */
-    CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery);
+    CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery) throws UnsupportedCriterionException;
 
-    List<List<List<String>>> translateMappedQuery(QueryExpanded mappedQuery);
+    List<List<List<String>>> translateMappedQuery(QueryExpanded mappedQuery) throws UnsupportedCriterionException;
 }

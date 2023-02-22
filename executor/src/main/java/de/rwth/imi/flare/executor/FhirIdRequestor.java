@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.executor;
 
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.requestor.CacheConfig;
 import de.rwth.imi.flare.requestor.FhirRequestor;
@@ -10,7 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class FhirIdRequestor {
-    FhirRequestor requestor;
+
+    private final FhirRequestor requestor;
 
     public FhirIdRequestor(FhirRequestor requestor) {
         this.requestor = requestor;
@@ -19,9 +21,7 @@ public class FhirIdRequestor {
     /**
      * Get all ids fulfilling a given criterion
      */
-    public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) {
+    public CompletableFuture<Set<String>> getPatientIdsFittingCriterion(Criterion criterion) throws UnsupportedCriterionException {
         return requestor.execute(criterion);
     }
-
-
 }

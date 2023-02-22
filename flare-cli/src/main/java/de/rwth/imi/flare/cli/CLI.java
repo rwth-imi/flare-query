@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
-import de.rwth.imi.flare.api.Requestor;
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
@@ -197,11 +197,15 @@ class CLI implements Callable<Integer> {
         } catch (InterruptedException e) {
             e.printStackTrace();
             return -4;
+        } catch (UnsupportedCriterionException e) {
+            e.printStackTrace();
+            return -5;
         }
         return 0;
     }
 
-    private int executeQuery(QueryExpanded mappedQuery) throws ExecutionException, InterruptedException {
+    private int executeQuery(QueryExpanded mappedQuery) throws ExecutionException, InterruptedException,
+            UnsupportedCriterionException {
         CompletableFuture<Integer> integerCompletableFuture = this.executor.calculatePatientCount(mappedQuery);
         return integerCompletableFuture.get();
     }

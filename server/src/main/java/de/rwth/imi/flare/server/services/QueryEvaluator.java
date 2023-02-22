@@ -4,6 +4,7 @@ import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
 import de.rwth.imi.flare.api.FlareParser;
 
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.QueryExpanded;
 import de.rwth.imi.flare.server.QueryFormat;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,8 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public CompletableFuture<Integer> evaluate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public CompletableFuture<Integer> evaluate(String query, String format) throws TransformerConfigurationException,
+            IOException, UnsupportedCriterionException {
         Query parsedQuery = parseQuery(query, format);
         QueryExpanded mappedQuery = mapQuery(parsedQuery);
         return executeQuery(mappedQuery);
@@ -62,7 +64,8 @@ public class QueryEvaluator {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public List<List<List<String>>> translate(String query, String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public List<List<List<String>>> translate(String query, String format) throws TransformerConfigurationException,
+            IOException, ExecutionException, InterruptedException, UnsupportedCriterionException {
         Query parsedQuery = parseQuery(query, format);
         QueryExpanded mappedQuery = mapQuery(parsedQuery);
         return translateQuery(mappedQuery);
@@ -92,7 +95,7 @@ public class QueryEvaluator {
         return mappedQuery;
     }
 
-    private CompletableFuture<Integer> executeQuery(QueryExpanded mappedQuery) throws ExecutionException, InterruptedException {
+    private CompletableFuture<Integer> executeQuery(QueryExpanded mappedQuery) throws UnsupportedCriterionException {
         return this.executor.calculatePatientCount(mappedQuery);
     }
 
@@ -101,7 +104,7 @@ public class QueryEvaluator {
      * @param mappedQuery
      * @return
      */
-    private List<List<List<String>>> translateQuery(QueryExpanded mappedQuery) {
+    private List<List<List<String>>> translateQuery(QueryExpanded mappedQuery) throws UnsupportedCriterionException {
         return this.executor.translateMappedQuery(mappedQuery);
     }
 }

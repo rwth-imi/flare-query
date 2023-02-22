@@ -6,9 +6,11 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Weigher;
 import de.rwth.imi.flare.api.FlareResource;
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.Criterion;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Clock;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -33,6 +35,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
   private final FhirRequestorConfig config;
   private final FhirContext fhirR4Context = FhirContext.forR4();
   private final AsyncLoadingCache<String, Set<String>> cache;
+  private final SearchQueryStringBuilder searchQueryStringBuilder;
 
   /**
    * @param executor
@@ -49,6 +52,7 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
         .evictionListener((String key, Set<String> idSet, RemovalCause cause) ->
             log.debug("Key " + key + " was evicted, cause: " + cause))
         .buildAsync(this::getSetCompletableFuture);
+    searchQueryStringBuilder = new SearchQueryStringBuilder(Clock.systemDefaultZone());
   }
 
 
@@ -60,11 +64,11 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    * @return Stream that contains the results for the given criterion
    */
   @Override
-  public CompletableFuture<Set<String>> execute(Criterion searchCriterion) {
+  public CompletableFuture<Set<String>> execute(Criterion searchCriterion) throws UnsupportedCriterionException {
     URI requestUrl;
     try {
       requestUrl = buildRequestUrl(searchCriterion);
-    } catch (URISyntaxException | IncorrectQueryInputException e) {
+    } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
     String urlString = requestUrl.toString();
@@ -97,11 +101,11 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
    * @return criterion parsed to FHIR URL String
    */
   @Override
-  public String translateCriterion(Criterion searchCriterion) {
+  public String translateCriterion(Criterion searchCriterion) throws UnsupportedCriterionException {
     URI requestUrl;
     try {
       requestUrl = buildRequestUrl(searchCriterion);
-    } catch (URISyntaxException | IncorrectQueryInputException e) {
+    } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
     return requestUrl.toString();
@@ -115,10 +119,9 @@ public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
   }
 
 
-  private URI buildRequestUrl(Criterion search)
-      throws URISyntaxException, IncorrectQueryInputException {
+  private URI buildRequestUrl(Criterion search) throws URISyntaxException, UnsupportedCriterionException {
     // TODO: Find a way to properly concat URLs in Java
-    String searchQuery = SearchQueryStringBuilder.constructQueryString(search);
+    String searchQuery = searchQueryStringBuilder.constructQueryString(search);
     String searchUrl = config.getBaseURI().toString() + searchQuery;
     return new URI(searchUrl);
   }
