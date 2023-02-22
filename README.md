@@ -17,7 +17,7 @@ Load example data into FHIR server
 
 ## Build
 ``
-mvn clean install -DskipTests
+mvn clean install
 ``
 
 ## Execution
@@ -126,4 +126,3 @@ It returns the patient count for the specified structured query result.
 ### Query Translate
 The flare query translater can be reached at the endpoint "query/translate".
 It returns the FHIR Search Query Strings formatted according to the structured query format.
-

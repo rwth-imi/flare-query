@@ -1,151 +1,143 @@
 package de.rwth.imi.flare.requestor;
 
 import ca.uhn.fhir.context.FhirContext;
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.Weigher;
 import de.rwth.imi.flare.api.FlareResource;
+import de.rwth.imi.flare.api.Requestor;
 import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.Criterion;
+import lombok.extern.slf4j.Slf4j;
+import org.ehcache.Cache;
+import org.ehcache.CacheManager;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ExpiryPolicyBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.EntryUnit;
+import org.ehcache.config.units.MemoryUnit;
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Clock;
+import java.time.Duration;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.index.qual.NonNegative;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Requestor implementation, takes a single criterion, builds a FHIR Query from
  * it, and executes it
  */
 @Slf4j
-public class FhirRequestor implements de.rwth.imi.flare.api.Requestor {
+public class FhirRequestor implements Requestor, AutoCloseable {
 
-  private static final StringSetWeigher WEIGHER = new StringSetWeigher();
-  private static final long N_BYTES_IN_MB = 1024*1024;
+    public static final String CACHE_ALIAS = "FlareCache";
 
-  private final FhirRequestorConfig config;
-  private final FhirContext fhirR4Context = FhirContext.forR4();
-  private final AsyncLoadingCache<String, Set<String>> cache;
-  private final SearchQueryStringBuilder searchQueryStringBuilder;
+    private final FhirRequestorConfig config;
+    private final FhirContext fhirR4Context = FhirContext.forR4();
+    private final Cache<String, CacheValue> cache;
+    private final Executor executor;
+    private final CacheManager cacheConfigurationManager;
+    private final SearchQueryStringBuilder searchQueryStringBuilder;
 
-  /**
-   * @param executor
-   * @param requestorConfig Configuration to be used when crafting requests
-   */
-  public FhirRequestor(FhirRequestorConfig requestorConfig,
-      CacheConfig cacheConfig, Executor executor) {
-    this.config = requestorConfig;
-    this.cache = Caffeine.newBuilder()
-        .maximumWeight(cacheConfig.getCacheSizeInMb() * N_BYTES_IN_MB)
-        .weigher(WEIGHER)
-        .refreshAfterWrite(cacheConfig.getEntryRefreshTimeHours(), TimeUnit.HOURS)
-        .executor(executor)
-        .evictionListener((String key, Set<String> idSet, RemovalCause cause) ->
-            log.debug("Key " + key + " was evicted, cause: " + cause))
-        .buildAsync(this::getSetCompletableFuture);
-    searchQueryStringBuilder = new SearchQueryStringBuilder(Clock.systemDefaultZone());
-  }
-
-
-  /**
-   * Builds the query string specified by the criterion, then executes said
-   * query string
-   *
-   * @param searchCriterion single criterion
-   * @return Stream that contains the results for the given criterion
-   */
-  @Override
-  public CompletableFuture<Set<String>> execute(Criterion searchCriterion) throws UnsupportedCriterionException {
-    URI requestUrl;
-    try {
-      requestUrl = buildRequestUrl(searchCriterion);
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-    String urlString = requestUrl.toString();
-    return cache.get(urlString);
-
+    /**
+     * @param requestorConfig configuration to be used when crafting requests
+     * @param cacheConfig     the cache config to use
+     * @param executor        the executor to use for FHIR REST API requests
+     */
+    public FhirRequestor(FhirRequestorConfig requestorConfig, CacheConfig cacheConfig, Executor executor) {
+        this.config = Objects.requireNonNull(requestorConfig);
+        this.cacheConfigurationManager = createCacheManager(Objects.requireNonNull(cacheConfig));
+        cache = this.cacheConfigurationManager.getCache(CACHE_ALIAS, String.class, CacheValue.class);
+        this.executor = Objects.requireNonNull(executor);
+        searchQueryStringBuilder = new SearchQueryStringBuilder(Clock.systemDefaultZone());
     }
 
-
-  @NotNull
-  private CompletableFuture<Set<String>> getSetCompletableFuture(String requestUrl, Executor executor) {
-    log.debug("FHIR Search: " + requestUrl + " not cached or refreshing...");
-    return CompletableFuture.supplyAsync(() -> {
-      String pagecount = this.config.getPageCount();
-      FhirSearchRequest fhirSearchRequest = this.config.getAuthentication()
-              .map((auth) -> new FhirSearchRequest(URI.create(requestUrl), auth, pagecount, fhirR4Context))
-              .orElseGet(() -> new FhirSearchRequest(URI.create(requestUrl), pagecount, fhirR4Context));
-      Set<String> flareStream = createStream(fhirSearchRequest)
-              .map(FlareResource::getPatientId)
-              .collect(Collectors.toSet());
-      log.debug("FHIR Search: " + requestUrl + " finished execution, writing to cache...");
-      return flareStream;
-    }, executor);
-  }
-
-  /**
-   * Override of execute. Returns URI as String instead of FlareResource
-   * stream.
-   *
-   * @param searchCriterion single criterion
-   * @return criterion parsed to FHIR URL String
-   */
-  @Override
-  public String translateCriterion(Criterion searchCriterion) throws UnsupportedCriterionException {
-    URI requestUrl;
-    try {
-      requestUrl = buildRequestUrl(searchCriterion);
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
+    private static CacheManager createCacheManager(CacheConfig cacheConfig) {
+        return CacheManagerBuilder.newCacheManagerBuilder()
+                .with(CacheManagerBuilder.persistence(cacheConfig.getCacheDir()))
+                .withCache(CACHE_ALIAS, CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, CacheValue.class,
+                                ResourcePoolsBuilder.newResourcePoolsBuilder()
+                                        .heap(cacheConfig.getHeapEntryCount(), EntryUnit.ENTRIES)
+                                        .disk(cacheConfig.getDiskSizeGB(), MemoryUnit.GB, true))
+                        .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofHours(cacheConfig.getExpiryHours()))))
+                .withSerializer(CacheValue.class, CacheValueSerializer.class)
+                .build(true);
     }
-    return requestUrl.toString();
-  }
 
-  @NotNull
-  private Stream<FlareResource> createStream(
-      FhirSearchRequest fhirSearchRequest) {
-    Iterable<FlareResource> streamSource = () -> fhirSearchRequest;
-    return StreamSupport.stream(streamSource.spliterator(), false);
-  }
+    /**
+     * Builds the query string specified by the criterion, then executes said
+     * query string
+     *
+     * @param searchCriterion single criterion
+     * @return Stream that contains the results for the given criterion
+     */
+    @Override
+    public CompletableFuture<Set<String>> execute(Criterion searchCriterion) {
+        String key;
+        try {
+            key = translateCriterion(searchCriterion);
+        } catch (UnsupportedCriterionException e) {
+            return CompletableFuture.failedFuture(e);
+        }
+        CacheValue value = cache.get(key);
+        if (value == null) {
+            return executeFhirQuery(key, executor);
+        } else {
+            return CompletableFuture.completedFuture(value.patientIds());
+        }
+    }
 
 
-  private URI buildRequestUrl(Criterion search) throws URISyntaxException, UnsupportedCriterionException {
-    // TODO: Find a way to properly concat URLs in Java
-    String searchQuery = searchQueryStringBuilder.constructQueryString(search);
-    String searchUrl = config.getBaseURI().toString() + searchQuery;
-    return new URI(searchUrl);
-  }
+    @NotNull
+    private CompletableFuture<Set<String>> executeFhirQuery(String requestUrl, Executor executor) {
+        log.debug("FHIR Search: " + requestUrl + " not cached or refreshing...");
 
-  private static class StringSetWeigher implements
-      Weigher<String, Set<String>> {
+        return CompletableFuture.supplyAsync(() -> {
+            FhirSearchRequest fhirSearchRequest = createFhirSearchRequest(URI.create(requestUrl));
+            Set<String> patientIds = createStream(fhirSearchRequest)
+                    .map(FlareResource::getPatientId)
+                    .collect(Collectors.toSet());
+
+            log.debug("FHIR Search: " + requestUrl + " finished execution, writing to cache...");
+            cache.put(requestUrl, new CacheValue(patientIds));
+            return patientIds;
+
+        }, executor);
+    }
+
+    @NotNull
+    private FhirSearchRequest createFhirSearchRequest(URI requestUrl) {
+        String pageCount = config.getPageCount();
+        return config.getAuthentication()
+                .map((auth) -> new FhirSearchRequest(requestUrl, auth, pageCount, fhirR4Context))
+                .orElseGet(() -> new FhirSearchRequest(requestUrl, pageCount, fhirR4Context));
+    }
+
+    /**
+     * Override of execute. Returns URI as String instead of FlareResource
+     * stream.
+     *
+     * @param searchCriterion single criterion
+     * @return criterion parsed to FHIR URL String
+     */
+    @Override
+    public String translateCriterion(Criterion searchCriterion) throws UnsupportedCriterionException {
+        String searchQuery = searchQueryStringBuilder.constructQueryString(searchCriterion);
+        return config.getBaseURI().resolve(searchQuery).toString();
+    }
+
+    @NotNull
+    private Stream<FlareResource> createStream(FhirSearchRequest fhirSearchRequest) {
+        Iterable<FlareResource> streamSource = () -> fhirSearchRequest;
+        return StreamSupport.stream(streamSource.spliterator(), false);
+    }
 
     @Override
-    public @NonNegative int weigh(String key, Set<String> idSet) {
-
-      return calcStringMemUsage(key) + (idSet.isEmpty() ? 88:
-          calSetItemMemUsage(calcStringMemUsage(idSet.iterator().next())) * idSet.size());
-
+    public void close() {
+        this.cacheConfigurationManager.close();
     }
-
-    private int calSetItemMemUsage(int elemMemUsage){
-        // 44 = HashMapNode, 16 = table array allocation
-        return 44 + 16 + elemMemUsage;
-    }
-
-    private int calcStringMemUsage(String s){
-      //30 = StringHeader, 24 = ByteArrayHeader
-      return 30 + 24 + s.length();
-
-    }
-  }
 }

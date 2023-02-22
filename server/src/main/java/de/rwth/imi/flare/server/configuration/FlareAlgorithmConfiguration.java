@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
+import de.rwth.imi.flare.api.Requestor;
 import de.rwth.imi.flare.api.model.TerminologyCode;
 import de.rwth.imi.flare.executor.FlareExecutor;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
@@ -89,12 +90,19 @@ public class FlareAlgorithmConfiguration {
     }
 
     @Bean
-    public Executor executor(@Nullable Authenticator auth,
-                             @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
-                             @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
-                             @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
-                             @Value("${flare.cache.cacheSizeMb}") int cacheSizeMb,
-                             @Value("${flare.cache.entryRefreshTimeHours}") int entryRefreshTimeHours) {
+    public Executor executor(Requestor requestor) {
+        return new FlareExecutor(requestor);
+    }
+
+    @Bean
+    Requestor requestor(@Nullable Authenticator auth,
+                        @Value("${flare.fhir.server}") String fhirBaseUri, @Value("${flare.fhir.pagecount}") String fhirSearchPageCount,
+                        @Value("${flare.exec.corePoolSize}") int corePoolSize, @Value("${flare.exec.maxPoolSize}") int maxPoolSize,
+                        @Value("${flare.exec.keepAliveTimeSeconds}") int keepAliveTimeSeconds,
+                        @Value("${flare.cache.cacheHeapEntryCount}") int cacheHeapEntryCount,
+                        @Value("${flare.cache.cacheDiskSizeGB}") int cacheDiskSizeGB,
+                        @Value("${flare.cache.cacheDir}") String cacheDir,
+                        @Value("${flare.cache.cacheExpiryHours}") int cacheExpiryHours) {
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -121,25 +129,28 @@ public class FlareAlgorithmConfiguration {
             @Override
             public FlareThreadPoolConfig getThreadPoolConfig() {
                 return new FlareThreadPoolConfig(corePoolSize, maxPoolSize,
-                    keepAliveTimeSeconds);
+                        keepAliveTimeSeconds);
             }
         };
+
         CacheConfig cacheConfig = new CacheConfig() {
-
             @Override
-            public int getCacheSizeInMb() {
-                return cacheSizeMb;
+            public int getHeapEntryCount() {
+                return cacheHeapEntryCount;
             }
-
             @Override
-            public int getEntryRefreshTimeHours() {
-                return entryRefreshTimeHours;
+            public int getDiskSizeGB() {
+                return cacheDiskSizeGB;
             }
-
+            @Override
+            public File getCacheDir() {
+                return new File( cacheDir);
+            }
+            @Override
+            public int getExpiryHours() {
+                return cacheExpiryHours;
+            }
         };
-
-        return new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(maxPoolSize)));
+        return new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(maxPoolSize));
     }
-
-
 }

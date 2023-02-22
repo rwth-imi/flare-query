@@ -53,15 +53,15 @@ public class QueryExpander {
     }
 
 
-    public QueryExpanded expandQuery(Query query){
-        QueryExpanded queryExpanded = new QueryExpanded();
+    public ExpandedQuery expandQuery(Query query){
+        ExpandedQuery expandedQuery = new ExpandedQuery();
         List<CriteriaGroup> exclusionCriteria = query.getExclusionCriteria();
         List<CriteriaGroup> inclusionCriteria = query.getInclusionCriteria();
         exclusionCriteria = exclusionCriteria == null ? new ArrayList<>() : exclusionCriteria;
         inclusionCriteria = inclusionCriteria == null ? new ArrayList<>() : inclusionCriteria;
-        queryExpanded.setExclusionCriteria(expandCriteriaGroupsExcl(exclusionCriteria));
-        queryExpanded.setInclusionCriteria(expandCriteriaGroups(inclusionCriteria));
-        return queryExpanded;
+        expandedQuery.setExclusionCriteria(expandCriteriaGroupsExcl(exclusionCriteria));
+        expandedQuery.setInclusionCriteria(expandCriteriaGroups(inclusionCriteria));
+        return expandedQuery;
     }
 
     public List<CriteriaGroup> expandCriteriaGroups(List<CriteriaGroup> criteriaGroups){
