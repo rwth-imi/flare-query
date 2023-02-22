@@ -17,8 +17,8 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @AllArgsConstructor
 @NoArgsConstructor
+public class ExpandedQuery {
 
-public class QueryExpanded {
     private List<CriteriaGroup> inclusionCriteria;
     private List<List<CriteriaGroup>> exclusionCriteria;
 }

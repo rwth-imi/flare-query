@@ -32,13 +32,13 @@ public class NaiveLookupMapping implements FhirResourceMapper {
 
 
     @Override
-    public CompletableFuture<QueryExpanded> mapResources(Query query) {
-        QueryExpanded queryExpanded = queryExpander.expandQuery(query);
-        for (List<CriteriaGroup> criteriaGroups: queryExpanded.getExclusionCriteria()){
+    public CompletableFuture<ExpandedQuery> mapResources(Query query) {
+        ExpandedQuery expandedQuery = queryExpander.expandQuery(query);
+        for (List<CriteriaGroup> criteriaGroups: expandedQuery.getExclusionCriteria()){
             this.mapCriterionGroup(criteriaGroups);
         }
-        this.mapCriterionGroup(queryExpanded.getInclusionCriteria());
-        return CompletableFuture.completedFuture(queryExpanded);
+        this.mapCriterionGroup(expandedQuery.getInclusionCriteria());
+        return CompletableFuture.completedFuture(expandedQuery);
     }
 
     private void mapCriterionGroup(List<CriteriaGroup> criterionGroup) {

@@ -18,8 +18,8 @@
 
     <properties>
         <java.version>16</java.version>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <log4j2.version>2.16.0</log4j2.version>
         <start-class>de.rwth.imi.flare.server.ServerApplication</start-class>
     </properties>

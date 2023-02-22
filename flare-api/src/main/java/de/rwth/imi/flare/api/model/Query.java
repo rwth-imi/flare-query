@@ -15,8 +15,8 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @AllArgsConstructor
 @NoArgsConstructor
-public class Query
-{
+public class Query {
+
     private List<CriteriaGroup> inclusionCriteria;
     private List<CriteriaGroup> exclusionCriteria;
 }

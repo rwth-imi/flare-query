@@ -22,9 +22,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 /**
  * Iterates over the paged results of a given FHIR search request
  */
-
 @Slf4j
 public class FhirSearchRequest implements Iterator<FlareResource> {
+
     private URI nextPageUri;
     //Stack of results returned by last request
     private final Deque<FlareResourceImpl> remainingPageResults;

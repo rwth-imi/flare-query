@@ -31,6 +31,7 @@ public interface FhirRequestorConfig {
 
 
     /**
+     * TODO: unused
      *
      * @return FlareThradPoolConfig, setting the configuration of the thread pool
      * used by Flare

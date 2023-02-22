@@ -19,7 +19,8 @@ import de.rwth.imi.flare.requestor.FlareThreadPoolConfig;
 
 import java.util.*;
 
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -33,9 +34,6 @@ import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import de.rwth.imi.flare.api.FlareParser;
 import de.rwth.imi.flare.parser.csq.ParserCSQ;
@@ -72,7 +70,7 @@ class CLI implements Callable<Integer> {
 
     private FlareParser parser;
 
-    public CLI(FhirResourceMapper mapper) throws IOException {
+    public CLI(FhirResourceMapper mapper) {
         createExecutor();
         mapping = mapper;
     }
@@ -138,16 +136,25 @@ class CLI implements Callable<Integer> {
 
         CacheConfig cacheConfig = new CacheConfig() {
             @Override
-            public int getCacheSizeInMb() {
-                return 100;
+            public int getHeapEntryCount() {
+                return 2;
+            }
+            @Override
+            public int getDiskSizeGB() {
+                return 2;
+            }
+            @Override
+            public File getCacheDir() {
+                return new File( "target", "EhCacheData");
+            }
+            @Override
+            public int getExpiryHours() {
+                return 24;
             }
 
-            @Override
-            public int getEntryRefreshTimeHours() {
-                return 1;
-            }
         };
 
+        // TODO: thread pool should be configurable
         executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
     }
 
@@ -180,11 +187,11 @@ class CLI implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-
             Query parsedQuery = parseQuery();
-            QueryExpanded mappedQuery = mapQuery(parsedQuery);
-            int queryResult = executeQuery(mappedQuery);
+            ExpandedQuery mappedQuery = mapQuery(parsedQuery);
+            int queryResult = executor.calculatePatientCount(mappedQuery).get();
             System.out.println(queryResult);
+            return 0;
         } catch (IOException e) {
             e.printStackTrace();
             return -1;
@@ -197,22 +204,11 @@ class CLI implements Callable<Integer> {
         } catch (InterruptedException e) {
             e.printStackTrace();
             return -4;
-        } catch (UnsupportedCriterionException e) {
-            e.printStackTrace();
-            return -5;
         }
-        return 0;
     }
 
-    private int executeQuery(QueryExpanded mappedQuery) throws ExecutionException, InterruptedException,
-            UnsupportedCriterionException {
-        CompletableFuture<Integer> integerCompletableFuture = this.executor.calculatePatientCount(mappedQuery);
-        return integerCompletableFuture.get();
-    }
-
-
-    private QueryExpanded mapQuery(Query query) {
-        QueryExpanded parsedQuery = new QueryExpanded();
+    private ExpandedQuery mapQuery(Query query) {
+        ExpandedQuery parsedQuery = new ExpandedQuery();
         // TODO: specific init needed?
         parsedQuery.setInclusionCriteria(query.getInclusionCriteria());
         List<List<CriteriaGroup>> exclusionCriteria = new LinkedList<>();

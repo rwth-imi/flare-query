@@ -1,14 +1,12 @@
 package de.rwth.imi.flare.api;
 
-import java.time.LocalDateTime;
-
 /**
  * Created by Lukas Szimtenings on 6/2/2021.
  */
-public interface FlareResource
-{
+public interface FlareResource {
+
     String getPatientId();
-    
+
     // TODO: implement later on
     // public LocalDateTime getRelevantDate();
 
