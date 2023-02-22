@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.executor;
 
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.QueryExpanded;
@@ -7,7 +8,6 @@ import de.rwth.imi.flare.requestor.FhirRequestor;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 
 /**
@@ -25,7 +25,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     }
 
     @Override
-    public CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery) {
+    public CompletableFuture<Integer> calculatePatientCount(QueryExpanded mappedQuery)
+            throws UnsupportedCriterionException {
         CompletableFuture<Set<String>> includedIds = getIncludedIds(mappedQuery.getInclusionCriteria());
         CompletableFuture<Set<String>> excludedIds = getExcludedIds(mappedQuery.getExclusionCriteria());
         CompletableFuture<Set<String>> resultingIds = includedIds.thenCombine(excludedIds, (strings, strings2) ->
@@ -46,7 +47,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * @return StructuredQuery
      */
     @Override
-    public List<List<List<String>>> translateMappedQuery(QueryExpanded mappedQuery) {
+    public List<List<List<String>>> translateMappedQuery(QueryExpanded mappedQuery)
+            throws UnsupportedCriterionException {
         //create new FhirRequestor by provided config
 
         //split criterions into inculsion and exclusion
@@ -74,16 +76,19 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
      * @param criterion  multiple criterions consisting of termcodes and valuefilters
      * @return String list of FHIR Search Strings containing termcodes and nested valuefilters
      */
-    private List<List<String>> iterateCriterion(FhirRequestor translator, List<CriteriaGroup> criterion) {
+    private List<List<String>> iterateCriterion(FhirRequestor translator, List<CriteriaGroup> criterion) throws UnsupportedCriterionException {
         //return array
         List<List<String>> termCodeList = new ArrayList<>();
         //loop TermCodes
         for (CriteriaGroup criteriaGrp : criterion) {
             //temporal list of ValueFilters
-            List<String> valueFilterList = criteriaGrp.getCriteria().stream().map(translator::translateCriterion).collect(Collectors.toList());
+            List<String> valueFilterList = new ArrayList<>();
+            for (Criterion criterion1 : criteriaGrp.getCriteria()) {
+                valueFilterList.add(translator.translateCriterion(criterion1));
+            }
             //add ValueFilter List to termCodeList
             //creates new ArrayList to copy value
-            termCodeList.add(new ArrayList<>(valueFilterList));
+            termCodeList.add(valueFilterList);
         }
         return termCodeList;
     }
@@ -91,13 +96,17 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Build intersection of all group sets
      */
-    private CompletableFuture<Set<String>> getIncludedIds(List<CriteriaGroup> inclusionCriteria) {
+    private CompletableFuture<Set<String>> getIncludedIds(List<CriteriaGroup> inclusionCriteria)
+            throws UnsupportedCriterionException {
         if (inclusionCriteria == null) {
             return CompletableFuture.completedFuture(new HashSet<>());
         }
         // Async fetch all ids per group
-        List<CompletableFuture<Set<String>>> includedIdsByGroup =
-                inclusionCriteria.stream().map(this::getIdsFittingInclusionGroup).toList();
+        List<CompletableFuture<Set<String>>> includedIdsByGroup = new ArrayList<>();
+        for (CriteriaGroup inclusionCriterion : inclusionCriteria) {
+            CompletableFuture<Set<String>> idsFittingInclusionGroup = getIdsFittingInclusionGroup(inclusionCriterion);
+            includedIdsByGroup.add(idsFittingInclusionGroup);
+        }
 
         // Wait for async exec to finish
         CompletableFuture<Void> groupExecutionFinished = CompletableFuture
@@ -123,9 +132,13 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Union all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(CriteriaGroup group) {
-        final List<CompletableFuture<Set<String>>> idsPerCriterion = group.getCriteria().stream()
-                .map(fhirIdRequestor::getPatientIdsFittingCriterion).toList();
+    private CompletableFuture<Set<String>> getIdsFittingInclusionGroup(CriteriaGroup group)
+            throws UnsupportedCriterionException {
+        final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
+        for (Criterion criterion : group.getCriteria()) {
+            CompletableFuture<Set<String>> patientIdsFittingCriterion = fhirIdRequestor.getPatientIdsFittingCriterion(criterion);
+            idsPerCriterion.add(patientIdsFittingCriterion);
+        }
 
         // Wait for all queries to finish execution
         return getUnionOfIds(idsPerCriterion);
@@ -134,7 +147,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Build union of all group sets
      */
-    private CompletableFuture<Set<String>> getExcludedIds(List<List<CriteriaGroup>> exclusionCriteria) {
+    private CompletableFuture<Set<String>> getExcludedIds(List<List<CriteriaGroup>> exclusionCriteria)
+            throws UnsupportedCriterionException {
         if (exclusionCriteria == null) {
             return CompletableFuture.completedFuture(new HashSet<>());
         }
@@ -168,7 +182,8 @@ public class FlareExecutor implements de.rwth.imi.flare.api.Executor {
     /**
      * Intersect all criteria sets for a given group
      */
-    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(List<CriteriaGroup> groups) {
+    private CompletableFuture<Set<String>> getIdsFittingExclusionGroup(List<CriteriaGroup> groups)
+            throws UnsupportedCriterionException {
         final List<CompletableFuture<Set<String>>> idsPerCriterion = new ArrayList<>();
         for (CriteriaGroup group : groups) {
             for (Criterion criterion : group.getCriteria()) {

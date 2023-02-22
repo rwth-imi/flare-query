@@ -1,4 +1,5 @@
 
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.CriteriaGroup;
 import de.rwth.imi.flare.api.model.Criterion;
 import de.rwth.imi.flare.api.model.QueryExpanded;
@@ -22,7 +23,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -77,7 +77,7 @@ public class ExecutorTests {
     }
 
     @Test
-    void calculatePatientCountWorkingAtAll() throws ExecutionException, InterruptedException {
+    void calculatePatientCountWorkingAtAll() throws Exception {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
@@ -96,7 +96,7 @@ public class ExecutorTests {
     }
 
     @Test
-    void calculatePatientCountOuterOrWorking() throws ExecutionException, InterruptedException {
+    void calculatePatientCountOuterOrWorking() throws Exception {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
@@ -115,7 +115,7 @@ public class ExecutorTests {
     }
 
     @Test
-    void calculatePatientCountAndWorking() throws ExecutionException, InterruptedException {
+    void calculatePatientCountAndWorking() throws Exception {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
@@ -134,7 +134,7 @@ public class ExecutorTests {
     }
 
     @Test
-    void calculatePatientCountInnerOrWorking() throws ExecutionException, InterruptedException {
+    void calculatePatientCountInnerOrWorking() throws Exception {
         Map<String, List<String>> ids = new HashMap<>();
         // logic is :
         // Inclusion / ( ( (A v A1 v A2) ^ B) v C)
@@ -152,7 +152,7 @@ public class ExecutorTests {
         assertEquals(4, number.get());
     }
 
-    private void mockGetIds(Map<String, List<String>> ids) {
+    private void mockGetIds(Map<String, List<String>> ids) throws UnsupportedCriterionException {
         if (ids.size() != 6) {
             throw new IllegalArgumentException("The number of Id-lists need to be 6, for A, A1, A2, B and C.");
         }

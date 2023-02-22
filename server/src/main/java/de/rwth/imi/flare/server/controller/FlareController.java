@@ -1,5 +1,6 @@
 package de.rwth.imi.flare.server.controller;
 
+import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.server.services.QueryEvaluator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,9 @@ public class FlareController {
      */
 
     @PostMapping(path = "/execute")
-    public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Content-Type") String format) throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException {
+    public ResponseEntity<String> executeQuery(@RequestBody String query, @RequestHeader("Content-Type") String format)
+            throws TransformerConfigurationException, IOException, ExecutionException, InterruptedException,
+            UnsupportedCriterionException {
 
         try {
             var queryResponse = this.queryEval.evaluate(query, format);
@@ -48,13 +51,8 @@ public class FlareController {
         }
         catch(NoSuchElementException e){
             //return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (TransformerConfigurationException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (TransformerConfigurationException | UnsupportedCriterionException | IOException | ExecutionException |
+                 InterruptedException e) {
             e.printStackTrace();
         }
         return ResponseEntity.ok().body(new ArrayList<>());

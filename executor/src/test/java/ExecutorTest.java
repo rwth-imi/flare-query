@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class ExecutorTest
 {
@@ -41,7 +40,7 @@ public class ExecutorTest
     }
 
     @Test
-    public void testExecutor() throws ExecutionException, InterruptedException {
+    public void testExecutor() throws Exception {
         QueryExpanded query = buildQuery();
         CompletableFuture<Integer> calc = executor.calculatePatientCount(query);
         System.out.printf("found %d values", calc.get());
