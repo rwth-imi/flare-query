@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.Executor;
 import de.rwth.imi.flare.api.FhirResourceMapper;
-import de.rwth.imi.flare.api.UnsupportedCriterionException;
 import de.rwth.imi.flare.api.model.*;
 import de.rwth.imi.flare.mapping.expansion.ExpansionTreeNode;
 import de.rwth.imi.flare.mapping.expansion.QueryExpander;
@@ -21,7 +20,6 @@ import java.util.*;
 
 import java.util.concurrent.*;
 
-import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -103,7 +101,7 @@ class CLI implements Callable<Integer> {
     }
 
     private void createExecutor() {
-        Optional<Authenticator> auth = Optional.ofNullable(createAuthenticator());
+        Optional<Authenticator> auth = createAuthenticator();
 
         FhirRequestorConfig config = new FhirRequestorConfig() {
             @Override
@@ -158,8 +156,7 @@ class CLI implements Callable<Integer> {
         executor = new FlareExecutor(new FhirRequestor(config, cacheConfig, Executors.newFixedThreadPool(16)));
     }
 
-    @Nullable
-    private Authenticator createAuthenticator() {
+    private Optional<Authenticator> createAuthenticator() {
         Authenticator auth = null;
         // TODO: Log warning if only one parameter is provided
         if(this.userName != null && this.password != null){
@@ -172,7 +169,7 @@ class CLI implements Callable<Integer> {
                 }
             };
         }
-        return auth;
+        return Optional.ofNullable(auth);
     }
 
     private FlareParser getParser() throws TransformerConfigurationException {
