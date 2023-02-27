@@ -119,3 +119,6 @@ hs_err_pid*
 .oh-my-zsh
 .vscode
 .zshrc
+
+# ignore cache files
+cache
