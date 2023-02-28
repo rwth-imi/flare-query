@@ -2,9 +2,9 @@ version: "3.7"
 
 services:
   fhir-server:
-    image: "samply/blaze:0.19"
+    image: "samply/blaze:develop"
     environment:
-      BASE_URL: "http://fhir-server:8080"
+      BASE_URL: "http://localhost:8082"
       JAVA_TOOL_OPTIONS: "-Xmx4g"
       LOG_LEVEL: debug
     ports:

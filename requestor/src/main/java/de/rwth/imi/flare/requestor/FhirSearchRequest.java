@@ -1,12 +1,11 @@
 package de.rwth.imi.flare.requestor;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.rwth.imi.flare.api.FlareResource;
+import de.rwth.imi.flare.requestor.model.Bundle;
+import de.rwth.imi.flare.requestor.model.Entry;
+import de.rwth.imi.flare.requestor.model.Link;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Resource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -27,27 +26,23 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
 
     private URI nextPageUri;
     //Stack of results returned by last request
-    private final Deque<FlareResourceImpl> remainingPageResults;
+    private final Deque<FlareResource> remainingPageResults;
     private final HttpClient client;
-    // Parses only JSON FHIR responses
-    private final IParser fhirParser;
     private final String pagecount;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount, FhirContext r4Context){
-        this.nextPageUri = fhirRequestUrl;
-        this.client = HttpClient.newBuilder().authenticator(auth).build();
-        this.pagecount = pagecount;
-        this.fhirParser = r4Context.newJsonParser();
-        this.remainingPageResults = new LinkedBlockingDeque<>();
-        // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
-        this.ensureStackFullness(true);
+    public FhirSearchRequest(URI fhirRequestUrl, Authenticator auth, String pagecount) {
+        this(fhirRequestUrl, HttpClient.newBuilder().authenticator(auth).build(), pagecount);
     }
 
-    public FhirSearchRequest(URI fhirRequestUrl, String pagecount, FhirContext r4Context){
+    public FhirSearchRequest(URI fhirRequestUrl, String pagecount) {
+        this(fhirRequestUrl, HttpClient.newBuilder().build(), pagecount);
+    }
+
+    private FhirSearchRequest(URI fhirRequestUrl, HttpClient client, String pagecount) {
         this.nextPageUri = fhirRequestUrl;
-        this.client = HttpClient.newBuilder().build();
+        this.client = client;
         this.pagecount = pagecount;
-        this.fhirParser = r4Context.newJsonParser();
         this.remainingPageResults = new LinkedBlockingDeque<>();
         // Execute before any iteration to make sure requests with empty response set don't lead to a true hasNext
         this.ensureStackFullness(true);
@@ -106,17 +101,30 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
         String uri = this.nextPageUri.getScheme() + "://" + this.nextPageUri.getAuthority() + this.nextPageUri.getPath() + "/_search";
         String query = this.nextPageUri.getQuery();
 
-        if ( ! this.pagecount.isEmpty()){
+        query = query + "&_elements=" + queryElements();
+
+        if (!this.pagecount.isEmpty()){
             query = query + "&_count=" + this.pagecount;
         }
 
-        return HttpRequest.newBuilder(
-                        URI.create(uri))
+        return HttpRequest.newBuilder(URI.create(uri))
                 .header("Prefer", "handling=strict")
-                .header("Accept-Encoding", "CSQ")
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(query))
                 .build();
+    }
+
+    /*
+     * The elements the FHIR server should return in resources. For patients the id is sufficient and for all other
+     * resource types, we need the subject reference.
+     */
+    private String queryElements() {
+        return nextPageUri.getPath().endsWith("Patient")
+                ? "id"
+                : nextPageUri.getPath().endsWith("Immunization")
+                || nextPageUri.getPath().endsWith("Consent")
+                ? "patient"
+                : "subject";
     }
 
     /**
@@ -134,7 +142,7 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
             throw new IOException("Received HTTP status code indicating request failure: " + response.statusCode());
         }
 
-        Bundle searchBundle = this.fhirParser.parseResource(Bundle.class, response.body());
+        Bundle searchBundle = mapper.readValue(response.body(), Bundle.class);
         extractResourcesFromBundle(searchBundle);
         extractNextPageLink(searchBundle);
     }
@@ -144,10 +152,9 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * @param searchBundle Response to a search request currently being processed
      */
     private void extractResourcesFromBundle(Bundle searchBundle) {
-        List<Bundle.BundleEntryComponent> entries = searchBundle.getEntry();
-        for(Bundle.BundleEntryComponent entry : entries){
-            Resource resource = entry.getResource();
-            this.remainingPageResults.push(new FlareResourceImpl(resource));
+        List<Entry> entries = searchBundle.entry();
+        for(Entry entry : entries){
+            this.remainingPageResults.push(entry.resource().flareResource());
         }
     }
 
@@ -157,12 +164,11 @@ public class FhirSearchRequest implements Iterator<FlareResource> {
      * @throws URISyntaxException If the URI contained in the bundle is not valid
      */
     private void extractNextPageLink(Bundle searchBundle) throws URISyntaxException {
-        Bundle.BundleLinkComponent nextLink = searchBundle.getLink(IBaseBundle.LINK_NEXT);
-        if(nextLink == null){
+        String nextLink = searchBundle.linkWithRel("next").map(Link::url).orElse(null);
+        if (nextLink == null) {
             this.nextPageUri = null;
-        }
-        else{
-            this.nextPageUri = new URI(nextLink.getUrl());
+        } else {
+            this.nextPageUri = new URI(nextLink);
         }
     }
 }

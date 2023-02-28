@@ -1,6 +1,5 @@
 package de.rwth.imi.flare.requestor;
 
-import ca.uhn.fhir.context.FhirContext;
 import de.rwth.imi.flare.api.FlareResource;
 import de.rwth.imi.flare.api.Requestor;
 import de.rwth.imi.flare.api.UnsupportedCriterionException;
@@ -14,7 +13,6 @@ import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
-import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 import java.time.Clock;
@@ -37,7 +35,6 @@ public class FhirRequestor implements Requestor, AutoCloseable {
     public static final String CACHE_ALIAS = "FlareCache";
 
     private final FhirRequestorConfig config;
-    private final FhirContext fhirR4Context = FhirContext.forR4();
     private final Cache<String, CacheValue> cache;
     private final Executor executor;
     private final CacheManager cacheConfigurationManager;
@@ -91,8 +88,6 @@ public class FhirRequestor implements Requestor, AutoCloseable {
         }
     }
 
-
-    @NotNull
     private CompletableFuture<Set<String>> executeFhirQuery(String requestUrl, Executor executor) {
         log.debug("FHIR Search: " + requestUrl + " not cached or refreshing...");
 
@@ -109,12 +104,11 @@ public class FhirRequestor implements Requestor, AutoCloseable {
         }, executor);
     }
 
-    @NotNull
     private FhirSearchRequest createFhirSearchRequest(URI requestUrl) {
         String pageCount = config.getPageCount();
         return config.getAuthentication()
-                .map((auth) -> new FhirSearchRequest(requestUrl, auth, pageCount, fhirR4Context))
-                .orElseGet(() -> new FhirSearchRequest(requestUrl, pageCount, fhirR4Context));
+                .map((auth) -> new FhirSearchRequest(requestUrl, auth, pageCount))
+                .orElseGet(() -> new FhirSearchRequest(requestUrl, pageCount));
     }
 
     /**
@@ -130,7 +124,6 @@ public class FhirRequestor implements Requestor, AutoCloseable {
         return config.getBaseURI().resolve(searchQuery).toString();
     }
 
-    @NotNull
     private Stream<FlareResource> createStream(FhirSearchRequest fhirSearchRequest) {
         Iterable<FlareResource> streamSource = () -> fhirSearchRequest;
         return StreamSupport.stream(streamSource.spliterator(), false);
