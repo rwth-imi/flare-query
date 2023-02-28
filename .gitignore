@@ -120,4 +120,5 @@ hs_err_pid*
 .vscode
 .zshrc
 
+# ignore cache files
 cache
