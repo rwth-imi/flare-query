@@ -49,7 +49,7 @@ class SearchQueryStringBuilderTest {
         MappingEntry mapping = new MappingEntry();
         mapping.setFhirResourceType("Patient");
         ageTestCrit.setMapping(mapping);
-        TerminologyCode termCode = new TerminologyCode("age", "mii.abide", "SomeDisplay");
+        TerminologyCode termCode = new TerminologyCode("424144002", "http://snomed.info/sct", "SomeDisplay");
         ageTestCrit.setTermCodes(List.of(termCode));
         return builder.constructQueryString(ageTestCrit);
     }
@@ -67,7 +67,7 @@ class SearchQueryStringBuilderTest {
         MappingEntry mapping = new MappingEntry();
         mapping.setFhirResourceType("Patient");
         ageTestCrit.setMapping(mapping);
-        TerminologyCode termCode = new TerminologyCode("age", "mii.abide", "SomeDisplay");
+        TerminologyCode termCode = new TerminologyCode("424144002", "http://snomed.info/sct", "SomeDisplay");
         ageTestCrit.setTermCodes(List.of(termCode));
         return builder.constructQueryString(ageTestCrit);
     }
