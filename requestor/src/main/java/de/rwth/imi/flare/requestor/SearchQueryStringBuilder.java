@@ -76,7 +76,7 @@ public class SearchQueryStringBuilder {
             }
 
             TerminologyCode currentTermCode = this.criterion.getTermCodes().get(0);
-            if (currentTermCode.getCode().equals("age") && currentTermCode.getSystem().equals("mii.abide")) {
+            if (currentTermCode.getCode().equals("424144002") && currentTermCode.getSystem().equals("http://snomed.info/sct")) {
 
                 FilterType filter = this.criterion.getValueFilter().getType();
                 if (filter == FilterType.QUANTITY_COMPARATOR) {
@@ -265,7 +265,6 @@ public class SearchQueryStringBuilder {
         private void appendConceptFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-
             sb.append(valueSearchParameter)
                     .append('=')
                     .append(concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
