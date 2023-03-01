@@ -48,7 +48,7 @@ public class SearchQueryStringBuilder {
 
         private final Criterion criterion;
         private final StringBuilder sb;
-        private final List<String> queryParams;
+        private final LinkedList<String> queryParams;
 
         /**
          * Initializes queryBuilder context
@@ -115,10 +115,10 @@ public class SearchQueryStringBuilder {
         private void constructFinalString(MappingEntry mappings){
             this.sb.append(mappings.getFhirResourceType());
             if(this.queryParams.size() > 0 ){
-                this.sb.append('?').append(this.queryParams.get(0));
+                this.sb.append('?').append(this.queryParams.removeFirst());
             }
 
-            this.queryParams.stream().skip(1).forEach((queryParam) -> this.sb.append("&").append(queryParam));
+            this.queryParams.stream().forEach((queryParam) -> this.sb.append("&").append(queryParam));
 
         }
 
@@ -243,12 +243,6 @@ public class SearchQueryStringBuilder {
             }
         }
 
-        /**
-         * Appends the {@link MappingEntry mappings} {@link TerminologyCode termCode search parameter}
-         * and appends it if existing <br>
-         * Then takes the {@link ValueFilter filter} contained in the {@link Criterion} and calls the builder method
-         * corresponding to the {@link FilterType} of the {@link ValueFilter filter}
-         */
         private void appendValueFilterByType() {
 
             FilterType filter = this.criterion.getValueFilter().getType();
@@ -259,17 +253,6 @@ public class SearchQueryStringBuilder {
             } else if (filter == FilterType.CONCEPT) {
                 appendConceptFilterString();
             }
-        }
-
-        /**
-         * Called if the {@link ValueFilter} is a Concept filter, appends the concept filter
-         */
-        private void appendCodeFilterString() {
-            ValueFilter valueFilter = this.criterion.getValueFilter();
-            String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-
-            this.queryParams.add(valueSearchParameter + "=" +
-                valueFilter.getSelectedConcepts().get(0).getCode());
         }
 
         /**
