@@ -48,6 +48,7 @@ public class SearchQueryStringBuilder {
 
         private final Criterion criterion;
         private final StringBuilder sb;
+        private final LinkedList<String> queryParams;
 
         /**
          * Initializes queryBuilder context
@@ -55,6 +56,7 @@ public class SearchQueryStringBuilder {
         private Builder(Criterion searchCriterion) {
             this.sb = new StringBuilder();
             this.criterion = searchCriterion;
+            this.queryParams = new LinkedList<>();
         }
 
         /**
@@ -64,45 +66,35 @@ public class SearchQueryStringBuilder {
             MappingEntry mappings = this.criterion.getMapping();
             TerminologyCode termCode = this.criterion.getTermCodes().get(0);
 
-            this.sb.append(mappings.getFhirResourceType()).append('?');
 
             if (mappings.getTermCodeSearchParameter() != null) {
                 StringBuilder sbTmp = new StringBuilder();
-                this.sb.append(mappings.getTermCodeSearchParameter()).append("=");
+                String queryParam = mappings.getTermCodeSearchParameter() + "=";
                 sbTmp.append(termCode.getSystem())
                         .append("|")
                         .append(termCode.getCode());
-                this.sb.append(urlEncodeAndReset(sbTmp));
+                this.queryParams.add(queryParam + urlEncodeAndReset(sbTmp));
             }
 
             TerminologyCode currentTermCode = this.criterion.getTermCodes().get(0);
             if (currentTermCode.getCode().equals("424144002") && currentTermCode.getSystem().equals("http://snomed.info/sct")) {
-
                 FilterType filter = this.criterion.getValueFilter().getType();
                 if (filter == FilterType.QUANTITY_COMPARATOR) {
                     if (checkAppendEqOrNeComparison()) {
+                        constructFinalString(mappings);
                         return;
                     }
 
                     appendSingleAgeComparison(this.criterion.getValueFilter().getValue(), this.criterion.getValueFilter().getComparator());
                 } else if (filter == FilterType.QUANTITY_RANGE) {
                     appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
-                    this.sb.append("&");
                     appendSingleAgeComparison(this.criterion.getValueFilter().getMaxValue(), Comparator.lt);
                 }
+                constructFinalString(mappings);
                 return;
             }
 
-            if (this.criterion.getMapping().getFhirResourceType().equals("Consent")) {
-                ValueFilter valueFilter = this.criterion.getValueFilter();
-                this.sb.append('$').append(concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
-                return;
-            }
-
-            if (this.criterion.getValueFilter() != null) {
-                if (mappings.getTermCodeSearchParameter() != null) {
-                    this.sb.append(("&"));
-                }
+            if(this.criterion.getValueFilter() != null) {
                 appendValueFilterByType();
             }
 
@@ -115,6 +107,19 @@ public class SearchQueryStringBuilder {
             }
 
             appendTimeConstraints();
+
+            constructFinalString(mappings);
+
+        }
+
+        private void constructFinalString(MappingEntry mappings){
+            this.sb.append(mappings.getFhirResourceType());
+            if(this.queryParams.size() > 0 ){
+                this.sb.append('?').append(this.queryParams.removeFirst());
+            }
+
+            this.queryParams.stream().forEach((queryParam) -> this.sb.append("&").append(queryParam));
+
         }
 
         private boolean checkAppendEqOrNeComparison() throws UnsupportedCriterionException {
@@ -125,8 +130,8 @@ public class SearchQueryStringBuilder {
                 LocalDate maxDate = timeValueToDate(age);
                 minDate = minDate.plusDays(1);
 
-                this.sb.append("birthdate=gt").append(minDate);
-                this.sb.append("&birthdate=lt").append(maxDate.toString());
+                this.queryParams.add("birthdate=gt" + minDate);
+                this.queryParams.add("birthdate=lt" + maxDate.toString());
                 return true;
 
             } else if (comparator.equals("ne")) {
@@ -136,16 +141,17 @@ public class SearchQueryStringBuilder {
         }
 
         private void appendSingleAgeComparison(Double age, Comparator comparator) throws UnsupportedCriterionException {
-            this.sb.append("birthdate=");
+            StringBuilder queryParam = new StringBuilder();
+            queryParam.append("birthdate=");
             switch (comparator.toString()) {
-                case "gt" -> this.sb.append("lt");
-                case "lt" -> this.sb.append("gt");
-                case "ge" -> this.sb.append("le");
-                case "le" -> this.sb.append("ge");
+                case "gt" -> queryParam.append("lt");
+                case "lt" -> queryParam.append("gt");
+                case "ge" -> queryParam.append("le");
+                case "le" -> queryParam.append("ge");
             }
 
             LocalDate dateToCompare = this.timeValueToDate(age);
-            this.sb.append(dateToCompare.toString());
+            this.queryParams.add(queryParam + dateToCompare.toString());
         }
 
         private LocalDate timeValueToDate(Double timeValue) throws UnsupportedCriterionException {
@@ -166,6 +172,7 @@ public class SearchQueryStringBuilder {
          * Appends the fixed criteria as given by the mapping
          */
         private void appendFixedCriteriaString() {
+
             for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()) {
                 if (criterion.getType().equals("code")) {
                     for (TerminologyCode valueMember : criterion.getValue()) {
@@ -173,7 +180,8 @@ public class SearchQueryStringBuilder {
                     }
                 }
                 String valueString = concatenateTerminologyCodes(criterion.getValue());
-                this.sb.append('&').append(criterion.getSearchParameter()).append('=').append(valueString);
+                this.queryParams.add(criterion.getSearchParameter() + "=" + valueString);
+
             }
         }
 
@@ -195,7 +203,7 @@ public class SearchQueryStringBuilder {
             if (afterDate != null) {
                 sbTemp.append("&").append(timeRestrictionParameter).append("=ge").append(afterDate);
             }
-            this.sb.append(sbTemp);
+            this.queryParams.add(sbTemp.toString());
         }
 
 
@@ -231,22 +239,10 @@ public class SearchQueryStringBuilder {
                 }
 
                 String concepts = concatenateTerminologyCodes(attributeFilter.getSelectedConcepts());
-
-                if (this.sb.indexOf("?") == sb.length() - 1) {
-                    this.sb.append(attSearchParam.getAttributeSearchParameter()).append('=').append(concepts);
-                } else {
-                    this.sb.append('&').append(attSearchParam.getAttributeSearchParameter()).append('=').append(concepts);
-                }
-
+                this.queryParams.add(attSearchParam.getAttributeSearchParameter() + "=" +concepts);
             }
         }
 
-        /**
-         * Appends the {@link MappingEntry mappings} {@link TerminologyCode termCode search parameter}
-         * and appends it if existing <br>
-         * Then takes the {@link ValueFilter filter} contained in the {@link Criterion} and calls the builder method
-         * corresponding to the {@link FilterType} of the {@link ValueFilter filter}
-         */
         private void appendValueFilterByType() {
 
             FilterType filter = this.criterion.getValueFilter().getType();
@@ -265,9 +261,8 @@ public class SearchQueryStringBuilder {
         private void appendConceptFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-            sb.append(valueSearchParameter)
-                    .append('=')
-                    .append(concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
+            this.queryParams.add(valueSearchParameter + "=" +
+                concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
         }
 
         /**
@@ -278,15 +273,15 @@ public class SearchQueryStringBuilder {
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
             StringBuilder sbTmp = new StringBuilder();
 
-            sb.append(valueSearchParameter).append("=");
+            String queryParamAgeGe = valueSearchParameter +"=";
             sbTmp.append("ge").append(valueFilter.getMinValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            sb.append(urlEncodeAndReset(sbTmp)).append('&');
+            this.queryParams.add(queryParamAgeGe + urlEncodeAndReset(sbTmp));
 
-            sb.append(valueSearchParameter).append("=");
+            String queryParamAgeLe = valueSearchParameter +"=";
             sbTmp.append("le").append(valueFilter.getMaxValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            sb.append(urlEncodeAndReset(sbTmp));
+            this.queryParams.add( queryParamAgeLe + urlEncodeAndReset(sbTmp));
         }
 
         /**
@@ -296,11 +291,10 @@ public class SearchQueryStringBuilder {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
             StringBuilder sbTmp = new StringBuilder();
-
-            this.sb.append(valueSearchParameter).append('=');
+            String queryParam = valueSearchParameter + "=";
             sbTmp.append(valueFilter.getComparator()).append(valueFilter.getValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.sb.append(urlEncodeAndReset(sbTmp));
+            this.queryParams.add(queryParam + urlEncodeAndReset(sbTmp));
         }
 
         private void appendFilterUnit(TerminologyCode filterUnit, StringBuilder sbTemp) {
