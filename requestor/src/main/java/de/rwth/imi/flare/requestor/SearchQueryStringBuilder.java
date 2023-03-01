@@ -261,7 +261,6 @@ public class SearchQueryStringBuilder {
         private void appendConceptFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-
             this.queryParams.add(valueSearchParameter + "=" +
                 concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
         }
