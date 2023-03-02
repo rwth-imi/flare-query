@@ -6,6 +6,7 @@ import de.rwth.imi.flare.api.model.mapping.AttributeSearchParameter;
 import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
+import javax.ws.rs.core.UriBuilder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -41,39 +42,37 @@ public class SearchQueryStringBuilder {
     public String constructQueryString(Criterion searchCriterion) throws UnsupportedCriterionException {
         Builder builder = new Builder(searchCriterion);
         builder.constructQueryString();
-        return builder.sb.toString();
+        return builder.ub.toString();
     }
 
     private class Builder {
 
         private final Criterion criterion;
-        private final StringBuilder sb;
-        private final LinkedList<String> queryParams;
+        private final UriBuilder ub;
 
         /**
          * Initializes queryBuilder context
          */
         private Builder(Criterion searchCriterion) {
-            this.sb = new StringBuilder();
+            this.ub = UriBuilder.fromUri("");
             this.criterion = searchCriterion;
-            this.queryParams = new LinkedList<>();
         }
 
         /**
-         * Constructs the query string into {@link #sb}
+         * Constructs the query string into {@link #ub}
          */
         private void constructQueryString() throws UnsupportedCriterionException {
             MappingEntry mappings = this.criterion.getMapping();
             TerminologyCode termCode = this.criterion.getTermCodes().get(0);
+            this.ub.path(mappings.getFhirResourceType());
 
 
             if (mappings.getTermCodeSearchParameter() != null) {
                 StringBuilder sbTmp = new StringBuilder();
-                String queryParam = mappings.getTermCodeSearchParameter() + "=";
                 sbTmp.append(termCode.getSystem())
                         .append("|")
                         .append(termCode.getCode());
-                this.queryParams.add(queryParam + urlEncodeAndReset(sbTmp));
+                this.ub.queryParam(mappings.getTermCodeSearchParameter(), sbTmp);
             }
 
             TerminologyCode currentTermCode = this.criterion.getTermCodes().get(0);
@@ -81,7 +80,6 @@ public class SearchQueryStringBuilder {
                 FilterType filter = this.criterion.getValueFilter().getType();
                 if (filter == FilterType.QUANTITY_COMPARATOR) {
                     if (checkAppendEqOrNeComparison()) {
-                        constructFinalString(mappings);
                         return;
                     }
 
@@ -90,7 +88,6 @@ public class SearchQueryStringBuilder {
                     appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
                     appendSingleAgeComparison(this.criterion.getValueFilter().getMaxValue(), Comparator.lt);
                 }
-                constructFinalString(mappings);
                 return;
             }
 
@@ -107,20 +104,9 @@ public class SearchQueryStringBuilder {
             }
 
             appendTimeConstraints();
-
-            constructFinalString(mappings);
-
         }
 
-        private void constructFinalString(MappingEntry mappings){
-            this.sb.append(mappings.getFhirResourceType());
-            if(this.queryParams.size() > 0 ){
-                this.sb.append('?').append(this.queryParams.removeFirst());
-            }
 
-            this.queryParams.stream().forEach((queryParam) -> this.sb.append("&").append(queryParam));
-
-        }
 
         private boolean checkAppendEqOrNeComparison() throws UnsupportedCriterionException {
             String comparator = this.criterion.getValueFilter().getComparator().toString();
@@ -130,8 +116,8 @@ public class SearchQueryStringBuilder {
                 LocalDate maxDate = timeValueToDate(age);
                 minDate = minDate.plusDays(1);
 
-                this.queryParams.add("birthdate=gt" + minDate);
-                this.queryParams.add("birthdate=lt" + maxDate.toString());
+                this.ub.queryParam("birthdate", "gt" + minDate);
+                this.ub.queryParam("birthdate", "lt" + maxDate);
                 return true;
 
             } else if (comparator.equals("ne")) {
@@ -141,17 +127,16 @@ public class SearchQueryStringBuilder {
         }
 
         private void appendSingleAgeComparison(Double age, Comparator comparator) throws UnsupportedCriterionException {
-            StringBuilder queryParam = new StringBuilder();
-            queryParam.append("birthdate=");
+            String newComparator = "";
             switch (comparator.toString()) {
-                case "gt" -> queryParam.append("lt");
-                case "lt" -> queryParam.append("gt");
-                case "ge" -> queryParam.append("le");
-                case "le" -> queryParam.append("ge");
+                case "gt" -> newComparator = "lt";
+                case "lt" -> newComparator = "gt";
+                case "ge" -> newComparator = "le";
+                case "le" -> newComparator = "ge";
             }
 
             LocalDate dateToCompare = this.timeValueToDate(age);
-            this.queryParams.add(queryParam + dateToCompare.toString());
+            this.ub.queryParam("birthdate", newComparator + dateToCompare);
         }
 
         private LocalDate timeValueToDate(Double timeValue) throws UnsupportedCriterionException {
@@ -180,13 +165,11 @@ public class SearchQueryStringBuilder {
                     }
                 }
                 String valueString = concatenateTerminologyCodes(criterion.getValue());
-                this.queryParams.add(criterion.getSearchParameter() + "=" + valueString);
-
+                this.ub.queryParam(criterion.getSearchParameter(), valueString);
             }
         }
 
         private void appendTimeConstraints() {
-            StringBuilder sbTemp = new StringBuilder();
 
             TimeRestriction timeRestriction = this.criterion.getTimeRestriction();
             String timeRestrictionParameter = this.criterion.getMapping().getTimeRestrictionParameter();
@@ -198,23 +181,20 @@ public class SearchQueryStringBuilder {
             String afterDate = timeRestriction.getAfterDate();
 
             if (beforeDate != null) {
-                sbTemp.append("&").append(timeRestrictionParameter).append("=le").append(beforeDate);
+                this.ub.queryParam(timeRestrictionParameter, "le" + beforeDate);
             }
             if (afterDate != null) {
-                sbTemp.append("&").append(timeRestrictionParameter).append("=ge").append(afterDate);
+                this.ub.queryParam(timeRestrictionParameter, "ge" + afterDate);
             }
-            this.queryParams.add(sbTemp.toString());
         }
 
 
         private AttributeSearchParameter getSearchParameter(List<AttributeSearchParameter> attSearchParams, TerminologyCode key) {
 
-            for (int i = 0; i < attSearchParams.size(); i++) {
-
-                AttributeSearchParameter cur = attSearchParams.get(i);
+            for (AttributeSearchParameter cur : attSearchParams) {
 
                 if (cur.getAttributeKey().getCode().equals(key.getCode()) && cur.getAttributeKey().getSystem().equals(key.getSystem())) {
-                    return attSearchParams.get(i);
+                    return cur;
                 }
             }
 
@@ -239,7 +219,7 @@ public class SearchQueryStringBuilder {
                 }
 
                 String concepts = concatenateTerminologyCodes(attributeFilter.getSelectedConcepts());
-                this.queryParams.add(attSearchParam.getAttributeSearchParameter() + "=" +concepts);
+                this.ub.queryParam(attSearchParam.getAttributeSearchParameter(), concepts);
             }
         }
 
@@ -261,8 +241,7 @@ public class SearchQueryStringBuilder {
         private void appendConceptFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-            this.queryParams.add(valueSearchParameter + "=" +
-                concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
+            this.ub.queryParam(valueSearchParameter, concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
         }
 
         /**
@@ -273,15 +252,14 @@ public class SearchQueryStringBuilder {
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
             StringBuilder sbTmp = new StringBuilder();
 
-            String queryParamAgeGe = valueSearchParameter +"=";
             sbTmp.append("ge").append(valueFilter.getMinValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.queryParams.add(queryParamAgeGe + urlEncodeAndReset(sbTmp));
+            this.ub.queryParam(valueSearchParameter, urlEncode(sbTmp.toString()));
+            resetStringBuilder(sbTmp);
 
-            String queryParamAgeLe = valueSearchParameter +"=";
             sbTmp.append("le").append(valueFilter.getMaxValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.queryParams.add( queryParamAgeLe + urlEncodeAndReset(sbTmp));
+            this.ub.queryParam(valueSearchParameter, urlEncode(sbTmp.toString()));
         }
 
         /**
@@ -291,10 +269,9 @@ public class SearchQueryStringBuilder {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
             StringBuilder sbTmp = new StringBuilder();
-            String queryParam = valueSearchParameter + "=";
             sbTmp.append(valueFilter.getComparator()).append(valueFilter.getValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.queryParams.add(queryParam + urlEncodeAndReset(sbTmp));
+            this.ub.queryParam(valueSearchParameter, urlEncode(sbTmp.toString()));
         }
 
         private void appendFilterUnit(TerminologyCode filterUnit, StringBuilder sbTemp) {
@@ -331,20 +308,9 @@ public class SearchQueryStringBuilder {
             return String.join(",", encodedTerminologyList);
         }
 
-        /**
-         * Helper Method, url encodes the content of the given {@code strBuilder} and empties the builder
-         *
-         * @return url encoded contents of the {@code strBuilder}
-         */
-        private static String urlEncodeAndReset(StringBuilder strBuilder) {
-            return urlEncode(reset(strBuilder));
-        }
-
-        private static String reset(StringBuilder strBuilder) {
-            String text = strBuilder.toString();
+        private static void resetStringBuilder(StringBuilder strBuilder) {
             strBuilder.setLength(0);
             strBuilder.trimToSize();
-            return text;
         }
 
         private static String urlEncode(String str) {
