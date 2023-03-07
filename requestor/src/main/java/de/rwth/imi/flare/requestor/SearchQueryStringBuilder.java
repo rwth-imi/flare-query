@@ -7,8 +7,6 @@ import de.rwth.imi.flare.api.model.mapping.FixedCriteria;
 import de.rwth.imi.flare.api.model.mapping.MappingEntry;
 
 import javax.ws.rs.core.UriBuilder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.LinkedList;
@@ -50,63 +48,68 @@ public class SearchQueryStringBuilder {
         private final Criterion criterion;
         private final UriBuilder ub;
 
-        /**
-         * Initializes queryBuilder context
-         */
         private Builder(Criterion searchCriterion) {
             this.ub = UriBuilder.fromUri("");
             this.criterion = searchCriterion;
         }
 
-        /**
-         * Constructs the query string into {@link #ub}
-         */
         private void constructQueryString() throws UnsupportedCriterionException {
             MappingEntry mappings = this.criterion.getMapping();
+            String termCodeSearchParam = mappings.getTermCodeSearchParameter();
             TerminologyCode termCode = this.criterion.getTermCodes().get(0);
+            ValueFilter valueFilter = this.criterion.getValueFilter();
+            List<FixedCriteria> fixedCriteria = mappings.getFixedCriteria();
+            List<AttributeFilter> attributeFilters = this.criterion.getAttributeFilters();
+
             this.ub.path(mappings.getFhirResourceType());
 
-
-            if (mappings.getTermCodeSearchParameter() != null) {
-                StringBuilder sbTmp = new StringBuilder();
-                sbTmp.append(termCode.getSystem())
-                        .append("|")
-                        .append(termCode.getCode());
-                this.ub.queryParam(mappings.getTermCodeSearchParameter(), sbTmp);
-            }
-
-            TerminologyCode currentTermCode = this.criterion.getTermCodes().get(0);
-            if (currentTermCode.getCode().equals("424144002") && currentTermCode.getSystem().equals("http://snomed.info/sct")) {
-                FilterType filter = this.criterion.getValueFilter().getType();
-                if (filter == FilterType.QUANTITY_COMPARATOR) {
-                    if (checkAppendEqOrNeComparison()) {
-                        return;
-                    }
-
-                    appendSingleAgeComparison(this.criterion.getValueFilter().getValue(), this.criterion.getValueFilter().getComparator());
-                } else if (filter == FilterType.QUANTITY_RANGE) {
-                    appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
-                    appendSingleAgeComparison(this.criterion.getValueFilter().getMaxValue(), Comparator.lt);
-                }
+            if (termCode.getCode().equals("424144002") && termCode.getSystem().equals("http://snomed.info/sct")) {
+                appendAge();
                 return;
             }
 
-            if(this.criterion.getValueFilter() != null) {
-                appendValueFilterByType();
+            if (termCodeSearchParam != null) {
+                appendTermCode(mappings, termCode);
             }
 
-            if (mappings.getFixedCriteria() != null) {
-                appendFixedCriteriaString();
+            if(valueFilter != null) {
+                appendValueFilter();
             }
 
-            if (this.criterion.getAttributeFilters() != null) {
-                appendAttributeSearchParameterString();
+            if (fixedCriteria != null) {
+                appendFixedCriteria();
+            }
+
+            if (attributeFilters != null) {
+                appendAttributeFilter();
             }
 
             appendTimeConstraints();
         }
 
+        private void appendTermCode(MappingEntry mappings,
+            TerminologyCode termCode) {
+            StringBuilder sbTmp = new StringBuilder();
+            sbTmp.append(termCode.getSystem())
+                    .append("|")
+                    .append(termCode.getCode());
+            this.ub.queryParam(mappings.getTermCodeSearchParameter(), sbTmp);
+        }
 
+        private void appendAge() throws UnsupportedCriterionException {
+            FilterType filter = this.criterion.getValueFilter().getType();
+            if (filter == FilterType.QUANTITY_COMPARATOR) {
+                if (checkAppendEqOrNeComparison()) {
+                    return;
+                }
+
+                appendSingleAgeComparison(this.criterion.getValueFilter().getValue(), this.criterion.getValueFilter().getComparator());
+            } else if (filter == FilterType.QUANTITY_RANGE) {
+                appendSingleAgeComparison(this.criterion.getValueFilter().getMinValue(), Comparator.gt);
+                appendSingleAgeComparison(this.criterion.getValueFilter().getMaxValue(), Comparator.lt);
+            }
+            return;
+        }
 
         private boolean checkAppendEqOrNeComparison() throws UnsupportedCriterionException {
             String comparator = this.criterion.getValueFilter().getComparator().toString();
@@ -153,10 +156,7 @@ public class SearchQueryStringBuilder {
             return date;
         }
 
-        /**
-         * Appends the fixed criteria as given by the mapping
-         */
-        private void appendFixedCriteriaString() {
+        private void appendFixedCriteria() {
 
             for (FixedCriteria criterion : this.criterion.getMapping().getFixedCriteria()) {
                 if (criterion.getType().equals("code")) {
@@ -188,7 +188,6 @@ public class SearchQueryStringBuilder {
             }
         }
 
-
         private AttributeSearchParameter getSearchParameter(List<AttributeSearchParameter> attSearchParams, TerminologyCode key) {
 
             for (AttributeSearchParameter cur : attSearchParams) {
@@ -201,10 +200,7 @@ public class SearchQueryStringBuilder {
             return null;
         }
 
-        /**
-         * Appends the attributeFilter as given by the mapping
-         */
-        private void appendAttributeSearchParameterString() {
+        private void appendAttributeFilter() {
 
             List<AttributeSearchParameter> searchParams = this.criterion.getMapping().getAttributeSearchParameters();
 
@@ -223,7 +219,7 @@ public class SearchQueryStringBuilder {
             }
         }
 
-        private void appendValueFilterByType() {
+        private void appendValueFilter() {
 
             FilterType filter = this.criterion.getValueFilter().getType();
             if (filter == FilterType.QUANTITY_COMPARATOR) {
@@ -235,43 +231,34 @@ public class SearchQueryStringBuilder {
             }
         }
 
-        /**
-         * Called if the {@link ValueFilter} is a Concept filter, appends the concept filter
-         */
         private void appendConceptFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
             this.ub.queryParam(valueSearchParameter, concatenateTerminologyCodes(valueFilter.getSelectedConcepts()));
         }
 
-        /**
-         * Called if the {@link ValueFilter} is a QuantityRange filter, appends two comparator filters
-         */
         private void appendQuantityRangeFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
-            StringBuilder sbTmp = new StringBuilder();
 
-            sbTmp.append("ge").append(valueFilter.getMinValue());
-            appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.ub.queryParam(valueSearchParameter, urlEncode(sbTmp.toString()));
-            resetStringBuilder(sbTmp);
+            StringBuilder sbGe = new StringBuilder();
+            sbGe.append("ge").append(valueFilter.getMinValue());
+            appendFilterUnit(valueFilter.getUnit(), sbGe);
+            this.ub.queryParam(valueSearchParameter, sbGe.toString());
 
-            sbTmp.append("le").append(valueFilter.getMaxValue());
-            appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.ub.queryParam(valueSearchParameter, urlEncode(sbTmp.toString()));
+            StringBuilder sbLe = new StringBuilder();
+            sbLe.append("le").append(valueFilter.getMaxValue());
+            appendFilterUnit(valueFilter.getUnit(), sbLe);
+            this.ub.queryParam(valueSearchParameter, sbLe.toString());
         }
 
-        /**
-         * Called if the {@link ValueFilter} is a Quantity filter, appends the comparator filter
-         */
         private void appendQuantityComparatorFilterString() {
             ValueFilter valueFilter = this.criterion.getValueFilter();
             String valueSearchParameter = this.criterion.getMapping().getValueSearchParameter();
             StringBuilder sbTmp = new StringBuilder();
             sbTmp.append(valueFilter.getComparator()).append(valueFilter.getValue());
             appendFilterUnit(valueFilter.getUnit(), sbTmp);
-            this.ub.queryParam(valueSearchParameter, urlEncode(sbTmp.toString()));
+            this.ub.queryParam(valueSearchParameter, sbTmp.toString());
         }
 
         private void appendFilterUnit(TerminologyCode filterUnit, StringBuilder sbTemp) {
@@ -282,12 +269,6 @@ public class SearchQueryStringBuilder {
             sbTemp.append("|").append(system).append("|").append(code);
         }
 
-        /**
-         * Helper method, joins an array of terminology codes with commas
-         *
-         * @param termCodes Codes to be joined
-         * @return String looking like this: "system|code,system2|code2"...
-         */
         private String concatenateTerminologyCodes(List<TerminologyCode> termCodes) {
             List<String> encodedTerminologyList = new LinkedList<>();
             String pipe = "|";
@@ -296,25 +277,17 @@ public class SearchQueryStringBuilder {
 
                 if (this.criterion.getMapping().getValueTypeFhir() != null &&
                         this.criterion.getMapping().getValueTypeFhir().equals("code")) {
-                    encodedTerminologyString = urlEncode(value.getCode());
+                    encodedTerminologyString = value.getCode();
                 } else if (value.getSystem().equals("")) {
                     //pipe is not needed if there is no system to be specified in the FHIR URL
-                    encodedTerminologyString = urlEncode(value.getCode());
+                    encodedTerminologyString = value.getCode();
                 } else {
-                    encodedTerminologyString = urlEncode(value.getSystem() + pipe + value.getCode());
+                    encodedTerminologyString = value.getSystem() + pipe + value.getCode();
                 }
                 encodedTerminologyList.add(encodedTerminologyString);
             }
             return String.join(",", encodedTerminologyList);
         }
 
-        private static void resetStringBuilder(StringBuilder strBuilder) {
-            strBuilder.setLength(0);
-            strBuilder.trimToSize();
-        }
-
-        private static String urlEncode(String str) {
-            return URLEncoder.encode(str, StandardCharsets.UTF_8);
-        }
     }
 }
