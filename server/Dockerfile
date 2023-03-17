@@ -18,9 +18,10 @@ COPY --from=build /home/app/server/target/server-*.jar /opt/flare/flare.jar
 RUN chown -R 10001:10001 /opt/flare
 ARG VERSION=0.0.0
 ENV APP_VERSION=${VERSION}
+ENV JAVA_OPTS=""
 
 USER 10001
-ENTRYPOINT ["java","-jar","flare.jar"]
+ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar flare.jar"]
 EXPOSE 8080
 
 ARG GIT_REF=""
