@@ -1,6 +1,9 @@
 # FLARE
 
-** THIS PROJECT IS ARCHIVED. FOR SIMILAR FUNCTIONALILTY SEE THE FOLLOW-UP PROJECT AT https://github.com/medizininformatik-initiative/flare **
+**THIS PROJECT IS ARCHIVED. FOR SIMILAR FUNCTIONALILTY SEE THE FOLLOW-UP PROJECT AT** 
+https://github.com/medizininformatik-initiative/flare 
+
+
 
 
 
