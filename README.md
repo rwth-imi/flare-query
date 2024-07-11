@@ -1,5 +1,9 @@
 # FLARE
 
+** THIS PROJECT IS ARCHIVED. FOR SIMILAR FUNCTIONALILTY SEE THE FOLLOW-UP PROJECT AT https://github.com/medizininformatik-initiative/flare **
+
+
+
 **F**easibi**l**ity **A**nalysis **R**equest **E**xecutor
 
 ## Goal
